@@ -1,0 +1,210 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model AdminUser {
+  id        String    @id @default(uuid())
+  email     String    @unique
+  role      AdminRole @default(ADMIN)
+  createdAt DateTime  @default(now())
+
+  @@map("admin_users")
+}
+
+model Group {
+  id         String      @id @default(uuid())
+  name       String      @unique
+  performers Performer[]
+  performerApplications PerformerApplication[]
+  createdAt  DateTime    @default(now())
+
+  @@map("groups")
+}
+
+model Performer {
+  id          String           @id @default(uuid())
+  name        String
+  groupId     String?
+  group       Group?           @relation(fields: [groupId], references: [id])
+  youtubeUrl  String?
+  officialUrl String?
+  status      MasterDataStatus @default(APPROVED)
+  aliases     PerformerAlias[]
+  covers      CoverPerformer[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([name])
+  @@index([groupId])
+  @@map("performers")
+}
+
+model PerformerAlias {
+  id          String    @id @default(uuid())
+  performerId String
+  performer   Performer @relation(fields: [performerId], references: [id], onDelete: Cascade)
+  alias       String
+
+  @@unique([performerId, alias])
+  @@index([alias])
+  @@map("performer_aliases")
+}
+
+model Artist {
+  id        String       @id @default(uuid())
+  name      String       @unique
+  songs     SongArtist[]
+  createdAt DateTime     @default(now())
+
+  @@index([name])
+  @@map("artists")
+}
+
+model Song {
+  id          String       @id @default(uuid())
+  title       String
+  originalUrl String?
+  artists     SongArtist[]
+  covers      Cover[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([title])
+  @@map("songs")
+}
+
+model SongArtist {
+  id       String @id @default(uuid())
+  songId   String
+  artistId String
+
+  song   Song   @relation(fields: [songId], references: [id], onDelete: Cascade)
+  artist Artist @relation(fields: [artistId], references: [id], onDelete: Cascade)
+
+  @@unique([songId, artistId])
+  @@index([artistId])
+  @@map("song_artists")
+}
+
+model Cover {
+  id               String           @id @default(uuid())
+  songId           String
+  song             Song             @relation(fields: [songId], references: [id])
+  performedAt      DateTime
+  coverType        CoverType
+  sourceUrl        String
+  sourceTitle      String?
+  timestampSeconds Int?
+  status           ContentStatus    @default(APPROVED)
+  ipHash           String?
+  userAgentHash    String?
+  performers       CoverPerformer[]
+  reports          Report[]
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@index([songId])
+  @@index([performedAt])
+  @@index([sourceUrl])
+  @@index([coverType])
+  @@index([status])
+  @@map("covers")
+}
+
+model CoverPerformer {
+  id          String @id @default(uuid())
+  coverId     String
+  performerId String
+
+  cover     Cover     @relation(fields: [coverId], references: [id], onDelete: Cascade)
+  performer Performer @relation(fields: [performerId], references: [id], onDelete: Cascade)
+
+  @@unique([coverId, performerId])
+  @@index([performerId])
+  @@map("cover_performers")
+}
+
+model Report {
+  id        String       @id @default(uuid())
+  coverId   String
+  cover     Cover        @relation(fields: [coverId], references: [id], onDelete: Cascade)
+  reason    ReportReason
+  memo      String?
+  status    ReportStatus @default(PENDING)
+  ipHash    String?
+  createdAt DateTime     @default(now())
+
+  @@index([coverId])
+  @@index([status])
+  @@map("reports")
+}
+
+model PerformerApplication {
+  id        String            @id @default(uuid())
+  name      String
+  url       String
+  groupId   String?
+  group     Group?            @relation(fields: [groupId], references: [id])
+  memo      String?
+  status    ApplicationStatus @default(PENDING)
+  ipHash    String?
+  createdAt DateTime          @default(now())
+
+  @@index([name])
+  @@index([groupId])
+  @@index([status])
+  @@map("performer_applications")
+}
+
+enum AdminRole {
+  ADMIN
+}
+
+enum MasterDataStatus {
+  PENDING
+  APPROVED
+  HIDDEN
+}
+
+enum ContentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  HIDDEN
+}
+
+enum CoverType {
+  COVER_VIDEO
+  KARAOKE_STREAM
+  LIVE_EVENT
+  SHORT
+  OTHER
+}
+
+enum ReportReason {
+  WRONG_SONG
+  WRONG_PERFORMER
+  WRONG_DATE
+  BROKEN_URL
+  MEMBERS_ONLY_CONTENT
+  NON_PUBLIC_PAID_CONTENT
+  DUPLICATE
+  OTHER
+}
+
+enum ReportStatus {
+  PENDING
+  RESOLVED
+  REJECTED
+}
+
+enum ApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
