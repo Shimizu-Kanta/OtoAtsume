@@ -33,6 +33,95 @@ pnpm dev
 
 `.env` の `ADMIN_ALLOWED_EMAILS` には管理者として許可する Google アカウントのメールアドレスをカンマ区切りで設定してください。
 
+## Cloud Run デプロイ
+
+このリポジトリには `main` branch への push を契機に、Docker image を Artifact Registry に push し、Prisma migration を適用してから Cloud Run に deploy する GitHub Actions workflow を含めています。
+
+### 必要な GCP リソース
+
+- Artifact Registry の Docker repository
+- Cloud Run service
+- Cloud SQL for PostgreSQL instance
+- Cloud SQL database / user
+- Secret Manager secrets
+- GitHub Actions 用の deploy service account
+- Cloud Run runtime service account
+- GitHub Actions と GCP を接続する Workload Identity Federation
+
+Cloud SQL connection name は `PROJECT_ID:REGION:INSTANCE_NAME` 形式です。
+
+### Cloud Run 環境変数
+
+Cloud Run には Secret Manager 経由で以下を設定します。DB パスワード、OAuth secret、認証 secret はリポジトリに書かないでください。
+
+| 環境変数 | 用途 |
+| --- | --- |
+| `DATABASE_URL` | Cloud SQL for PostgreSQL の接続文字列 |
+| `NEXT_PUBLIC_SITE_URL` | 公開 URL |
+| `ADMIN_ALLOWED_EMAILS` | 管理者として許可するメールアドレス。カンマ区切り |
+| `AUTH_SECRET` | NextAuth.js の署名 secret |
+| `GOOGLE_CLIENT_ID` | Google OAuth client ID |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret |
+| `CAPTCHA_SECRET_KEY` | CAPTCHA 検証用 secret |
+| `NEXT_PUBLIC_CAPTCHA_SITE_KEY` | CAPTCHA site key |
+
+Cloud Run runtime の `DATABASE_URL` は Cloud SQL connector を使う前提で、例として以下のような形式にします。
+
+```text
+postgresql://USER:PASSWORD@localhost/DB_NAME?host=/cloudsql/PROJECT_ID:REGION:INSTANCE_NAME&schema=public
+```
+
+Secret Manager には workflow と同じ名前で secret を作成しておきます。
+
+```bash
+gcloud secrets create DATABASE_URL --data-file=-
+gcloud secrets create NEXT_PUBLIC_SITE_URL --data-file=-
+gcloud secrets create ADMIN_ALLOWED_EMAILS --data-file=-
+gcloud secrets create AUTH_SECRET --data-file=-
+gcloud secrets create GOOGLE_CLIENT_ID --data-file=-
+gcloud secrets create GOOGLE_CLIENT_SECRET --data-file=-
+gcloud secrets create CAPTCHA_SECRET_KEY --data-file=-
+gcloud secrets create NEXT_PUBLIC_CAPTCHA_SITE_KEY --data-file=-
+```
+
+### GitHub Actions 設定
+
+Repository Variables:
+
+| 変数 | 例 |
+| --- | --- |
+| `GCP_PROJECT_ID` | `my-project` |
+| `GCP_REGION` | `asia-northeast1` |
+| `ARTIFACT_REGISTRY_REPOSITORY` | `oto-atsume` |
+| `CLOUD_RUN_SERVICE` | `oto-atsume` |
+| `CLOUD_SQL_CONNECTION_NAME` | `my-project:asia-northeast1:oto-atsume-db` |
+
+Repository Secrets:
+
+| Secret | 用途 |
+| --- | --- |
+| `GCP_WORKLOAD_IDENTITY_PROVIDER` | Workload Identity Provider resource name |
+| `GCP_SERVICE_ACCOUNT` | deploy 用 service account email |
+| `MIGRATION_DATABASE_URL` | GitHub Actions から `prisma migrate deploy` を実行するための接続文字列 |
+
+`MIGRATION_DATABASE_URL` は workflow 内の Cloud SQL Auth Proxy に接続するため、例として以下のような形式にします。
+
+```text
+postgresql://USER:PASSWORD@127.0.0.1:5432/DB_NAME?schema=public
+```
+
+deploy 用 service account には少なくとも Artifact Registry への push、Cloud Run deploy、Cloud SQL Auth Proxy 接続に必要な権限を付与します。Cloud Run runtime service account には `roles/cloudsql.client` と Secret Manager の secret accessor 権限を付与してください。
+
+### Prisma migration
+
+ローカル開発では `pnpm prisma:migrate` を使います。本番環境では migration file を生成せず、既存 migration を適用するだけにします。
+
+```bash
+pnpm prisma:deploy
+```
+
+GitHub Actions では Cloud SQL Auth Proxy を起動し、`MIGRATION_DATABASE_URL` を `DATABASE_URL` として渡して `prisma migrate deploy` を実行します。migration が失敗した場合、Cloud Run deploy は実行されません。
+
 ## 主な画面
 
 - `/` トップページ
@@ -84,4 +173,3 @@ pnpm dev
 - CAPTCHA provider の実接続
 - 永続型レート制限への置き換え
 - 管理画面での詳細編集フォーム拡充
-- GitHub Actions と Cloud Run デプロイ設定

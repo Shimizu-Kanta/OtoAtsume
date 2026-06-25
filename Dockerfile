@@ -13,7 +13,8 @@ WORKDIR /app
 
 FROM base AS deps
 COPY package.json ./
-RUN pnpm install --frozen-lockfile=false
+COPY pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 
 FROM base AS builder
 ENV NEXT_STANDALONE=true
