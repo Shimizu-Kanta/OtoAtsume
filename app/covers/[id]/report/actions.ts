@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 
 import { createReport } from "@/lib/data/covers";
 import { checkServerActionRateLimit, rateLimitPresets } from "@/lib/rate-limit/http";
+import { verifyCaptchaToken } from "@/lib/security/captcha";
 import { reportCreateSchema } from "@/lib/validations/report";
 
 export async function createReportAction(coverId: string, formData: FormData) {
@@ -16,6 +17,16 @@ export async function createReportAction(coverId: string, formData: FormData) {
     redirect(
       `/covers/${coverId}/report?error=${encodeURIComponent(
         "短時間に通報が多すぎます。少し待ってから再試行してください。"
+      )}`
+    );
+  }
+
+  const captcha = await verifyCaptchaToken(String(formData.get("captchaToken") ?? ""));
+
+  if (!captcha.ok) {
+    redirect(
+      `/covers/${coverId}/report?error=${encodeURIComponent(
+        captcha.message ?? "CAPTCHA認証に失敗しました。"
       )}`
     );
   }

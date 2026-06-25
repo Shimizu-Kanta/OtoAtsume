@@ -1,4 +1,5 @@
 import { AdminNav } from "@/components/admin/admin-nav";
+import Link from "next/link";
 import { PageHeading } from "@/components/page-heading";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,8 +49,11 @@ export default async function AdminSongsPage() {
       <div className="overflow-hidden rounded-md border bg-card">
         <div className="divide-y">
           {songs.map((song) => (
-            <div key={song.id} className="p-4">
-              <p className="font-medium">{song.title}</p>
+            <div key={song.id} className="grid gap-3 p-4 sm:grid-cols-[1fr_auto] sm:items-center">
+              <div>
+              <Link href={`/admin/songs/${song.id}`} className="font-medium text-primary underline">
+                {song.title}
+              </Link>
               <p className="mt-1 text-sm text-muted-foreground">
                 {song.artists.map(({ artist }) => artist.name).join(", ") || "アーティスト未設定"}
               </p>
@@ -58,6 +62,10 @@ export default async function AdminSongsPage() {
                   {song.originalUrl}
                 </a>
               ) : null}
+              </div>
+              <Link href={`/admin/songs/${song.id}`} className="rounded-md border px-3 py-2 text-sm">
+                編集
+              </Link>
             </div>
           ))}
         </div>

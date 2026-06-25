@@ -50,6 +50,9 @@ export default async function AdminPerformerApplicationDetailPage({
 
       <section className="rounded-md border bg-card p-5">
         <h2 className="text-lg font-semibold">対応</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          承認すると同名の活動者がない場合は新規作成し、既存の活動者がある場合は所属グループ・公式URL・ステータスを更新します。
+        </p>
         <div className="mt-4 flex flex-wrap gap-3">
           <form action={approveAction}>
             <Button type="submit">performers に追加して承認</Button>

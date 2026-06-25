@@ -10,6 +10,7 @@ import {
   contentStatusLabel,
   coverTypeLabel,
   reportReasonLabel,
+  reportStatusLabel,
   reportStatusOptions
 } from "@/lib/constants";
 import { getReport } from "@/lib/data/admin";
@@ -43,7 +44,7 @@ export default async function AdminReportDetailPage({
       <section className="rounded-md border bg-card p-5">
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="accent">{reportReasonLabel(report.reason)}</Badge>
-          <Badge variant="outline">{report.status}</Badge>
+          <Badge variant="outline">{reportStatusLabel(report.status)}</Badge>
         </div>
         <p className="mt-4 whitespace-pre-wrap text-sm">{report.memo ?? "詳細メモなし"}</p>
       </section>
@@ -77,6 +78,9 @@ export default async function AdminReportDetailPage({
 
       <section className="rounded-md border bg-card p-5">
         <h2 className="text-lg font-semibold">対応</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          対象記録を確認し、通報だけを処理する場合はステータス更新、記録自体を非表示にする場合は解決ボタンを使います。
+        </p>
         <div className="mt-4 flex flex-wrap gap-3">
           <form action={updateAction} className="flex items-end gap-2">
             <Select name="status" defaultValue={report.status} aria-label="通報ステータス">

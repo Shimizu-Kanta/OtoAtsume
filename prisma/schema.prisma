@@ -161,6 +161,18 @@ model PerformerApplication {
   @@map("performer_applications")
 }
 
+model RateLimitBucket {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  count     Int      @default(0)
+  resetAt   DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([resetAt])
+  @@map("rate_limit_buckets")
+}
+
 enum AdminRole {
   ADMIN
 }

@@ -8,6 +8,7 @@ import {
 
 import { db } from "@/lib/db";
 import { coverDetailInclude, coverListInclude } from "@/lib/data/covers";
+import { normalizeNames } from "@/lib/utils";
 
 export async function listReports(status?: ReportStatus) {
   return db.report.findMany({
@@ -75,16 +76,23 @@ export async function approvePerformerApplication(id: string) {
       }
     });
 
-    const performer =
-      existing ??
-      (await client.performer.create({
+    const performer = existing
+      ? await client.performer.update({
+          where: { id: existing.id },
+          data: {
+            groupId: application.groupId,
+            officialUrl: application.url,
+            status: MasterDataStatus.APPROVED
+          }
+        })
+      : await client.performer.create({
         data: {
           name: application.name,
           groupId: application.groupId,
           officialUrl: application.url,
           status: MasterDataStatus.APPROVED
         }
-      }));
+      });
 
     await client.performerApplication.update({
       where: { id },
@@ -185,14 +193,35 @@ export async function updateAdminPerformer(
     youtubeUrl: string | null;
     officialUrl: string | null;
     status: MasterDataStatus;
+    aliases: string[];
   }>
 ) {
-  return db.performer.update({
-    where: { id },
-    data: {
-      ...input,
-      groupId: input.groupId === "" ? null : input.groupId
+  return db.$transaction(async (client) => {
+    const { aliases, ...performerInput } = input;
+    const performer = await client.performer.update({
+      where: { id },
+      data: {
+        ...performerInput,
+        groupId: performerInput.groupId === "" ? null : performerInput.groupId
+      },
+      include: { group: true, aliases: true }
+    });
+
+    if (aliases) {
+      const uniqueAliases = Array.from(new Set(aliases.map((alias) => alias.trim()).filter(Boolean)));
+      await client.performerAlias.deleteMany({
+        where: { performerId: id }
+      });
+
+      if (uniqueAliases.length > 0) {
+        await client.performerAlias.createMany({
+          data: uniqueAliases.map((alias) => ({ performerId: id, alias })),
+          skipDuplicates: true
+        });
+      }
     }
+
+    return performer;
   });
 }
 
@@ -205,6 +234,17 @@ export async function listAdminSongs() {
     },
     orderBy: { createdAt: "desc" },
     take: 100
+  });
+}
+
+export async function getAdminSong(id: string) {
+  return db.song.findUnique({
+    where: { id },
+    include: {
+      artists: {
+        include: { artist: true }
+      }
+    }
   });
 }
 
@@ -226,18 +266,91 @@ export async function createAdminSong(input: {
 
 export async function updateAdminSong(
   id: string,
-  input: Partial<{ title: string; originalUrl: string | null }>
+  input: {
+    title?: string;
+    originalUrl?: string | null;
+    artistIds?: string[];
+    artistNames?: string;
+  }
 ) {
-  return db.song.update({
-    where: { id },
-    data: input
+  return db.$transaction(async (client) => {
+    const existing = await client.song.findUniqueOrThrow({
+      where: { id },
+      include: {
+        artists: {
+          select: { artistId: true }
+        }
+      }
+    });
+    const shouldReplaceArtists = input.artistIds !== undefined || input.artistNames !== undefined;
+    const artistIds = new Set(
+      shouldReplaceArtists ? input.artistIds ?? [] : existing.artists.map(({ artistId }) => artistId)
+    );
+
+    for (const name of normalizeNames(input.artistNames)) {
+      const artist = await client.artist.upsert({
+        where: { name },
+        create: { name },
+        update: {}
+      });
+      artistIds.add(artist.id);
+    }
+
+    await client.song.update({
+      where: { id },
+      data: {
+        title: input.title ?? existing.title,
+        originalUrl: input.originalUrl === undefined ? existing.originalUrl : input.originalUrl
+      }
+    });
+
+    if (shouldReplaceArtists) {
+      await client.songArtist.deleteMany({
+        where: { songId: id }
+      });
+
+      if (artistIds.size > 0) {
+        await client.songArtist.createMany({
+          data: Array.from(artistIds).map((artistId) => ({
+            songId: id,
+            artistId
+          })),
+          skipDuplicates: true
+        });
+      }
+    }
+
+    return client.song.findUniqueOrThrow({
+      where: { id },
+      include: {
+        artists: {
+          include: { artist: true }
+        }
+      }
+    });
   });
 }
 
 export async function listAdminArtists() {
   return db.artist.findMany({
+    include: {
+      _count: {
+        select: { songs: true }
+      }
+    },
     orderBy: { createdAt: "desc" },
     take: 100
+  });
+}
+
+export async function getAdminArtist(id: string) {
+  return db.artist.findUnique({
+    where: { id },
+    include: {
+      _count: {
+        select: { songs: true }
+      }
+    }
   });
 }
 

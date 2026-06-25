@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   try {
-    const limited = checkRouteRateLimit(
+    const limited = await checkRouteRateLimit(
       request,
       "api:covers:duplicate-candidates",
       rateLimitPresets.duplicateCheck

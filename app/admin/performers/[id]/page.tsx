@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { requireAdminPage } from "@/lib/auth/admin";
 import { getAdminPerformer, listGroups } from "@/lib/data/admin";
 import { getSearchParam } from "@/lib/utils";
@@ -33,6 +34,7 @@ export default async function AdminPerformerEditPage({
   const action = updatePerformerAction.bind(null, performer.id);
   const error = getSearchParam(query, "error");
   const updated = getSearchParam(query, "updated") === "1";
+  const aliases = performer.aliases.map((alias) => alias.alias).join("\n");
 
   return (
     <div className="space-y-6">
@@ -93,6 +95,15 @@ export default async function AdminPerformerEditPage({
               <option value="PENDING">確認待ち</option>
               <option value="HIDDEN">非表示</option>
             </Select>
+          </div>
+          <div className="space-y-2 md:col-span-2">
+            <Label htmlFor="aliases">別名</Label>
+            <Textarea
+              id="aliases"
+              name="aliases"
+              defaultValue={aliases}
+              placeholder="1行に1件、またはカンマ区切りで入力"
+            />
           </div>
         </div>
         <div className="mt-4 flex flex-wrap gap-2">

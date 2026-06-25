@@ -1,4 +1,5 @@
 import { AdminNav } from "@/components/admin/admin-nav";
+import Link from "next/link";
 import { PageHeading } from "@/components/page-heading";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,8 +30,16 @@ export default async function AdminArtistsPage() {
       <div className="overflow-hidden rounded-md border bg-card">
         <div className="divide-y">
           {artists.map((artist) => (
-            <div key={artist.id} className="p-4">
-              <p className="font-medium">{artist.name}</p>
+            <div key={artist.id} className="grid gap-3 p-4 sm:grid-cols-[1fr_auto] sm:items-center">
+              <div>
+                <Link href={`/admin/artists/${artist.id}`} className="font-medium text-primary underline">
+                  {artist.name}
+                </Link>
+                <p className="mt-1 text-sm text-muted-foreground">楽曲 {artist._count.songs} 件</p>
+              </div>
+              <Link href={`/admin/artists/${artist.id}`} className="rounded-md border px-3 py-2 text-sm">
+                編集
+              </Link>
             </div>
           ))}
         </div>

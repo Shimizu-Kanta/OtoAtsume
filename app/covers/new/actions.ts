@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 
 import { createCover } from "@/lib/data/covers";
 import { checkServerActionRateLimit, rateLimitPresets } from "@/lib/rate-limit/http";
+import { verifyCaptchaToken } from "@/lib/security/captcha";
 import { coverCreateSchema } from "@/lib/validations/cover";
 
 function errorRedirect(message: string): never {
@@ -18,6 +19,12 @@ export async function createCoverAction(formData: FormData) {
 
   if (!rateLimit.allowed) {
     errorRedirect("短時間に登録が多すぎます。少し待ってから再試行してください。");
+  }
+
+  const captcha = await verifyCaptchaToken(String(formData.get("captchaToken") ?? ""));
+
+  if (!captcha.ok) {
+    errorRedirect(captcha.message ?? "CAPTCHA認証に失敗しました。");
   }
 
   const parsed = coverCreateSchema.safeParse({

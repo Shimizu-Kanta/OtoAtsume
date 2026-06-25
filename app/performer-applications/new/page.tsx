@@ -1,3 +1,4 @@
+import { TurnstileCaptcha } from "@/components/captcha/turnstile";
 import { PageHeading } from "@/components/page-heading";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -5,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { listGroups } from "@/lib/data/admin";
+import { getCaptchaSiteKey, isCaptchaRequired } from "@/lib/security/captcha";
 import { getSearchParam } from "@/lib/utils";
 import { createPerformerApplicationAction } from "./actions";
 
@@ -56,6 +58,7 @@ export default async function NewPerformerApplicationPage({
           <Label htmlFor="memo">補足メモ</Label>
           <Textarea id="memo" name="memo" />
         </div>
+        <TurnstileCaptcha siteKey={getCaptchaSiteKey()} required={isCaptchaRequired()} />
         <Button type="submit">申請する</Button>
       </form>
     </div>

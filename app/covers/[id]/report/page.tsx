@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 
+import { TurnstileCaptcha } from "@/components/captcha/turnstile";
 import { PageHeading } from "@/components/page-heading";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -7,6 +8,7 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { reportReasonOptions } from "@/lib/constants";
 import { getCoverById } from "@/lib/data/covers";
+import { getCaptchaSiteKey, isCaptchaRequired } from "@/lib/security/captcha";
 import { getSearchParam } from "@/lib/utils";
 import { createReportAction } from "./actions";
 
@@ -54,6 +56,7 @@ export default async function ReportPage({
           <Label htmlFor="memo">詳細メモ</Label>
           <Textarea id="memo" name="memo" />
         </div>
+        <TurnstileCaptcha siteKey={getCaptchaSiteKey()} required={isCaptchaRequired()} />
         <Button type="submit">通報する</Button>
       </form>
     </div>

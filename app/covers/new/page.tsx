@@ -1,5 +1,6 @@
 import { Info } from "lucide-react";
 
+import { TurnstileCaptcha } from "@/components/captcha/turnstile";
 import { DuplicateCandidateChecker } from "@/components/covers/duplicate-candidate-checker";
 import { PerformerPicker } from "@/components/covers/performer-picker";
 import { PageHeading } from "@/components/page-heading";
@@ -10,6 +11,7 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { coverTypeOptions } from "@/lib/constants";
 import { getPerformerOptions } from "@/lib/data/performers";
+import { getCaptchaSiteKey, isCaptchaRequired } from "@/lib/security/captcha";
 import { getSearchParam } from "@/lib/utils";
 import { createCoverAction } from "./actions";
 
@@ -100,6 +102,8 @@ export default async function NewCoverPage({
         </section>
 
         <DuplicateCandidateChecker />
+
+        <TurnstileCaptcha siteKey={getCaptchaSiteKey()} required={isCaptchaRequired()} />
 
         <Button type="submit">登録する</Button>
       </form>

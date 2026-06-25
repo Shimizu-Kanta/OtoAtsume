@@ -6,17 +6,19 @@ import { redirect } from "next/navigation";
 
 import { requireAdminPage } from "@/lib/auth/admin";
 import { updateAdminPerformer } from "@/lib/data/admin";
-import { performerCreateSchema } from "@/lib/validations/master-data";
+import { normalizeNames } from "@/lib/utils";
+import { performerUpdateSchema } from "@/lib/validations/master-data";
 
 export async function updatePerformerAction(performerId: string, formData: FormData) {
   await requireAdminPage();
 
-  const parsed = performerCreateSchema.safeParse({
+  const parsed = performerUpdateSchema.safeParse({
     name: formData.get("name"),
     groupId: formData.get("groupId"),
     youtubeUrl: formData.get("youtubeUrl"),
     officialUrl: formData.get("officialUrl"),
-    status: formData.get("status") || "APPROVED"
+    status: formData.get("status") || "APPROVED",
+    aliases: formData.get("aliases")
   });
 
   if (!parsed.success) {
@@ -32,7 +34,8 @@ export async function updatePerformerAction(performerId: string, formData: FormD
     groupId: parsed.data.groupId ?? null,
     youtubeUrl: parsed.data.youtubeUrl ?? null,
     officialUrl: parsed.data.officialUrl ?? null,
-    status: parsed.data.status as MasterDataStatus
+    status: parsed.data.status as MasterDataStatus,
+    aliases: normalizeNames(parsed.data.aliases)
   });
 
   revalidatePath("/admin/performers");

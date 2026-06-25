@@ -1,7 +1,8 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
+import { createHash } from "crypto";
 
-import { checkRateLimit } from "@/lib/rate-limit/memory";
+import { checkRateLimit } from "@/lib/rate-limit/persistent";
 
 type HeaderReader = {
   get(name: string): string | null;
@@ -18,16 +19,21 @@ function clientKey(headerReader: HeaderReader, scope: string) {
   const forwardedFor = headerReader.get("x-forwarded-for")?.split(",")[0]?.trim();
   const realIp = headerReader.get("x-real-ip")?.trim();
   const ip = forwardedFor || realIp || "local";
+  const userAgent = headerReader.get("user-agent")?.trim() || "unknown";
+  const salt = process.env.AUTH_SECRET || process.env.CAPTCHA_SECRET_KEY || "otoatsume-rate-limit";
+  const digest = createHash("sha256")
+    .update(`${salt}:${scope}:${ip}:${userAgent}`)
+    .digest("hex");
 
-  return `${scope}:${ip}`;
+  return `${scope}:${digest}`;
 }
 
-export function checkRouteRateLimit(
+export async function checkRouteRateLimit(
   request: Request,
   scope: string,
   options: { limit: number; windowMs: number }
 ) {
-  const result = checkRateLimit(clientKey(request.headers, scope), options);
+  const result = await checkRateLimit(clientKey(request.headers, scope), options);
 
   if (result.allowed) {
     return null;

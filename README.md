@@ -1,4 +1,4 @@
-# うたあつめ Ver.1.0.0
+# うたあつめ Ver.1.0.1
 
 VTuber、配信者、歌い手などの歌ってみた動画・歌枠・ライブ歌唱記録を登録・閲覧するデータベースサービスです。
 
@@ -31,7 +31,7 @@ pnpm prisma:seed
 pnpm dev
 ```
 
-`.env` の `ADMIN_ALLOWED_EMAILS` には管理者として許可する Google アカウントのメールアドレスをカンマ区切りで設定してください。
+`.env` の `ADMIN_ALLOWED_EMAILS` には管理者として許可する Google アカウントのメールアドレスをカンマ区切りで設定してください。`NEXTAUTH_URL` は NextAuth.js が OAuth callback URL を生成するために使うため、ローカルでは `http://localhost:3000` を設定します。
 
 管理画面は一般公開 UI からリンクせず、管理者が `/admin` を直接開くかブックマークからアクセスする前提です。
 
@@ -67,6 +67,10 @@ Cloud Run には Secret Manager 経由で以下を設定します。DB パスワ
 | `GOOGLE_CLIENT_SECRET` | Google OAuth client secret |
 | `CAPTCHA_SECRET_KEY` | CAPTCHA 検証用 secret |
 | `NEXT_PUBLIC_CAPTCHA_SITE_KEY` | CAPTCHA site key |
+
+CAPTCHA は Cloudflare Turnstile を使います。ローカル開発では `CAPTCHA_SECRET_KEY` / `NEXT_PUBLIC_CAPTCHA_SITE_KEY` が未設定でも投稿フォームの CAPTCHA は skip できます。本番では必ず両方を Secret Manager に設定してください。未設定の場合、本番の投稿・通報・活動者申請は保存されません。
+
+公開投稿系フォームのレート制限は Cloud SQL の `rate_limit_buckets` table に保存します。IP アドレスはそのまま保存せず、scope と user agent を含めて hash 化した key を保存します。
 
 Cloud Run runtime の `DATABASE_URL` は Cloud SQL connector を使う前提で、例として以下のような形式にします。
 
@@ -151,6 +155,8 @@ pnpm prisma:deploy
 
 GitHub Actions では Cloud SQL Auth Proxy を起動し、`MIGRATION_DATABASE_URL` を `DATABASE_URL` として渡して `prisma migrate deploy` を実行します。migration が失敗した場合、Cloud Run deploy は実行されません。
 
+本番データのバックアップ方針は [docs/production-backup.md](docs/production-backup.md) を参照してください。migration 前に Cloud SQL backup を作成する運用を推奨します。
+
 ## 主な画面
 
 - `/` トップページ
@@ -161,7 +167,18 @@ GitHub Actions では Cloud SQL Auth Proxy を起動し、`MIGRATION_DATABASE_UR
 - `/performers` 活動者一覧
 - `/songs` 楽曲一覧
 - `/performer-applications/new` 活動者申請
+
+管理者向け画面:
+
 - `/admin` 管理者トップ
+- `/admin/covers` カバー記録管理
+- `/admin/reports` 通報管理
+- `/admin/performer-applications` 活動者申請管理
+- `/admin/groups` 所属グループ管理
+- `/admin/performers` 活動者管理
+- `/admin/songs` 楽曲管理
+- `/admin/artists` アーティスト管理
+- `/admin/imports` 一括インポート
 
 ## API
 
@@ -199,6 +216,4 @@ GitHub Actions では Cloud SQL Auth Proxy を起動し、`MIGRATION_DATABASE_UR
 
 ## 残タスク
 
-- CAPTCHA provider の実接続
-- 永続型レート制限への置き換え
-- 管理画面での詳細編集フォーム拡充
+- Cloud SQL backup / restore の定期運用確認
