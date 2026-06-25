@@ -1,8 +1,5 @@
 import Link from "next/link";
 
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-
 const navItems = [
   { href: "/covers", label: "カバー記録" },
   { href: "/performers", label: "活動者" },
@@ -32,9 +29,6 @@ export function SiteHeader() {
               {item.label}
             </Link>
           ))}
-          <Link href="/admin" className={cn(buttonVariants({ size: "sm", variant: "outline" }))}>
-            管理
-          </Link>
         </nav>
       </div>
     </header>

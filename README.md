@@ -33,6 +33,8 @@ pnpm dev
 
 `.env` の `ADMIN_ALLOWED_EMAILS` には管理者として許可する Google アカウントのメールアドレスをカンマ区切りで設定してください。
 
+管理画面は一般公開 UI からリンクせず、管理者が `/admin` を直接開くかブックマークからアクセスする前提です。
+
 ## Cloud Run デプロイ
 
 このリポジトリには `main` branch への push を契機に、Docker image を Artifact Registry に push し、Prisma migration を適用してから Cloud Run に deploy する GitHub Actions workflow を含めています。
