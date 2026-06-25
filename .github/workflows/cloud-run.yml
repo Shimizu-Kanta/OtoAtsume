@@ -55,7 +55,14 @@ jobs:
       - name: Install dependencies for Prisma
         run: pnpm install --frozen-lockfile
 
+      - name: Generate Prisma Client
+        env:
+          DATABASE_URL: postgresql://user:password@localhost:5432/otoatsume?schema=public
+        run: pnpm prisma:generate
+
       - name: Typecheck
+        env:
+          DATABASE_URL: postgresql://user:password@localhost:5432/otoatsume?schema=public
         run: pnpm typecheck
 
       - name: Set image URI
