@@ -14,6 +14,10 @@ export const performerCreateSchema = z.object({
   status: z.enum(["PENDING", "APPROVED", "HIDDEN"]).default("APPROVED")
 });
 
+export const groupCreateSchema = z.object({
+  name: z.string().trim().min(1).max(200)
+});
+
 export const artistCreateSchema = z.object({
   name: z.string().trim().min(1).max(200)
 });

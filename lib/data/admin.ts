@@ -101,6 +101,49 @@ export async function listGroups() {
   });
 }
 
+export async function listAdminGroups() {
+  return db.group.findMany({
+    include: {
+      _count: {
+        select: {
+          performers: true,
+          performerApplications: true
+        }
+      }
+    },
+    orderBy: { name: "asc" }
+  });
+}
+
+export async function getAdminGroup(id: string) {
+  return db.group.findUnique({
+    where: { id },
+    include: {
+      _count: {
+        select: {
+          performers: true,
+          performerApplications: true
+        }
+      }
+    }
+  });
+}
+
+export async function createAdminGroup(name: string) {
+  return db.group.upsert({
+    where: { name },
+    create: { name },
+    update: {}
+  });
+}
+
+export async function updateAdminGroup(id: string, name: string) {
+  return db.group.update({
+    where: { id },
+    data: { name }
+  });
+}
+
 export async function listAdminPerformers() {
   return db.performer.findMany({
     include: { group: true, aliases: true },

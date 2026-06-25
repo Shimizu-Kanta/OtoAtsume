@@ -5,9 +5,11 @@ const adminNavItems = [
   { href: "/admin/covers", label: "カバー記録" },
   { href: "/admin/reports", label: "通報" },
   { href: "/admin/performer-applications", label: "活動者申請" },
+  { href: "/admin/groups", label: "所属グループ" },
   { href: "/admin/performers", label: "活動者" },
   { href: "/admin/songs", label: "楽曲" },
-  { href: "/admin/artists", label: "アーティスト" }
+  { href: "/admin/artists", label: "アーティスト" },
+  { href: "/admin/imports", label: "一括インポート" }
 ];
 
 export function AdminNav() {

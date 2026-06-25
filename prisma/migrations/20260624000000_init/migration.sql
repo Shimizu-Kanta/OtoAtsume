@@ -2,8 +2,6 @@ CREATE TYPE "AdminRole" AS ENUM ('ADMIN');
 CREATE TYPE "MasterDataStatus" AS ENUM ('PENDING', 'APPROVED', 'HIDDEN');
 CREATE TYPE "ContentStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECTED', 'HIDDEN');
 CREATE TYPE "CoverType" AS ENUM ('COVER_VIDEO', 'KARAOKE_STREAM', 'LIVE_EVENT', 'SHORT', 'OTHER');
-CREATE TYPE "SourceVisibility" AS ENUM ('PUBLIC', 'MEMBERS_ONLY', 'PAID_LIVE', 'PRIVATE', 'UNKNOWN');
-CREATE TYPE "SourcePublicity" AS ENUM ('PUBLICLY_AVAILABLE', 'NOT_PUBLIC', 'UNKNOWN');
 CREATE TYPE "ReportReason" AS ENUM ('WRONG_SONG', 'WRONG_PERFORMER', 'WRONG_DATE', 'BROKEN_URL', 'MEMBERS_ONLY_CONTENT', 'NON_PUBLIC_PAID_CONTENT', 'DUPLICATE', 'OTHER');
 CREATE TYPE "ReportStatus" AS ENUM ('PENDING', 'RESOLVED', 'REJECTED');
 CREATE TYPE "ApplicationStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECTED');
@@ -73,9 +71,6 @@ CREATE TABLE "covers" (
   "sourceUrl" TEXT NOT NULL,
   "sourceTitle" TEXT,
   "timestampSeconds" INTEGER,
-  "sourceVisibility" "SourceVisibility" NOT NULL DEFAULT 'PUBLIC',
-  "sourceIsPublic" "SourcePublicity" NOT NULL DEFAULT 'UNKNOWN',
-  "memo" TEXT,
   "status" "ContentStatus" NOT NULL DEFAULT 'APPROVED',
   "ipHash" TEXT,
   "userAgentHash" TEXT,
@@ -106,6 +101,7 @@ CREATE TABLE "performer_applications" (
   "id" TEXT NOT NULL,
   "name" TEXT NOT NULL,
   "url" TEXT NOT NULL,
+  "groupId" TEXT,
   "memo" TEXT,
   "status" "ApplicationStatus" NOT NULL DEFAULT 'PENDING',
   "ipHash" TEXT,
@@ -134,6 +130,7 @@ CREATE INDEX "cover_performers_performerId_idx" ON "cover_performers"("performer
 CREATE INDEX "reports_coverId_idx" ON "reports"("coverId");
 CREATE INDEX "reports_status_idx" ON "reports"("status");
 CREATE INDEX "performer_applications_name_idx" ON "performer_applications"("name");
+CREATE INDEX "performer_applications_groupId_idx" ON "performer_applications"("groupId");
 CREATE INDEX "performer_applications_status_idx" ON "performer_applications"("status");
 
 ALTER TABLE "performers" ADD CONSTRAINT "performers_groupId_fkey" FOREIGN KEY ("groupId") REFERENCES "groups"("id") ON DELETE SET NULL ON UPDATE CASCADE;
@@ -144,3 +141,4 @@ ALTER TABLE "covers" ADD CONSTRAINT "covers_songId_fkey" FOREIGN KEY ("songId") 
 ALTER TABLE "cover_performers" ADD CONSTRAINT "cover_performers_coverId_fkey" FOREIGN KEY ("coverId") REFERENCES "covers"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE "cover_performers" ADD CONSTRAINT "cover_performers_performerId_fkey" FOREIGN KEY ("performerId") REFERENCES "performers"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE "reports" ADD CONSTRAINT "reports_coverId_fkey" FOREIGN KEY ("coverId") REFERENCES "covers"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "performer_applications" ADD CONSTRAINT "performer_applications_groupId_fkey" FOREIGN KEY ("groupId") REFERENCES "groups"("id") ON DELETE SET NULL ON UPDATE CASCADE;
