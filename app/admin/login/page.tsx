@@ -2,6 +2,8 @@ import { LoginButtons } from "@/components/admin/login-buttons";
 import { PageHeading } from "@/components/page-heading";
 import { getAllowedAdminEmails } from "@/lib/auth/allowed";
 
+export const dynamic = "force-dynamic";
+
 export default function AdminLoginPage() {
   const configured = getAllowedAdminEmails().length > 0;
   const googleConfigured = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
