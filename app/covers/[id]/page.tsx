@@ -7,6 +7,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { coverTypeLabel } from "@/lib/constants";
 import { getCoverById } from "@/lib/data/covers";
 import { cn, formatDate, formatSeconds, withTimestamp } from "@/lib/utils";
+import { getYouTubeThumbnailUrl } from "@/lib/youtube";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +29,7 @@ export default async function CoverDetailPage({
   const performers = cover.performers.map(({ performer }) => performer);
   const created = query.created === "1";
   const reported = query.reported === "1";
+  const thumbnailUrl = getYouTubeThumbnailUrl(cover.sourceUrl);
 
   return (
     <div className="space-y-6">
@@ -56,6 +58,20 @@ export default async function CoverDetailPage({
       ) : null}
 
       <section className="rounded-md border bg-card">
+        {thumbnailUrl ? (
+          <a
+            href={withTimestamp(cover.sourceUrl, cover.timestampSeconds)}
+            target="_blank"
+            rel="noreferrer"
+            className="block border-b bg-muted"
+          >
+            <img
+              src={thumbnailUrl}
+              alt={`${cover.song.title} のサムネイル`}
+              className="aspect-video max-h-[420px] w-full object-cover"
+            />
+          </a>
+        ) : null}
         <dl className="divide-y">
           <div className="grid gap-1 p-4 md:grid-cols-4">
             <dt className="text-sm text-muted-foreground">活動者</dt>

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { FilePlus2, Search } from "lucide-react";
 
-import { CoverList } from "@/components/covers/cover-list";
+import { CoverResults } from "@/components/covers/cover-results";
 import { PageHeading } from "@/components/page-heading";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +26,8 @@ export default async function CoversPage({
     dateTo: getSearchParam(params, "dateTo"),
     coverType: getSearchParam(params, "coverType")
   };
+  const view = getSearchParam(params, "view");
+  const safeView = view === "card" || view === "list" ? view : undefined;
   const covers = await getApprovedCovers(search);
 
   return (
@@ -42,6 +44,7 @@ export default async function CoversPage({
       />
 
       <form action="/covers" className="rounded-md border bg-card p-4">
+        {safeView ? <input type="hidden" name="view" value={safeView} /> : null}
         <div className="form-grid">
           <Input name="performer" defaultValue={search.performer} placeholder="活動者名・別名" />
           <Input name="song" defaultValue={search.song} placeholder="楽曲名" />
@@ -68,7 +71,7 @@ export default async function CoversPage({
         </div>
       </form>
 
-      <CoverList covers={covers} />
+      <CoverResults covers={covers} initialViewMode={view} />
     </div>
   );
 }
