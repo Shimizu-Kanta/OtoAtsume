@@ -7,28 +7,36 @@ import { checkServerActionRateLimit, rateLimitPresets } from "@/lib/rate-limit/h
 import { verifyCaptchaToken } from "@/lib/security/captcha";
 import { reportCreateSchema } from "@/lib/validations/report";
 
-export async function createReportAction(coverId: string, formData: FormData) {
-  const rateLimit = await checkServerActionRateLimit(
-    "action:reports:create",
-    rateLimitPresets.reportCreate
-  );
+function errorRedirect(coverId: string, message: string): never {
+  redirect(`/covers/${coverId}/report?error=${encodeURIComponent(message)}`);
+}
 
-  if (!rateLimit.allowed) {
-    redirect(
-      `/covers/${coverId}/report?error=${encodeURIComponent(
-        "短時間に通報が多すぎます。少し待ってから再試行してください。"
-      )}`
+export async function createReportAction(coverId: string, formData: FormData) {
+  let rateLimit;
+  try {
+    rateLimit = await checkServerActionRateLimit(
+      "action:reports:create",
+      rateLimitPresets.reportCreate
     );
+  } catch (error) {
+    console.error("createReportAction rate limit failed", error);
+    errorRedirect(coverId, "送信に失敗しました。時間をおいて再試行してください。");
   }
 
-  const captcha = await verifyCaptchaToken(String(formData.get("captchaToken") ?? ""));
+  if (!rateLimit.allowed) {
+    errorRedirect(coverId, "短時間に通報が多すぎます。少し待ってから再試行してください。");
+  }
+
+  let captcha;
+  try {
+    captcha = await verifyCaptchaToken(String(formData.get("captchaToken") ?? ""));
+  } catch (error) {
+    console.error("createReportAction captcha failed", error);
+    errorRedirect(coverId, "送信に失敗しました。時間をおいて再試行してください。");
+  }
 
   if (!captcha.ok) {
-    redirect(
-      `/covers/${coverId}/report?error=${encodeURIComponent(
-        captcha.message ?? "CAPTCHA認証に失敗しました。"
-      )}`
-    );
+    errorRedirect(coverId, captcha.message ?? "CAPTCHA認証に失敗しました。");
   }
 
   const parsed = reportCreateSchema.safeParse({
@@ -37,13 +45,15 @@ export async function createReportAction(coverId: string, formData: FormData) {
   });
 
   if (!parsed.success) {
-    redirect(
-      `/covers/${coverId}/report?error=${encodeURIComponent(
-        parsed.error.issues[0]?.message ?? "入力内容を確認してください。"
-      )}`
-    );
+    errorRedirect(coverId, parsed.error.issues[0]?.message ?? "入力内容を確認してください。");
   }
 
-  await createReport(coverId, parsed.data);
+  try {
+    await createReport(coverId, parsed.data);
+  } catch (error) {
+    console.error("createReportAction create failed", error);
+    errorRedirect(coverId, "送信に失敗しました。時間をおいて再試行してください。");
+  }
+
   redirect(`/covers/${coverId}?reported=1`);
 }

@@ -12,16 +12,28 @@ function errorRedirect(message: string): never {
 }
 
 export async function createCoverAction(formData: FormData) {
-  const rateLimit = await checkServerActionRateLimit(
-    "action:covers:create",
-    rateLimitPresets.coverCreate
-  );
+  let rateLimit;
+  try {
+    rateLimit = await checkServerActionRateLimit(
+      "action:covers:create",
+      rateLimitPresets.coverCreate
+    );
+  } catch (error) {
+    console.error("createCoverAction rate limit failed", error);
+    errorRedirect("登録に失敗しました。時間をおいて再試行してください。");
+  }
 
   if (!rateLimit.allowed) {
     errorRedirect("短時間に登録が多すぎます。少し待ってから再試行してください。");
   }
 
-  const captcha = await verifyCaptchaToken(String(formData.get("captchaToken") ?? ""));
+  let captcha;
+  try {
+    captcha = await verifyCaptchaToken(String(formData.get("captchaToken") ?? ""));
+  } catch (error) {
+    console.error("createCoverAction captcha failed", error);
+    errorRedirect("登録に失敗しました。時間をおいて再試行してください。");
+  }
 
   if (!captcha.ok) {
     errorRedirect(captcha.message ?? "CAPTCHA認証に失敗しました。");
@@ -43,6 +55,13 @@ export async function createCoverAction(formData: FormData) {
     errorRedirect(parsed.error.issues[0]?.message ?? "入力内容を確認してください。");
   }
 
-  const cover = await createCover(parsed.data);
+  let cover;
+  try {
+    cover = await createCover(parsed.data);
+  } catch (error) {
+    console.error("createCoverAction create failed", error);
+    errorRedirect("登録に失敗しました。時間をおいて再試行してください。");
+  }
+
   redirect(`/covers/${cover.id}?created=1`);
 }

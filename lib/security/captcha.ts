@@ -6,8 +6,13 @@ type CaptchaVerifyResult = {
 
 const turnstileVerifyUrl = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 
+function optionalEnv(value: string | undefined) {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : undefined;
+}
+
 export function getCaptchaSiteKey() {
-  return process.env.NEXT_PUBLIC_CAPTCHA_SITE_KEY;
+  return optionalEnv(process.env.NEXT_PUBLIC_CAPTCHA_SITE_KEY);
 }
 
 export function isCaptchaRequired() {
@@ -18,7 +23,7 @@ export async function verifyCaptchaToken(
   token: string | null | undefined,
   remoteIp?: string | null
 ): Promise<CaptchaVerifyResult> {
-  const secret = process.env.CAPTCHA_SECRET_KEY;
+  const secret = optionalEnv(process.env.CAPTCHA_SECRET_KEY);
 
   if (!secret) {
     if (isCaptchaRequired()) {
@@ -32,7 +37,9 @@ export async function verifyCaptchaToken(
     return { ok: true, skipped: true };
   }
 
-  if (!token) {
+  const responseToken = token?.trim();
+
+  if (!responseToken) {
     return {
       ok: false,
       skipped: false,
@@ -42,7 +49,7 @@ export async function verifyCaptchaToken(
 
   const body = new URLSearchParams({
     secret,
-    response: token
+    response: responseToken
   });
 
   if (remoteIp) {

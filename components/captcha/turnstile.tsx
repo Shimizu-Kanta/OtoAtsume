@@ -20,6 +20,8 @@ declare global {
 }
 
 const scriptId = "cloudflare-turnstile-script";
+const captchaLoadError = "CAPTCHA の読み込みに失敗しました。ページを再読み込みしてください。";
+const captchaIncompleteMessage = "CAPTCHA を完了してから送信してください。";
 
 export function TurnstileCaptcha({
   siteKey,
@@ -31,25 +33,68 @@ export function TurnstileCaptcha({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const widgetIdRef = useRef<string | null>(null);
   const [token, setToken] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const normalizedSiteKey = siteKey?.trim() || undefined;
 
   useEffect(() => {
-    if (!siteKey || !containerRef.current) {
+    if (!normalizedSiteKey || !containerRef.current) {
+      setToken("");
       return;
     }
 
     let mounted = true;
 
-    function renderWidget() {
-      if (!mounted || !siteKey || !containerRef.current || !window.turnstile || widgetIdRef.current) {
+    function removeWidget() {
+      if (!widgetIdRef.current || !window.turnstile) {
         return;
       }
 
-      widgetIdRef.current = window.turnstile.render(containerRef.current, {
-        sitekey: siteKey,
-        callback: (value) => setToken(value),
-        "expired-callback": () => setToken(""),
-        "error-callback": () => setToken("")
-      });
+      try {
+        window.turnstile.remove(widgetIdRef.current);
+      } catch (removeError) {
+        console.error("Turnstile remove failed", removeError);
+      } finally {
+        widgetIdRef.current = null;
+      }
+    }
+
+    function renderWidget() {
+      if (
+        !mounted ||
+        !normalizedSiteKey ||
+        !containerRef.current ||
+        !window.turnstile ||
+        widgetIdRef.current
+      ) {
+        return;
+      }
+
+      try {
+        setError(null);
+        widgetIdRef.current = window.turnstile.render(containerRef.current, {
+          sitekey: normalizedSiteKey,
+          callback: (value) => {
+            setToken(value);
+            setError(null);
+          },
+          "expired-callback": () => setToken(""),
+          "error-callback": () => setToken("")
+        });
+      } catch (renderError) {
+        console.error("Turnstile render failed", renderError);
+        setToken("");
+        setError(captchaLoadError);
+      }
+    }
+
+    function handleScriptError() {
+      if (!mounted) {
+        return;
+      }
+
+      console.error("Turnstile script failed to load");
+      setToken("");
+      setError(captchaLoadError);
     }
 
     if (window.turnstile) {
@@ -66,39 +111,44 @@ export function TurnstileCaptcha({
         document.body.appendChild(script);
       }
 
+      script.addEventListener("error", handleScriptError);
       script.addEventListener("load", renderWidget);
       return () => {
         mounted = false;
+        script.removeEventListener("error", handleScriptError);
         script.removeEventListener("load", renderWidget);
-        if (widgetIdRef.current && window.turnstile) {
-          window.turnstile.remove(widgetIdRef.current);
-          widgetIdRef.current = null;
-        }
+        removeWidget();
       };
     }
 
     return () => {
       mounted = false;
-      if (widgetIdRef.current && window.turnstile) {
-        window.turnstile.remove(widgetIdRef.current);
-        widgetIdRef.current = null;
-      }
+      removeWidget();
     };
-  }, [siteKey]);
+  }, [normalizedSiteKey]);
 
-  if (!siteKey) {
-    return required ? (
-      <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm">
-        CAPTCHA が未設定のため、このフォームは送信できません。管理者に連絡してください。
+  if (!normalizedSiteKey) {
+    return (
+      <>
         <input type="hidden" name="captchaToken" value="" />
-      </div>
-    ) : null;
+        {required ? (
+          <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm">
+            CAPTCHA が未設定のため、このフォームは送信できません。管理者に連絡してください。
+          </div>
+        ) : null}
+      </>
+    );
   }
 
   return (
     <div className="space-y-2">
       <input type="hidden" name="captchaToken" value={token} readOnly />
       <div ref={containerRef} />
+      {error ? (
+        <p className="text-sm text-destructive">{error}</p>
+      ) : required && !token ? (
+        <p className="text-sm text-muted-foreground">{captchaIncompleteMessage}</p>
+      ) : null}
       <p className="text-xs text-muted-foreground">Cloudflare Turnstile で送信元を確認します。</p>
     </div>
   );
