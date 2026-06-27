@@ -13,14 +13,35 @@ import { createPerformerAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminPerformersPage() {
+export default async function AdminPerformersPage({
+  searchParams
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   await requireAdminPage();
-  const [performers, groups] = await Promise.all([listAdminPerformers(), listGroups()]);
+  const [performers, groups, query] = await Promise.all([
+    listAdminPerformers(),
+    listGroups(),
+    searchParams
+  ]);
 
+  const deleted = typeof query.deleted === "string" ? query.deleted : undefined;
+  const error = typeof query.error === "string" ? query.error : undefined;
   return (
     <div className="space-y-6">
       <AdminNav />
       <PageHeading title="活動者管理" description="活動者マスタを追加・確認します。" />
+        {error ? (
+          <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm">
+            {error}
+          </div>
+        ) : null}
+
+        {deleted ? (
+          <div className="rounded-md border border-secondary/40 bg-secondary/10 p-4 text-sm">
+            活動者「{deleted}」を削除しました。
+          </div>
+        ) : null}
 
       <form action={createPerformerAction} className="rounded-md border bg-card p-5">
         <div className="form-grid">

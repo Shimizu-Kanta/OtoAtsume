@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { requireAdminPage } from "@/lib/auth/admin";
 import { getAdminPerformer, listGroups } from "@/lib/data/admin";
 import { formatDateInput, getSearchParam } from "@/lib/utils";
-import { updatePerformerAction } from "./actions";
+import { deletePerformerAction, updatePerformerAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +32,7 @@ export default async function AdminPerformerEditPage({
   }
 
   const action = updatePerformerAction.bind(null, performer.id);
+  const deleteAction = deletePerformerAction.bind(null, performer.id);
   const error = getSearchParam(query, "error");
   const updated = getSearchParam(query, "updated") === "1";
   const aliases = performer.aliases.map((alias) => alias.alias).join("\n");
@@ -141,6 +142,46 @@ export default async function AdminPerformerEditPage({
           </Link>
         </div>
       </form>
+      <section className="rounded-md border border-destructive/40 bg-destructive/10 p-5">
+        <h2 className="text-lg font-semibold">危険操作</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          この活動者を削除します。削除すると、別名・タグ付けも削除されます。
+          カバー記録に紐づいている場合は削除できません。
+        </p>
+        <p className="mt-2 text-sm">
+          紐づくカバー記録:{" "}
+          <span className="font-semibold">{performer._count.covers}</span> 件
+        </p>
+
+        {performer._count.covers > 0 ? (
+          <p className="mt-3 text-sm text-destructive">
+            この活動者はカバー記録に紐づいているため削除できません。先にカバー記録側の紐づきを修正してください。
+          </p>
+        ) : null}
+
+        <form action={deleteAction} className="mt-4 space-y-3">
+          <div className="space-y-2">
+            <Label htmlFor="confirmName">
+              削除するには活動者名「{performer.name}」を入力してください
+            </Label>
+            <Input
+              id="confirmName"
+              name="confirmName"
+              placeholder={performer.name}
+              disabled={performer._count.covers > 0}
+              required
+            />
+          </div>
+
+          <Button
+            type="submit"
+            variant="destructive"
+            disabled={performer._count.covers > 0}
+          >
+            活動者を削除する
+          </Button>
+        </form>
+      </section>
     </div>
   );
 }

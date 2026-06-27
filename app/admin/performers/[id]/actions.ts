@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { requireAdminPage } from "@/lib/auth/admin";
-import { updateAdminPerformer } from "@/lib/data/admin";
+import { deleteAdminPerformerIfUnused, updateAdminPerformer } from "@/lib/data/admin";
 import { normalizeNames } from "@/lib/utils";
 import { normalizeTagNames } from "@/lib/validations/performer-profile";
 import { performerUpdateSchema } from "@/lib/validations/master-data";
@@ -51,4 +51,43 @@ export async function updatePerformerAction(performerId: string, formData: FormD
   revalidatePath(`/admin/performers/${performerId}`);
   revalidatePath(`/performers/${performerId}`);
   redirect(`/admin/performers/${performerId}?updated=1`);
+}
+
+export async function deletePerformerAction(performerId: string, formData: FormData) {
+  await requireAdminPage();
+
+  const confirmName = String(formData.get("confirmName") ?? "");
+  let redirectTo = "/admin/performers";
+
+  try {
+    const result = await deleteAdminPerformerIfUnused(performerId, confirmName);
+
+    if (result.ok) {
+      revalidatePath("/admin/performers");
+      revalidatePath("/admin/tags");
+      revalidatePath("/performers");
+      revalidatePath("/covers");
+      revalidatePath(`/admin/performers/${performerId}`);
+      revalidatePath(`/performers/${performerId}`);
+
+      redirectTo = `/admin/performers?deleted=${encodeURIComponent(result.name)}`;
+    } else if (result.reason === "notFound") {
+      redirectTo = `/admin/performers?error=${encodeURIComponent("活動者が見つかりません。")}`;
+    } else if (result.reason === "nameMismatch") {
+      redirectTo = `/admin/performers/${performerId}?error=${encodeURIComponent(
+        `確認用の活動者名が一致しません。「${result.name}」と入力してください。`
+      )}`;
+    } else if (result.reason === "hasCovers") {
+      redirectTo = `/admin/performers/${performerId}?error=${encodeURIComponent(
+        `この活動者は ${result.coverCount} 件のカバー記録に紐づいているため削除できません。先に紐づきを修正してください。`
+      )}`;
+    }
+  } catch (error) {
+    console.error("deletePerformerAction failed", error);
+    redirectTo = `/admin/performers/${performerId}?error=${encodeURIComponent(
+      "活動者の削除に失敗しました。時間をおいて再試行してください。"
+    )}`;
+  }
+
+  redirect(redirectTo);
 }

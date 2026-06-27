@@ -177,6 +177,11 @@ export async function getAdminPerformer(id: string) {
       tags: {
         include: { tag: true },
         orderBy: { tag: { name: "asc" } }
+      },
+      _count: {
+        select: {
+          covers: true
+        }
       }
     }
   });
@@ -263,6 +268,56 @@ export async function updateAdminPerformer(
         }
       }
     });
+  });
+}
+
+export async function deleteAdminPerformerIfUnused(id: string, confirmName: string) {
+  return db.$transaction(async (client) => {
+    const performer = await client.performer.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        name: true,
+        _count: {
+          select: {
+            covers: true
+          }
+        }
+      }
+    });
+
+    if (!performer) {
+      return {
+        ok: false as const,
+        reason: "notFound" as const
+      };
+    }
+
+    if (performer.name !== confirmName.trim()) {
+      return {
+        ok: false as const,
+        reason: "nameMismatch" as const,
+        name: performer.name
+      };
+    }
+
+    if (performer._count.covers > 0) {
+      return {
+        ok: false as const,
+        reason: "hasCovers" as const,
+        name: performer.name,
+        coverCount: performer._count.covers
+      };
+    }
+
+    await client.performer.delete({
+      where: { id }
+    });
+
+    return {
+      ok: true as const,
+      name: performer.name
+    };
   });
 }
 
