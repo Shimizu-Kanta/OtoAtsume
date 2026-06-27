@@ -116,7 +116,11 @@ export async function listAdminGroups() {
       _count: {
         select: {
           performers: true,
-          performerApplications: true
+          performerApplications: {
+            where: {
+              status: ApplicationStatus.PENDING
+            }
+          }
         }
       }
     },
@@ -128,16 +132,31 @@ export async function getAdminGroup(id: string) {
   return db.group.findUnique({
     where: { id },
     include: {
+      performers: {
+        orderBy: { name: "asc" },
+        select: {
+          id: true,
+          name: true,
+          status: true,
+          youtubeUrl: true,
+          officialUrl: true,
+          colorCode: true,
+          debutDate: true
+        }
+      },
       _count: {
         select: {
           performers: true,
-          performerApplications: true
+          performerApplications: {
+            where: {
+              status: ApplicationStatus.PENDING
+            }
+          }
         }
       }
     }
   });
 }
-
 export async function createAdminGroup(name: string) {
   return db.group.upsert({
     where: { name },
@@ -153,8 +172,66 @@ export async function updateAdminGroup(id: string, name: string) {
   });
 }
 
-export async function listAdminPerformers() {
+export async function listAdminPerformers(query?: string) {
+  const keyword = query?.trim();
+
   return db.performer.findMany({
+    where: keyword
+      ? {
+          OR: [
+            {
+              name: {
+                contains: keyword,
+                mode: Prisma.QueryMode.insensitive
+              }
+            },
+            {
+              youtubeUrl: {
+                contains: keyword,
+                mode: Prisma.QueryMode.insensitive
+              }
+            },
+            {
+              officialUrl: {
+                contains: keyword,
+                mode: Prisma.QueryMode.insensitive
+              }
+            },
+            {
+              group: {
+                is: {
+                  name: {
+                    contains: keyword,
+                    mode: Prisma.QueryMode.insensitive
+                  }
+                }
+              }
+            },
+            {
+              aliases: {
+                some: {
+                  alias: {
+                    contains: keyword,
+                    mode: Prisma.QueryMode.insensitive
+                  }
+                }
+              }
+            },
+            {
+              tags: {
+                some: {
+                  tag: {
+                    name: {
+                      contains: keyword,
+                      mode: Prisma.QueryMode.insensitive
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      : undefined,
     include: {
       group: true,
       aliases: true,

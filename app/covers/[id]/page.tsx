@@ -30,6 +30,8 @@ export default async function CoverDetailPage({
   const created = query.created === "1";
   const reported = query.reported === "1";
   const thumbnailUrl = getYouTubeThumbnailUrl(cover.sourceUrl);
+  const sourceTitle = cover.sourceTitle?.trim();
+  const hasTimestamp = cover.timestampSeconds != null;
 
   return (
     <div className="space-y-6">
@@ -90,16 +92,19 @@ export default async function CoverDetailPage({
               </div>
             </dd>
           </div>
+
           <div className="grid gap-1 p-4 md:grid-cols-4">
             <dt className="text-sm text-muted-foreground">歌唱日</dt>
             <dd className="md:col-span-3">{formatDate(cover.performedAt)}</dd>
           </div>
+
           <div className="grid gap-1 p-4 md:grid-cols-4">
             <dt className="text-sm text-muted-foreground">歌唱種別</dt>
             <dd className="md:col-span-3">
               <Badge variant="muted">{coverTypeLabel(cover.coverType)}</Badge>
             </dd>
           </div>
+
           <div className="grid gap-1 p-4 md:grid-cols-4">
             <dt className="text-sm text-muted-foreground">情報元URL</dt>
             <dd className="min-w-0 md:col-span-3">
@@ -113,18 +118,20 @@ export default async function CoverDetailPage({
               </a>
             </dd>
           </div>
-          <div className="grid gap-1 p-4 md:grid-cols-4">
-            <dt className="text-sm text-muted-foreground">配信・動画・ライブ名</dt>
-            <dd className="md:col-span-3">{cover.sourceTitle ?? "-"}</dd>
-          </div>
-          <div className="grid gap-1 p-4 md:grid-cols-4">
-            <dt className="text-sm text-muted-foreground">タイムスタンプ</dt>
-            <dd className="md:col-span-3">{formatSeconds(cover.timestampSeconds)}</dd>
-          </div>
-          <div className="grid gap-1 p-4 md:grid-cols-4">
-            <dt className="text-sm text-muted-foreground">登録日</dt>
-            <dd className="md:col-span-3">{formatDate(cover.createdAt)}</dd>
-          </div>
+
+          {sourceTitle ? (
+            <div className="grid gap-1 p-4 md:grid-cols-4">
+              <dt className="text-sm text-muted-foreground">配信・動画・ライブ名</dt>
+              <dd className="md:col-span-3">{sourceTitle}</dd>
+            </div>
+          ) : null}
+
+          {hasTimestamp ? (
+            <div className="grid gap-1 p-4 md:grid-cols-4">
+              <dt className="text-sm text-muted-foreground">タイムスタンプ</dt>
+              <dd className="md:col-span-3">{formatSeconds(cover.timestampSeconds)}</dd>
+            </div>
+          ) : null}
         </dl>
       </section>
     </div>

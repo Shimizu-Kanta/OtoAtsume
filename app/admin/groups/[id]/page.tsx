@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { AdminNav } from "@/components/admin/admin-nav";
 import { PageHeading } from "@/components/page-heading";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -37,7 +38,7 @@ export default async function AdminGroupEditPage({
       <AdminNav />
       <PageHeading
         title="所属グループ編集"
-        description={`活動者 ${group._count.performers} 件 / 申請 ${group._count.performerApplications} 件が紐づいています。`}
+        description={`活動者 ${group._count.performers} 件 / 未対応申請 ${group._count.performerApplications} 件が紐づいています。`}
       />
 
       {error ? (
@@ -63,6 +64,81 @@ export default async function AdminGroupEditPage({
           </Link>
         </div>
       </form>
+      <section className="rounded-md border bg-card">
+        <div className="border-b p-4">
+          <h2 className="text-lg font-semibold">所属活動者</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            このグループに所属している活動者を確認できます。
+          </p>
+        </div>
+
+        {group.performers.length > 0 ? (
+          <div className="divide-y">
+            {group.performers.map((performer) => (
+              <div key={performer.id} className="grid gap-3 p-4 sm:grid-cols-[1fr_auto] sm:items-center">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Link href={`/admin/performers/${performer.id}`} className="font-medium text-primary underline">
+                      {performer.name}
+                    </Link>
+                    <Badge variant="outline">{performer.status}</Badge>
+                    {performer.colorCode ? (
+                      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                        <span
+                          className="size-3 rounded-sm border"
+                          style={{ backgroundColor: performer.colorCode }}
+                        />
+                        {performer.colorCode}
+                      </span>
+                    ) : null}
+                  </div>
+
+                  {performer.debutDate ? (
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      デビュー日: {performer.debutDate.toISOString().slice(0, 10)}
+                    </p>
+                  ) : null}
+
+                  {performer.youtubeUrl ? (
+                    <a
+                      href={performer.youtubeUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-1 block truncate text-sm text-primary underline"
+                    >
+                      {performer.youtubeUrl}
+                    </a>
+                  ) : null}
+
+                  {!performer.youtubeUrl && performer.officialUrl ? (
+                    <a
+                      href={performer.officialUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-1 block truncate text-sm text-primary underline"
+                    >
+                      {performer.officialUrl}
+                    </a>
+                  ) : null}
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <Link href={`/admin/performers/${performer.id}`} className="rounded-md border px-3 py-2 text-sm">
+                    編集
+                  </Link>
+                  <Link href={`/performers/${performer.id}`} className="rounded-md border px-3 py-2 text-sm">
+                    公開画面
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="p-4 text-sm text-muted-foreground">
+            このグループに所属している活動者はいません。
+          </p>
+        )}
+      </section>
     </div>
   );
 }

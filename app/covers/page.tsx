@@ -5,6 +5,7 @@ import { CoverResults } from "@/components/covers/cover-results";
 import { PageHeading } from "@/components/page-heading";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { coverTypeOptions } from "@/lib/constants";
 import { getApprovedCovers } from "@/lib/data/covers";
@@ -57,8 +58,26 @@ export default async function CoversPage({
               </option>
             ))}
           </Select>
-          <Input name="dateFrom" type="date" defaultValue={search.dateFrom} />
-          <Input name="dateTo" type="date" defaultValue={search.dateTo} />
+
+          <div className="space-y-2">
+            <Label htmlFor="dateFrom">歌唱日（開始）</Label>
+            <Input
+              id="dateFrom"
+              name="dateFrom"
+              type="date"
+              defaultValue={search.dateFrom}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="dateTo">歌唱日（終了）</Label>
+            <Input
+              id="dateTo"
+              name="dateTo"
+              type="date"
+              defaultValue={search.dateTo}
+            />
+          </div>
         </div>
         <div className="mt-4 flex flex-wrap gap-2">
           <button type="submit" className={cn(buttonVariants())}>
