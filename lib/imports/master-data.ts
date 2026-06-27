@@ -4,6 +4,7 @@ import { MasterDataStatus, Prisma, type PrismaClient } from "@prisma/client";
 import { z } from "zod";
 
 import { db } from "@/lib/db";
+import { addPerformerTags } from "@/lib/data/tags";
 import {
   importFormats,
   importTargets,
@@ -16,6 +17,7 @@ import {
   type ImportSummary,
   type ImportTarget
 } from "@/lib/imports/types";
+import { colorCodeSchema, debutDateSchema } from "@/lib/validations/performer-profile";
 
 type RawImportRow = {
   rowNumber: number;
@@ -28,6 +30,9 @@ type PerformerImportRow = {
   groupName?: string;
   youtubeUrl?: string;
   officialUrl?: string;
+  colorCode?: string;
+  debutDate?: Date;
+  tags: string[];
   aliases: string[];
   status: MasterDataStatus;
 };
@@ -97,6 +102,9 @@ const performerSchema = z.object({
   groupName: optionalTextSchema,
   youtubeUrl: optionalUrlSchema,
   officialUrl: optionalUrlSchema,
+  colorCode: colorCodeSchema,
+  debutDate: debutDateSchema,
+  tags: z.array(z.string().max(80, "タグ名は80文字以内で入力してください。")).default([]),
   aliases: z.array(textSchema).default([]),
   status: statusSchema
 });
@@ -437,12 +445,16 @@ function normalizePerformerRow(
   format: ImportFormat
 ): { row: PerformerImportRow } | { error: ImportRowPreview } {
   const aliasesValue = readValue(raw.value, ["aliases", "alias"]);
+  const tagsValue = readValue(raw.value, ["tags", "tagNames"]);
   const parsed = performerSchema.safeParse({
     rowNumber: raw.rowNumber,
     name: readValue(raw.value, ["name"]),
     groupName: readValue(raw.value, ["group", "groupName"]),
     youtubeUrl: readValue(raw.value, ["youtubeUrl", "youTubeUrl", "youtubeURL", "youtube_url"]),
     officialUrl: readValue(raw.value, ["officialUrl", "officialURL", "official_url"]),
+    colorCode: readValue(raw.value, ["colorCode", "color", "color_code"]),
+    debutDate: readValue(raw.value, ["debutDate", "debut_date"]),
+    tags: parseStringList(tagsValue, format),
     aliases: parseStringList(aliasesValue, format),
     status: readValue(raw.value, ["status"])
   });
@@ -454,6 +466,7 @@ function normalizePerformerRow(
   return {
     row: {
       ...parsed.data,
+      tags: uniqueStrings(parsed.data.tags),
       aliases: uniqueStrings(parsed.data.aliases)
     }
   };
@@ -603,6 +616,12 @@ async function executePerformerImport(
     if (row.officialUrl) {
       data.officialUrl = row.officialUrl;
     }
+    if (row.colorCode) {
+      data.colorCode = row.colorCode;
+    }
+    if (row.debutDate) {
+      data.debutDate = row.debutDate;
+    }
 
     const performer =
       existing ??
@@ -612,6 +631,8 @@ async function executePerformerImport(
           groupId: group?.id,
           youtubeUrl: row.youtubeUrl,
           officialUrl: row.officialUrl,
+          colorCode: row.colorCode,
+          debutDate: row.debutDate,
           status: row.status
         }
       }));
@@ -627,6 +648,7 @@ async function executePerformerImport(
     }
 
     await createAliases(client, performer.id, row.aliases);
+    await addPerformerTags(client, performer.id, row.tags);
     result.names.push(row.name);
   }
 

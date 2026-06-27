@@ -5,7 +5,7 @@ import { PageHeading } from "@/components/page-heading";
 import { Badge } from "@/components/ui/badge";
 import { coverTypeLabel } from "@/lib/constants";
 import { getPerformerById } from "@/lib/data/performers";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatDateInput } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +26,44 @@ export default async function PerformerDetailPage({ params }: { params: Promise<
 
       <section className="rounded-md border bg-card">
         <dl className="divide-y">
+          <div className="grid gap-1 p-4 md:grid-cols-4">
+            <dt className="text-sm text-muted-foreground">カラー</dt>
+            <dd className="md:col-span-3">
+              {performer.colorCode ? (
+                <span className="inline-flex items-center gap-2">
+                  <span
+                    className="size-4 rounded-sm border"
+                    style={{ backgroundColor: performer.colorCode }}
+                  />
+                  {performer.colorCode}
+                </span>
+              ) : (
+                "-"
+              )}
+            </dd>
+          </div>
+          <div className="grid gap-1 p-4 md:grid-cols-4">
+            <dt className="text-sm text-muted-foreground">デビュー日</dt>
+            <dd className="md:col-span-3">
+              {performer.debutDate ? formatDateInput(performer.debutDate) : "-"}
+            </dd>
+          </div>
+          <div className="grid gap-1 p-4 md:grid-cols-4">
+            <dt className="text-sm text-muted-foreground">タグ</dt>
+            <dd className="md:col-span-3">
+              {performer.tags.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {performer.tags.map(({ tag }) => (
+                    <Badge key={tag.id} variant="muted">
+                      {tag.name}
+                    </Badge>
+                  ))}
+                </div>
+              ) : (
+                "-"
+              )}
+            </dd>
+          </div>
           <div className="grid gap-1 p-4 md:grid-cols-4">
             <dt className="text-sm text-muted-foreground">YouTube URL</dt>
             <dd className="min-w-0 md:col-span-3">

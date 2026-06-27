@@ -33,14 +33,18 @@ model Performer {
   group       Group?           @relation(fields: [groupId], references: [id])
   youtubeUrl  String?
   officialUrl String?
+  colorCode   String?
+  debutDate   DateTime?        @db.Date
   status      MasterDataStatus @default(APPROVED)
   aliases     PerformerAlias[]
+  tags        PerformerTag[]
   covers      CoverPerformer[]
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
 
   @@index([name])
   @@index([groupId])
+  @@index([debutDate])
   @@map("performers")
 }
 
@@ -53,6 +57,29 @@ model PerformerAlias {
   @@unique([performerId, alias])
   @@index([alias])
   @@map("performer_aliases")
+}
+
+model Tag {
+  id         String         @id @default(uuid())
+  name       String         @unique
+  performers PerformerTag[]
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  @@index([name])
+  @@map("tags")
+}
+
+model PerformerTag {
+  performerId String
+  tagId       String
+
+  performer Performer @relation(fields: [performerId], references: [id], onDelete: Cascade)
+  tag       Tag       @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([performerId, tagId])
+  @@index([tagId])
+  @@map("performer_tags")
 }
 
 model Artist {

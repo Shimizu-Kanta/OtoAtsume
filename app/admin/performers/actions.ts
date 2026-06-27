@@ -14,6 +14,9 @@ export async function createPerformerAction(formData: FormData) {
     groupId: formData.get("groupId"),
     youtubeUrl: formData.get("youtubeUrl"),
     officialUrl: formData.get("officialUrl"),
+    colorCode: formData.get("colorCode"),
+    debutDate: formData.get("debutDate"),
+    tags: formData.get("tags"),
     status: formData.get("status") || "APPROVED"
   });
 
@@ -23,7 +26,10 @@ export async function createPerformerAction(formData: FormData) {
 
   await createAdminPerformer({
     ...parsed.data,
+    groupId: parsed.data.groupId,
     status: parsed.data.status as MasterDataStatus
   });
   revalidatePath("/admin/performers");
+  revalidatePath("/admin/tags");
+  revalidatePath("/performers");
 }

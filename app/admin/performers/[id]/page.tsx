@@ -11,7 +11,7 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { requireAdminPage } from "@/lib/auth/admin";
 import { getAdminPerformer, listGroups } from "@/lib/data/admin";
-import { getSearchParam } from "@/lib/utils";
+import { formatDateInput, getSearchParam } from "@/lib/utils";
 import { updatePerformerAction } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -35,6 +35,7 @@ export default async function AdminPerformerEditPage({
   const error = getSearchParam(query, "error");
   const updated = getSearchParam(query, "updated") === "1";
   const aliases = performer.aliases.map((alias) => alias.alias).join("\n");
+  const tags = performer.tags.map(({ tag }) => tag.name).join(";");
 
   return (
     <div className="space-y-6">
@@ -89,6 +90,24 @@ export default async function AdminPerformerEditPage({
             <Input id="officialUrl" name="officialUrl" type="url" defaultValue={performer.officialUrl ?? ""} />
           </div>
           <div className="space-y-2">
+            <Label htmlFor="colorCode">カラーコード</Label>
+            <Input
+              id="colorCode"
+              name="colorCode"
+              defaultValue={performer.colorCode ?? ""}
+              placeholder="#4A90E2"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="debutDate">デビュー日</Label>
+            <Input
+              id="debutDate"
+              name="debutDate"
+              type="date"
+              defaultValue={performer.debutDate ? formatDateInput(performer.debutDate) : ""}
+            />
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="status">ステータス</Label>
             <Select id="status" name="status" defaultValue={performer.status}>
               <option value="APPROVED">公開</option>
@@ -103,6 +122,15 @@ export default async function AdminPerformerEditPage({
               name="aliases"
               defaultValue={aliases}
               placeholder="1行に1件、またはカンマ区切りで入力"
+            />
+          </div>
+          <div className="space-y-2 md:col-span-2">
+            <Label htmlFor="tags">タグ</Label>
+            <Input
+              id="tags"
+              name="tags"
+              defaultValue={tags}
+              placeholder="Vsinger;歌枠;オリ曲あり"
             />
           </div>
         </div>

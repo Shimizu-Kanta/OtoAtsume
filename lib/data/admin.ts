@@ -8,6 +8,7 @@ import {
 
 import { db } from "@/lib/db";
 import { coverDetailInclude, coverListInclude } from "@/lib/data/covers";
+import { replacePerformerTags } from "@/lib/data/tags";
 import { normalizeNames } from "@/lib/utils";
 
 export async function listReports(status?: ReportStatus) {
@@ -154,7 +155,14 @@ export async function updateAdminGroup(id: string, name: string) {
 
 export async function listAdminPerformers() {
   return db.performer.findMany({
-    include: { group: true, aliases: true },
+    include: {
+      group: true,
+      aliases: true,
+      tags: {
+        include: { tag: true },
+        orderBy: { tag: { name: "asc" } }
+      }
+    },
     orderBy: { createdAt: "desc" },
     take: 100
   });
@@ -163,7 +171,14 @@ export async function listAdminPerformers() {
 export async function getAdminPerformer(id: string) {
   return db.performer.findUnique({
     where: { id },
-    include: { group: true, aliases: true }
+    include: {
+      group: true,
+      aliases: true,
+      tags: {
+        include: { tag: true },
+        orderBy: { tag: { name: "asc" } }
+      }
+    }
   });
 }
 
@@ -172,16 +187,26 @@ export async function createAdminPerformer(input: {
   groupId?: string;
   youtubeUrl?: string;
   officialUrl?: string;
+  colorCode?: string;
+  debutDate?: Date;
+  tags?: string[];
   status?: MasterDataStatus;
 }) {
-  return db.performer.create({
-    data: {
-      name: input.name,
-      groupId: input.groupId,
-      youtubeUrl: input.youtubeUrl,
-      officialUrl: input.officialUrl,
-      status: input.status ?? MasterDataStatus.APPROVED
-    }
+  return db.$transaction(async (client) => {
+    const performer = await client.performer.create({
+      data: {
+        name: input.name,
+        groupId: input.groupId,
+        youtubeUrl: input.youtubeUrl,
+        officialUrl: input.officialUrl,
+        colorCode: input.colorCode,
+        debutDate: input.debutDate,
+        status: input.status ?? MasterDataStatus.APPROVED
+      }
+    });
+
+    await replacePerformerTags(client, performer.id, input.tags ?? []);
+    return performer;
   });
 }
 
@@ -192,19 +217,21 @@ export async function updateAdminPerformer(
     groupId: string | null;
     youtubeUrl: string | null;
     officialUrl: string | null;
+    colorCode: string | null;
+    debutDate: Date | null;
     status: MasterDataStatus;
     aliases: string[];
+    tags: string[];
   }>
 ) {
   return db.$transaction(async (client) => {
-    const { aliases, ...performerInput } = input;
-    const performer = await client.performer.update({
+    const { aliases, tags, ...performerInput } = input;
+    await client.performer.update({
       where: { id },
       data: {
         ...performerInput,
         groupId: performerInput.groupId === "" ? null : performerInput.groupId
-      },
-      include: { group: true, aliases: true }
+      }
     });
 
     if (aliases) {
@@ -221,7 +248,21 @@ export async function updateAdminPerformer(
       }
     }
 
-    return performer;
+    if (tags) {
+      await replacePerformerTags(client, id, tags);
+    }
+
+    return client.performer.findUniqueOrThrow({
+      where: { id },
+      include: {
+        group: true,
+        aliases: true,
+        tags: {
+          include: { tag: true },
+          orderBy: { tag: { name: "asc" } }
+        }
+      }
+    });
   });
 }
 

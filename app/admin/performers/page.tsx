@@ -48,6 +48,18 @@ export default async function AdminPerformersPage() {
             <Input id="officialUrl" name="officialUrl" type="url" />
           </div>
           <div className="space-y-2">
+            <Label htmlFor="colorCode">カラーコード</Label>
+            <Input id="colorCode" name="colorCode" placeholder="#4A90E2" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="debutDate">デビュー日</Label>
+            <Input id="debutDate" name="debutDate" type="date" />
+          </div>
+          <div className="space-y-2 md:col-span-2">
+            <Label htmlFor="tags">タグ</Label>
+            <Input id="tags" name="tags" placeholder="Vsinger;歌枠;オリ曲あり" />
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="status">ステータス</Label>
             <Select id="status" name="status" defaultValue="APPROVED">
               <option value="APPROVED">公開</option>
@@ -74,6 +86,27 @@ export default async function AdminPerformersPage() {
               <p className="mt-1 text-sm text-muted-foreground">
                 {performer.group?.name ?? "所属なし"}
               </p>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                {performer.colorCode ? (
+                  <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                    <span
+                      className="size-3 rounded-sm border"
+                      style={{ backgroundColor: performer.colorCode }}
+                    />
+                    {performer.colorCode}
+                  </span>
+                ) : null}
+                {performer.debutDate ? (
+                  <span className="text-xs text-muted-foreground">
+                    デビュー日: {performer.debutDate.toISOString().slice(0, 10)}
+                  </span>
+                ) : null}
+                {performer.tags.map(({ tag }) => (
+                  <Badge key={tag.id} variant="muted">
+                    {tag.name}
+                  </Badge>
+                ))}
+              </div>
               {performer.youtubeUrl ? (
                 <a
                   href={performer.youtubeUrl}

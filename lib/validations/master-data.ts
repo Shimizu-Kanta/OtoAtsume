@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { normalizeNames } from "@/lib/utils";
 import { optionalText } from "@/lib/validations/shared";
+import { colorCodeSchema, debutDateSchema, tagNamesSchema } from "@/lib/validations/performer-profile";
 
 export const performerCreateSchema = z.object({
   name: z.string().trim().min(1).max(200),
@@ -12,7 +13,14 @@ export const performerCreateSchema = z.object({
   officialUrl: optionalText(2000).refine((value) => !value || z.string().url().safeParse(value).success, {
     message: "公式URLが正しくありません。"
   }),
+  colorCode: colorCodeSchema,
+  debutDate: debutDateSchema,
+  tags: tagNamesSchema,
   status: z.enum(["PENDING", "APPROVED", "HIDDEN"]).default("APPROVED")
+});
+
+export const tagCreateSchema = z.object({
+  name: z.string().trim().min(1).max(80)
 });
 
 export const performerUpdateSchema = performerCreateSchema.extend({

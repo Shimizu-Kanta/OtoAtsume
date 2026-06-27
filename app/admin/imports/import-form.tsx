@@ -121,7 +121,11 @@ export function ImportForm({ initialState }: { initialState: ImportActionState }
             value={content}
             onChange={(event) => setContent(event.currentTarget.value)}
             className="min-h-80 font-mono text-xs leading-relaxed"
-            placeholder={format === "csv" ? "name,group,youtubeUrl,officialUrl,aliases,status" : "[\n  {}\n]"}
+            placeholder={
+              format === "csv"
+                ? "name,groupName,youtubeUrl,officialUrl,colorCode,debutDate,tags,aliases,status"
+                : "[\n  {}\n]"
+            }
           />
         </div>
 

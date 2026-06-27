@@ -5,6 +5,10 @@ import { db } from "@/lib/db";
 export const performerListInclude = {
   group: true,
   aliases: true,
+  tags: {
+    include: { tag: true },
+    orderBy: { tag: { name: "asc" } }
+  },
   _count: {
     select: {
       covers: {
@@ -19,6 +23,10 @@ export const performerListInclude = {
 export const performerDetailInclude = {
   group: true,
   aliases: true,
+  tags: {
+    include: { tag: true },
+    orderBy: { tag: { name: "asc" } }
+  },
   covers: {
     where: {
       cover: { status: ContentStatus.APPROVED }
@@ -46,7 +54,30 @@ export type PerformerListItem = Prisma.PerformerGetPayload<{
   include: typeof performerListInclude;
 }>;
 
-export async function getPerformers(query?: string) {
+export type PerformerSort = "nameAsc" | "debutDateAsc" | "debutDateDesc";
+
+export type PerformerSearch = {
+  query?: string;
+  tagNames?: string[];
+  sort?: PerformerSort;
+};
+
+function performerOrderBy(sort: PerformerSort | undefined): Prisma.PerformerOrderByWithRelationInput[] {
+  if (sort === "debutDateAsc") {
+    return [{ debutDate: { sort: "asc", nulls: "last" } }, { name: "asc" }];
+  }
+
+  if (sort === "debutDateDesc") {
+    return [{ debutDate: { sort: "desc", nulls: "last" } }, { name: "asc" }];
+  }
+
+  return [{ name: "asc" }];
+}
+
+export async function getPerformers(search: PerformerSearch = {}) {
+  const query = search.query?.trim();
+  const tagNames = search.tagNames?.map((tag) => tag.trim()).filter(Boolean) ?? [];
+
   return db.performer.findMany({
     where: {
       status: MasterDataStatus.APPROVED,
@@ -62,10 +93,19 @@ export async function getPerformers(query?: string) {
               { group: { name: { contains: query, mode: Prisma.QueryMode.insensitive } } }
             ]
           }
+        : {}),
+      ...(tagNames.length > 0
+        ? {
+            tags: {
+              some: {
+                tag: { name: { in: tagNames } }
+              }
+            }
+          }
         : {})
     },
     include: performerListInclude,
-    orderBy: { name: "asc" }
+    orderBy: performerOrderBy(search.sort)
   });
 }
 

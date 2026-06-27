@@ -46,6 +46,8 @@ export async function submitImportAction(
     revalidatePath("/admin");
     revalidatePath("/admin/imports");
     revalidatePath("/admin/performers");
+    revalidatePath("/admin/tags");
+    revalidatePath("/performers");
     revalidatePath("/admin/songs");
     revalidatePath("/admin/artists");
     revalidatePath("/admin/performer-applications");

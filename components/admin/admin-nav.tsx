@@ -7,6 +7,7 @@ const adminNavItems = [
   { href: "/admin/performer-applications", label: "活動者申請" },
   { href: "/admin/groups", label: "所属グループ" },
   { href: "/admin/performers", label: "活動者" },
+  { href: "/admin/tags", label: "タグ" },
   { href: "/admin/songs", label: "楽曲" },
   { href: "/admin/artists", label: "アーティスト" },
   { href: "/admin/imports", label: "一括インポート" }
