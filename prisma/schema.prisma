@@ -200,6 +200,25 @@ model RateLimitBucket {
   @@map("rate_limit_buckets")
 }
 
+model YouTubeVideoMetadataCache {
+  id           String   @id @default(uuid())
+  videoId      String   @unique
+  canonicalUrl String
+  sourceTitle  String
+  description  String
+  publishedAt  DateTime
+  channelId    String
+  channelTitle String
+  thumbnailUrl String?
+  tags         String[] @default([])
+  fetchedAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([channelId])
+  @@index([fetchedAt])
+  @@map("youtube_video_metadata_cache")
+}
+
 enum AdminRole {
   ADMIN
 }
