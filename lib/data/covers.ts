@@ -176,16 +176,20 @@ export async function getLatestCovers(take = 8) {
   return getApprovedCovers({ take });
 }
 
+export type AnniversaryType = "debut" | "birthday";
+
 export type AnniversaryCoverGroup = {
   performer: {
     id: string;
     name: string;
     colorCode: string | null;
     debutDate: Date | null;
+    birthday: Date | null;
     group: {
       name: string;
     } | null;
   };
+  anniversaryTypes: AnniversaryType[];
   covers: CoverListItem[];
 };
 
@@ -223,15 +227,25 @@ export async function getTodayAnniversaryCoverGroups(takePerPerformer = 3) {
   const performers = await db.performer.findMany({
     where: {
       status: MasterDataStatus.APPROVED,
-      debutDate: {
-        not: null
-      }
+      OR: [
+        {
+          debutDate: {
+            not: null
+          }
+        },
+        {
+          birthday: {
+            not: null
+          }
+        }
+      ]
     },
     select: {
       id: true,
       name: true,
       colorCode: true,
       debutDate: true,
+      birthday: true,
       group: {
         select: {
           name: true
@@ -243,17 +257,15 @@ export async function getTodayAnniversaryCoverGroups(takePerPerformer = 3) {
     }
   });
 
-  const anniversaryPerformers = performers.filter((performer) => {
-    if (!performer.debutDate) {
-      return false;
-    }
-
-    const debutDate = getUtcMonthDay(performer.debutDate);
-    return debutDate.month === today.month && debutDate.day === today.day;
-  });
+  const anniversaryPerformers = performers
+    .map((performer) => ({
+      performer,
+      anniversaryTypes: getTodayAnniversaryTypes(performer, today)
+    }))
+    .filter(({ anniversaryTypes }) => anniversaryTypes.length > 0);
 
   const groups = await Promise.all(
-    anniversaryPerformers.map(async (performer) => {
+    anniversaryPerformers.map(async ({ performer, anniversaryTypes }) => {
       const covers = await db.cover.findMany({
         where: {
           status: ContentStatus.APPROVED,
@@ -270,6 +282,7 @@ export async function getTodayAnniversaryCoverGroups(takePerPerformer = 3) {
 
       return {
         performer,
+        anniversaryTypes,
         covers: shuffleItems(covers).slice(0, takePerPerformer)
       };
     })
@@ -578,4 +591,35 @@ export async function createReport(coverId: string, input: ReportCreateInput) {
       memo: input.memo
     }
   });
+}
+
+function getTodayAnniversaryTypes(
+  performer: {
+    debutDate: Date | null;
+    birthday: Date | null;
+  },
+  today: {
+    month: number;
+    day: number;
+  }
+): AnniversaryType[] {
+  const types: AnniversaryType[] = [];
+
+  if (performer.debutDate) {
+    const debutDate = getUtcMonthDay(performer.debutDate);
+
+    if (debutDate.month === today.month && debutDate.day === today.day) {
+      types.push("debut");
+    }
+  }
+
+  if (performer.birthday) {
+    const birthday = getUtcMonthDay(performer.birthday);
+
+    if (birthday.month === today.month && birthday.day === today.day) {
+      types.push("birthday");
+    }
+  }
+
+  return types;
 }

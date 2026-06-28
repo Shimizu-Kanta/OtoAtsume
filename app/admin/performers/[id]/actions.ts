@@ -20,6 +20,7 @@ export async function updatePerformerAction(performerId: string, formData: FormD
     officialUrl: formData.get("officialUrl"),
     colorCode: formData.get("colorCode"),
     debutDate: formData.get("debutDate"),
+    birthday: formData.get("birthday"),
     status: formData.get("status") || "APPROVED",
     aliases: formData.get("aliases"),
     tags: formData.get("tags")
@@ -40,6 +41,7 @@ export async function updatePerformerAction(performerId: string, formData: FormD
     officialUrl: parsed.data.officialUrl ?? null,
     colorCode: parsed.data.colorCode ?? null,
     debutDate: parsed.data.debutDate ?? null,
+    birthday: parsed.data.birthday ?? null,
     status: parsed.data.status as MasterDataStatus,
     aliases: normalizeNames(parsed.data.aliases),
     tags: normalizeTagNames(parsed.data.tags)

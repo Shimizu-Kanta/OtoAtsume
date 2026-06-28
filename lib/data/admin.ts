@@ -205,6 +205,7 @@ export async function createAdminPerformer(input: {
   officialUrl?: string;
   colorCode?: string;
   debutDate?: Date;
+  birthday?: Date;
   tags?: string[];
   status?: MasterDataStatus;
 }) {
@@ -217,6 +218,7 @@ export async function createAdminPerformer(input: {
         officialUrl: input.officialUrl,
         colorCode: input.colorCode,
         debutDate: input.debutDate,
+        birthday: input.birthday,
         status: input.status ?? MasterDataStatus.APPROVED
       }
     });
@@ -235,6 +237,7 @@ export async function updateAdminPerformer(
     officialUrl: string | null;
     colorCode: string | null;
     debutDate: Date | null;
+    birthday: Date | null;
     status: MasterDataStatus;
     aliases: string[];
     tags: string[];

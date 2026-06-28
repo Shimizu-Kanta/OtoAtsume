@@ -123,7 +123,7 @@ export function ImportForm({ initialState }: { initialState: ImportActionState }
             className="min-h-80 font-mono text-xs leading-relaxed"
             placeholder={
               format === "csv"
-                ? "name,groupName,youtubeUrl,officialUrl,colorCode,debutDate,tags,aliases,status"
+                ? "name,groupName,youtubeUrl,officialUrl,colorCode,debutDate,birthday,tags,aliases,status"
                 : "[\n  {}\n]"
             }
           />

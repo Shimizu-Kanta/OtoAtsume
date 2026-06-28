@@ -17,7 +17,7 @@ import {
   type ImportSummary,
   type ImportTarget
 } from "@/lib/imports/types";
-import { colorCodeSchema, debutDateSchema } from "@/lib/validations/performer-profile";
+import { colorCodeSchema, debutDateSchema, birthdaySchema } from "@/lib/validations/performer-profile";
 
 type RawImportRow = {
   rowNumber: number;
@@ -32,6 +32,7 @@ type PerformerImportRow = {
   officialUrl?: string;
   colorCode?: string;
   debutDate?: Date;
+  birthday?: Date;
   tags: string[];
   aliases: string[];
   status: MasterDataStatus;
@@ -104,6 +105,7 @@ const performerSchema = z.object({
   officialUrl: optionalUrlSchema,
   colorCode: colorCodeSchema,
   debutDate: debutDateSchema,
+  birthday: birthdaySchema,
   tags: z.array(z.string().max(80, "タグ名は80文字以内で入力してください。")).default([]),
   aliases: z.array(textSchema).default([]),
   status: statusSchema
@@ -454,6 +456,7 @@ function normalizePerformerRow(
     officialUrl: readValue(raw.value, ["officialUrl", "officialURL", "official_url"]),
     colorCode: readValue(raw.value, ["colorCode", "color", "color_code"]),
     debutDate: readValue(raw.value, ["debutDate", "debut_date"]),
+    birthday: readValue(raw.value, ["birthday","birthDay", "birth_date", "birthDate"]),
     tags: parseStringList(tagsValue, format),
     aliases: parseStringList(aliasesValue, format),
     status: readValue(raw.value, ["status"])
@@ -622,6 +625,9 @@ async function executePerformerImport(
     if (row.debutDate) {
       data.debutDate = row.debutDate;
     }
+    if (row.birthday) {
+      data.birthday = row.birthday;
+    }
 
     const performer =
       existing ??
@@ -633,6 +639,7 @@ async function executePerformerImport(
           officialUrl: row.officialUrl,
           colorCode: row.colorCode,
           debutDate: row.debutDate,
+          birthday: row.birthday,
           status: row.status
         }
       }));
