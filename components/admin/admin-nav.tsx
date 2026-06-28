@@ -4,7 +4,7 @@ const adminNavItems = [
   { href: "/admin", label: "ダッシュボード" },
   { href: "/admin/covers", label: "カバー記録" },
   { href: "/admin/reports", label: "通報" },
-  { href: "/admin/performer-applications", label: "活動者申請" },
+  { href: "/admin/performers?status=PENDING", label: "確認待ち活動者" },
   { href: "/admin/groups", label: "所属グループ" },
   { href: "/admin/performers", label: "活動者" },
   { href: "/admin/tags", label: "タグ" },

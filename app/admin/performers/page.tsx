@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { MasterDataStatus } from "@prisma/client";
 import { AdminNav } from "@/components/admin/admin-nav";
 import { PageHeading } from "@/components/page-heading";
 import { Badge } from "@/components/ui/badge";
@@ -23,11 +24,12 @@ export default async function AdminPerformersPage({
 
   const query = await searchParams;
   const q = getSearchParam(query, "q");
+  const status = normalizeMasterDataStatus(getSearchParam(query, "status"));
   const deleted = getSearchParam(query, "deleted");
   const error = getSearchParam(query, "error");
 
   const [performers, groups] = await Promise.all([
-    listAdminPerformers(q),
+    listAdminPerformers(q, status),
     listGroups()
   ]);
 
@@ -36,8 +38,8 @@ export default async function AdminPerformersPage({
       <AdminNav />
       <PageHeading title="活動者管理" description="活動者マスタを追加・確認します。" />
       <form action="/admin/performers" className="rounded-md border bg-card p-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-          <div className="flex-1 space-y-2">
+        <div className="grid gap-3 md:grid-cols-[1fr_220px_auto] md:items-end">
+          <div className="space-y-2">
             <Label htmlFor="q">活動者検索</Label>
             <Input
               id="q"
@@ -46,6 +48,17 @@ export default async function AdminPerformersPage({
               placeholder="活動者名・別名・所属・タグ・URLで検索"
             />
           </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="statusFilter">ステータス</Label>
+            <Select id="statusFilter" name="status" defaultValue={status ?? ""}>
+              <option value="">すべて</option>
+              <option value="PENDING">確認待ち</option>
+              <option value="APPROVED">公開</option>
+              <option value="HIDDEN">非表示</option>
+            </Select>
+          </div>
+
           <div className="flex flex-wrap gap-2">
             <Button type="submit">検索</Button>
             <Link href="/admin/performers" className="rounded-md border px-4 py-2 text-sm">
@@ -54,6 +67,16 @@ export default async function AdminPerformersPage({
           </div>
         </div>
       </form>
+            <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
+        <p>
+          表示中: {performers.length} 件
+          {status ? ` / ${statusLabel(status)}` : ""}
+          {q ? ` / 検索: ${q}` : ""}
+        </p>
+        <Link href="/admin/performers?status=PENDING" className="text-primary underline">
+          確認待ち活動者を見る
+        </Link>
+      </div>
         {error ? (
           <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm">
             {error}
@@ -181,4 +204,36 @@ export default async function AdminPerformersPage({
       </div>
     </div>
   );
+}
+
+function normalizeMasterDataStatus(value: string | undefined): MasterDataStatus | undefined {
+  if (value === MasterDataStatus.PENDING) {
+    return MasterDataStatus.PENDING;
+  }
+
+  if (value === MasterDataStatus.APPROVED) {
+    return MasterDataStatus.APPROVED;
+  }
+
+  if (value === MasterDataStatus.HIDDEN) {
+    return MasterDataStatus.HIDDEN;
+  }
+
+  return undefined;
+}
+
+function statusLabel(status: MasterDataStatus) {
+  if (status === MasterDataStatus.PENDING) {
+    return "確認待ち";
+  }
+
+  if (status === MasterDataStatus.APPROVED) {
+    return "公開";
+  }
+
+  if (status === MasterDataStatus.HIDDEN) {
+    return "非表示";
+  }
+
+  return status;
 }

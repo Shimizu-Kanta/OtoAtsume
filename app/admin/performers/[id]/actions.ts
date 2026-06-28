@@ -53,6 +53,24 @@ export async function updatePerformerAction(performerId: string, formData: FormD
   redirect(`/admin/performers/${performerId}?updated=1`);
 }
 
+export async function approvePerformerAction(performerId: string) {
+  await requireAdminPage();
+
+  await updateAdminPerformer(performerId, {
+    status: MasterDataStatus.APPROVED
+  });
+
+  revalidatePath("/");
+  revalidatePath("/admin");
+  revalidatePath("/admin/performers");
+  revalidatePath("/admin/tags");
+  revalidatePath("/performers");
+  revalidatePath(`/admin/performers/${performerId}`);
+  revalidatePath(`/performers/${performerId}`);
+
+  redirect(`/admin/performers/${performerId}?approved=1`);
+}
+
 export async function deletePerformerAction(performerId: string, formData: FormData) {
   await requireAdminPage();
 

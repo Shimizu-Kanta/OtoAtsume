@@ -30,12 +30,6 @@ export const reportStatusOptions = [
   { value: "REJECTED", label: "却下" }
 ] as const;
 
-export const applicationStatusOptions = [
-  { value: "PENDING", label: "未対応" },
-  { value: "APPROVED", label: "承認" },
-  { value: "REJECTED", label: "却下" }
-] as const;
-
 export function labelFor(
   options: readonly { value: string; label: string }[],
   value: string | null | undefined
@@ -57,8 +51,4 @@ export function contentStatusLabel(value: string) {
 
 export function reportStatusLabel(value: string) {
   return labelFor(reportStatusOptions, value);
-}
-
-export function applicationStatusLabel(value: string) {
-  return labelFor(applicationStatusOptions, value);
 }

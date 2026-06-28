@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { listGroups } from "@/lib/data/admin";
 import { getCaptchaSiteKey, isCaptchaRequired } from "@/lib/security/captcha";
 import { getSearchParam } from "@/lib/utils";
@@ -25,7 +24,7 @@ export default async function NewPerformerApplicationPage({
     <div className="space-y-6">
       <PageHeading
         title="活動者申請"
-        description="一覧にない活動者を申請できます。承認後に活動者として登録されます。"
+        description="一覧にない活動者を確認待ちとして登録できます。管理者の確認後に公開されます。"
       />
 
       {error ? (
@@ -53,10 +52,6 @@ export default async function NewPerformerApplicationPage({
               </option>
             ))}
           </Select>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="memo">補足メモ</Label>
-          <Textarea id="memo" name="memo" />
         </div>
         <TurnstileCaptcha siteKey={getCaptchaSiteKey()} required={isCaptchaRequired()} />
         <Button type="submit">申請する</Button>

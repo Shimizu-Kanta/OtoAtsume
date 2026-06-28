@@ -1,16 +1,39 @@
-import { ApplicationStatus } from "@prisma/client";
+import { MasterDataStatus } from "@prisma/client";
 
 import { db } from "@/lib/db";
 import type { PerformerApplicationCreateInput } from "@/lib/validations/performer-application";
 
 export async function createPerformerApplication(input: PerformerApplicationCreateInput) {
-  return db.performerApplication.create({
+  const existing = await db.performer.findFirst({
+    where: {
+      name: {
+        equals: input.name,
+        mode: "insensitive"
+      }
+    }
+  });
+
+  if (existing) {
+    if (existing.status !== MasterDataStatus.PENDING) {
+      throw new Error("この活動者はすでに登録されています。");
+    }
+
+    return db.performer.update({
+      where: { id: existing.id },
+      data: {
+        groupId: input.groupId,
+        officialUrl: input.url,
+        status: MasterDataStatus.PENDING
+      }
+    });
+  }
+
+  return db.performer.create({
     data: {
       name: input.name,
-      url: input.url,
       groupId: input.groupId,
-      memo: input.memo,
-      status: ApplicationStatus.PENDING
+      officialUrl: input.url,
+      status: MasterDataStatus.PENDING
     }
   });
 }
