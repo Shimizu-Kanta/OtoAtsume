@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Search } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
@@ -49,6 +49,29 @@ export function PerformerPicker({
       return next;
     });
   }
+
+  useEffect(() => {
+    function handleAddPerformer(event: Event) {
+      const customEvent = event as CustomEvent<{ id?: string }>;
+      const id = customEvent.detail?.id;
+
+      if (!id) {
+        return;
+      }
+
+      setSelectedIds((current) => {
+        const next = new Set(current);
+        next.add(id);
+        return next;
+      });
+    }
+
+    window.addEventListener("otoatsume:add-performer-id", handleAddPerformer);
+
+    return () => {
+      window.removeEventListener("otoatsume:add-performer-id", handleAddPerformer);
+    };
+  }, []);
 
   return (
     <div className="space-y-3">

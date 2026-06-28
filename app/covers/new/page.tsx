@@ -3,6 +3,7 @@ import { Info } from "lucide-react";
 import { TurnstileCaptcha } from "@/components/captcha/turnstile";
 import { DuplicateCandidateChecker } from "@/components/covers/duplicate-candidate-checker";
 import { PerformerPicker } from "@/components/covers/performer-picker";
+import { YouTubeMetadataFetcher } from "@/components/covers/youtube-metadata-fetcher";
 import { PageHeading } from "@/components/page-heading";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -90,6 +91,9 @@ export default async function NewCoverPage({
           <div className="space-y-2 md:col-span-2">
             <Label htmlFor="sourceUrl">情報元URL</Label>
             <Input id="sourceUrl" name="sourceUrl" type="url" required />
+          </div>
+          <div className="md:col-span-2">
+            <YouTubeMetadataFetcher />
           </div>
           <div className="space-y-2">
             <Label htmlFor="sourceTitle">配信・動画・ライブ名</Label>
