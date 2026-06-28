@@ -176,6 +176,139 @@ export async function getLatestCovers(take = 8) {
   return getApprovedCovers({ take });
 }
 
+export type AnniversaryCoverGroup = {
+  performer: {
+    id: string;
+    name: string;
+    colorCode: string | null;
+    debutDate: Date | null;
+    group: {
+      name: string;
+    } | null;
+  };
+  covers: CoverListItem[];
+};
+
+export async function getRandomCovers(take = 6) {
+  const total = await db.cover.count({
+    where: {
+      status: ContentStatus.APPROVED
+    }
+  });
+
+  if (total === 0) {
+    return [];
+  }
+
+  const windowSize = Math.min(Math.max(take * 3, take), total);
+  const maxSkip = Math.max(0, total - windowSize);
+  const skip = maxSkip > 0 ? Math.floor(Math.random() * (maxSkip + 1)) : 0;
+
+  const covers = await db.cover.findMany({
+    where: {
+      status: ContentStatus.APPROVED
+    },
+    include: coverListInclude,
+    orderBy: [{ createdAt: "desc" }],
+    skip,
+    take: windowSize
+  });
+
+  return shuffleItems(covers).slice(0, take);
+}
+
+export async function getTodayAnniversaryCoverGroups(takePerPerformer = 3) {
+  const today = getTokyoMonthDay(new Date());
+
+  const performers = await db.performer.findMany({
+    where: {
+      status: MasterDataStatus.APPROVED,
+      debutDate: {
+        not: null
+      }
+    },
+    select: {
+      id: true,
+      name: true,
+      colorCode: true,
+      debutDate: true,
+      group: {
+        select: {
+          name: true
+        }
+      }
+    },
+    orderBy: {
+      name: "asc"
+    }
+  });
+
+  const anniversaryPerformers = performers.filter((performer) => {
+    if (!performer.debutDate) {
+      return false;
+    }
+
+    const debutDate = getUtcMonthDay(performer.debutDate);
+    return debutDate.month === today.month && debutDate.day === today.day;
+  });
+
+  const groups = await Promise.all(
+    anniversaryPerformers.map(async (performer) => {
+      const covers = await db.cover.findMany({
+        where: {
+          status: ContentStatus.APPROVED,
+          performers: {
+            some: {
+              performerId: performer.id
+            }
+          }
+        },
+        include: coverListInclude,
+        orderBy: [{ performedAt: "desc" }, { createdAt: "desc" }],
+        take: Math.max(takePerPerformer * 4, takePerPerformer)
+      });
+
+      return {
+        performer,
+        covers: shuffleItems(covers).slice(0, takePerPerformer)
+      };
+    })
+  );
+
+  return groups;
+}
+
+function shuffleItems<T>(items: T[]) {
+  const result = [...items];
+
+  for (let index = result.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
+    [result[index], result[randomIndex]] = [result[randomIndex], result[index]];
+  }
+
+  return result;
+}
+
+function getTokyoMonthDay(date: Date) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Tokyo",
+    month: "2-digit",
+    day: "2-digit"
+  }).formatToParts(date);
+
+  const month = Number(parts.find((part) => part.type === "month")?.value);
+  const day = Number(parts.find((part) => part.type === "day")?.value);
+
+  return { month, day };
+}
+
+function getUtcMonthDay(date: Date) {
+  return {
+    month: date.getUTCMonth() + 1,
+    day: date.getUTCDate()
+  };
+}
+
 async function ensureArtist(client: DbClient, name: string) {
   return client.artist.upsert({
     where: { name },
