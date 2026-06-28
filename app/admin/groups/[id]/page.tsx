@@ -38,7 +38,7 @@ export default async function AdminGroupEditPage({
       <AdminNav />
       <PageHeading
         title="所属グループ編集"
-        description={`活動者 ${group._count.performers} 件 / 未対応申請 ${group._count.performerApplications} 件が紐づいています。`}
+        description={`活動者 ${group._count.performers} 件が紐づいています。`}
       />
 
       {error ? (

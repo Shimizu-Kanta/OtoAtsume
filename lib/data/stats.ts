@@ -1,4 +1,4 @@
-import { ContentStatus, ReportStatus, ApplicationStatus } from "@prisma/client";
+import { ContentStatus, MasterDataStatus, ReportStatus } from "@prisma/client";
 
 import { db } from "@/lib/db";
 
@@ -13,9 +13,9 @@ export async function getPublicStats() {
 }
 
 export async function getAdminDashboardStats() {
-  const [pendingReportCount, pendingApplicationCount, latestCovers] = await Promise.all([
+  const [pendingReportCount, pendingPerformerCount, latestCovers] = await Promise.all([
     db.report.count({ where: { status: ReportStatus.PENDING } }),
-    db.performerApplication.count({ where: { status: ApplicationStatus.PENDING } }),
+    db.performer.count({ where: { status: MasterDataStatus.PENDING } }),
     db.cover.findMany({
       include: {
         song: true,
@@ -30,5 +30,5 @@ export async function getAdminDashboardStats() {
     })
   ]);
 
-  return { pendingReportCount, pendingApplicationCount, latestCovers };
+  return { pendingReportCount, pendingPerformerCount, latestCovers };
 }

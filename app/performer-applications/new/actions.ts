@@ -54,7 +54,8 @@ export async function createPerformerApplicationAction(formData: FormData) {
     await createPerformerApplication(parsed.data);
   } catch (error) {
     console.error("createPerformerApplicationAction create failed", error);
-    errorRedirect("申請の送信に失敗しました。時間をおいて再試行してください。");
+    const message = error instanceof Error ? error.message : "申請の送信に失敗しました。時間をおいて再試行してください。";
+    errorRedirect(message);
   }
 
   redirect("/?application=1");

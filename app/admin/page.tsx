@@ -34,11 +34,11 @@ export default async function AdminPage() {
           <p className="mt-2 text-3xl font-semibold">{stats.pendingReportCount}</p>
         </Link>
         <Link
-          href="/admin/performer-applications"
+          href="/admin/performers?status=PENDING"
           className="rounded-md border bg-card p-4 hover:bg-muted/50"
         >
-          <p className="text-sm text-muted-foreground">未対応活動者申請</p>
-          <p className="mt-2 text-3xl font-semibold">{stats.pendingApplicationCount}</p>
+          <p className="text-sm text-muted-foreground">確認待ち活動者</p>
+          <p className="mt-2 text-3xl font-semibold">{stats.pendingPerformerCount}</p>
         </Link>
       </section>
 

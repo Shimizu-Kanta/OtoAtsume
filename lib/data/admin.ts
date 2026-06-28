@@ -1,5 +1,4 @@
 import {
-  ApplicationStatus,
   ContentStatus,
   MasterDataStatus,
   Prisma,
@@ -42,68 +41,6 @@ export async function updateReportStatus(id: string, status: ReportStatus) {
   });
 }
 
-export async function listPerformerApplications(status?: ApplicationStatus) {
-  return db.performerApplication.findMany({
-    where: status ? { status } : {},
-    include: { group: true },
-    orderBy: { createdAt: "desc" },
-    take: 100
-  });
-}
-
-export async function getPerformerApplication(id: string) {
-  return db.performerApplication.findUnique({
-    where: { id },
-    include: { group: true }
-  });
-}
-
-export async function updatePerformerApplicationStatus(id: string, status: ApplicationStatus) {
-  return db.performerApplication.update({
-    where: { id },
-    data: { status }
-  });
-}
-
-export async function approvePerformerApplication(id: string) {
-  return db.$transaction(async (client) => {
-    const application = await client.performerApplication.findUniqueOrThrow({
-      where: { id }
-    });
-
-    const existing = await client.performer.findFirst({
-      where: {
-        name: { equals: application.name, mode: Prisma.QueryMode.insensitive }
-      }
-    });
-
-    const performer = existing
-      ? await client.performer.update({
-          where: { id: existing.id },
-          data: {
-            groupId: application.groupId,
-            officialUrl: application.url,
-            status: MasterDataStatus.APPROVED
-          }
-        })
-      : await client.performer.create({
-        data: {
-          name: application.name,
-          groupId: application.groupId,
-          officialUrl: application.url,
-          status: MasterDataStatus.APPROVED
-        }
-      });
-
-    await client.performerApplication.update({
-      where: { id },
-      data: { status: ApplicationStatus.APPROVED }
-    });
-
-    return performer;
-  });
-}
-
 export async function listGroups() {
   return db.group.findMany({
     orderBy: { name: "asc" }
@@ -115,12 +52,7 @@ export async function listAdminGroups() {
     include: {
       _count: {
         select: {
-          performers: true,
-          performerApplications: {
-            where: {
-              status: ApplicationStatus.PENDING
-            }
-          }
+          performers: true
         }
       }
     },
@@ -146,12 +78,7 @@ export async function getAdminGroup(id: string) {
       },
       _count: {
         select: {
-          performers: true,
-          performerApplications: {
-            where: {
-              status: ApplicationStatus.PENDING
-            }
-          }
+          performers: true
         }
       }
     }
@@ -172,66 +99,73 @@ export async function updateAdminGroup(id: string, name: string) {
   });
 }
 
-export async function listAdminPerformers(query?: string) {
+export async function listAdminPerformers(query?: string, status?: MasterDataStatus) {
   const keyword = query?.trim();
+  const filters: Prisma.PerformerWhereInput[] = [];
 
-  return db.performer.findMany({
-    where: keyword
-      ? {
-          OR: [
-            {
+  if (status) {
+    filters.push({ status });
+  }
+
+  if (keyword) {
+    filters.push({
+      OR: [
+        {
+          name: {
+            contains: keyword,
+            mode: Prisma.QueryMode.insensitive
+          }
+        },
+        {
+          youtubeUrl: {
+            contains: keyword,
+            mode: Prisma.QueryMode.insensitive
+          }
+        },
+        {
+          officialUrl: {
+            contains: keyword,
+            mode: Prisma.QueryMode.insensitive
+          }
+        },
+        {
+          group: {
+            is: {
               name: {
                 contains: keyword,
                 mode: Prisma.QueryMode.insensitive
               }
-            },
-            {
-              youtubeUrl: {
+            }
+          }
+        },
+        {
+          aliases: {
+            some: {
+              alias: {
                 contains: keyword,
                 mode: Prisma.QueryMode.insensitive
               }
-            },
-            {
-              officialUrl: {
-                contains: keyword,
-                mode: Prisma.QueryMode.insensitive
-              }
-            },
-            {
-              group: {
-                is: {
-                  name: {
-                    contains: keyword,
-                    mode: Prisma.QueryMode.insensitive
-                  }
-                }
-              }
-            },
-            {
-              aliases: {
-                some: {
-                  alias: {
-                    contains: keyword,
-                    mode: Prisma.QueryMode.insensitive
-                  }
-                }
-              }
-            },
-            {
-              tags: {
-                some: {
-                  tag: {
-                    name: {
-                      contains: keyword,
-                      mode: Prisma.QueryMode.insensitive
-                    }
-                  }
+            }
+          }
+        },
+        {
+          tags: {
+            some: {
+              tag: {
+                name: {
+                  contains: keyword,
+                  mode: Prisma.QueryMode.insensitive
                 }
               }
             }
-          ]
+          }
         }
-      : undefined,
+      ]
+    });
+  }
+
+  return db.performer.findMany({
+    where: filters.length > 0 ? { AND: filters } : undefined,
     include: {
       group: true,
       aliases: true,

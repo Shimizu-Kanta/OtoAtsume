@@ -37,7 +37,7 @@ export default async function AdminGroupsPage() {
                   {group.name}
                 </Link>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  活動者 {group._count.performers} 件 / 申請 {group._count.performerApplications} 件
+                  活動者 {group._count.performers} 件
                 </p>
               </div>
               <Link href={`/admin/groups/${group.id}`} className="rounded-md border px-3 py-2 text-sm">

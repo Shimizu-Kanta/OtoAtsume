@@ -1,3 +1,4 @@
+import { MasterDataStatus } from "@prisma/client";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -12,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { requireAdminPage } from "@/lib/auth/admin";
 import { getAdminPerformer, listGroups } from "@/lib/data/admin";
 import { formatDateInput, getSearchParam } from "@/lib/utils";
-import { deletePerformerAction, updatePerformerAction } from "./actions";
+import { approvePerformerAction, deletePerformerAction, updatePerformerAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -32,9 +33,11 @@ export default async function AdminPerformerEditPage({
   }
 
   const action = updatePerformerAction.bind(null, performer.id);
+  const approveAction = approvePerformerAction.bind(null, performer.id);
   const deleteAction = deletePerformerAction.bind(null, performer.id);
   const error = getSearchParam(query, "error");
   const updated = getSearchParam(query, "updated") === "1";
+  const approved = getSearchParam(query, "approved") === "1";
   const aliases = performer.aliases.map((alias) => alias.alias).join("\n");
   const tags = performer.tags.map(({ tag }) => tag.name).join(";");
 
@@ -64,7 +67,28 @@ export default async function AdminPerformerEditPage({
           活動者を更新しました。
         </div>
       ) : null}
+      {approved ? (
+        <div className="rounded-md border border-secondary/40 bg-secondary/10 p-4 text-sm">
+          活動者を承認しました。
+        </div>
+      ) : null}
 
+      {performer.status === MasterDataStatus.PENDING ? (
+        <section className="rounded-md border border-primary/30 bg-primary/5 p-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold">確認待ち活動者</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                内容に問題がなければ、この活動者を公開状態にできます。
+              </p>
+            </div>
+            <form action={approveAction}>
+              <Button type="submit">承認して公開する</Button>
+            </form>
+          </div>
+        </section>
+      ) : null}
+      
       <form action={action} className="rounded-md border bg-card p-5">
         <div className="form-grid">
           <div className="space-y-2">
