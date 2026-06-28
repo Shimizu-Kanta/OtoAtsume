@@ -82,7 +82,11 @@ export default async function PerformersPage({
       <div className="overflow-hidden rounded-md border bg-card">
         <div className="divide-y">
           {performers.map((performer) => (
-            <div key={performer.id} className="grid gap-2 p-4 md:grid-cols-[1fr_auto]">
+            <div
+              key={performer.id}
+              className="grid gap-2 border-l-4 p-4 transition-colors hover:bg-muted/40 md:grid-cols-[1fr_auto]"
+              style={{ borderLeftColor: performer.colorCode ?? "transparent" }}
+            >
               <div>
                 <Link href={`/performers/${performer.id}`} className="font-medium text-primary underline">
                   {performer.name}
