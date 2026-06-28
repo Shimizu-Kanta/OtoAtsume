@@ -138,101 +138,119 @@ export function YouTubeMetadataFetcher() {
       ) : null}
 
       {state.status === "success" ? (
-        <div className="mt-4 rounded-md border border-secondary/50 bg-secondary/10 p-3 text-sm">
-          <p className="font-medium">YouTube動画情報を反映しました。</p>
+        <div className="mt-4 space-y-4">
+          <div className="rounded-md border border-secondary/50 bg-secondary/10 p-4">
+            <p className="text-sm font-medium">YouTube動画情報を反映しました。</p>
 
-          <div className="mt-3 grid gap-3 md:grid-cols-[160px_1fr]">
-            {state.metadata.thumbnailUrl ? (
-              <img
-                src={state.metadata.thumbnailUrl}
-                alt=""
-                className="aspect-video w-full rounded-md border object-cover"
-              />
-            ) : null}
+            <div className="mt-3 flex flex-col gap-4 sm:flex-row">
+              {state.metadata.thumbnailUrl ? (
+                <img
+                  src={state.metadata.thumbnailUrl}
+                  alt=""
+                  className="aspect-video w-full max-w-[240px] rounded-md border object-cover"
+                />
+              ) : null}
 
-            <div className="min-w-0 space-y-1">
-              <p className="truncate font-medium">{state.metadata.sourceTitle}</p>
-                {state.metadata.cache ? (
-                <p className="text-xs text-muted-foreground">
-                    取得元: {cacheLabel(state.metadata.cache)}
+              <div className="min-w-0 flex-1 space-y-1">
+                <p className="break-words font-medium">{state.metadata.sourceTitle}</p>
+                <p className="text-sm text-muted-foreground">
+                  {state.metadata.channelTitle} / {state.metadata.publishedDate}
                 </p>
-                ) : null}
-              <a
-                href={state.metadata.canonicalUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1 text-primary underline"
-              >
-                YouTubeで開く
-                <ExternalLink className="size-3" />
-              </a>
-            </div>
-            {state.suggestions.performers.length > 0 ? (
-            <div className="mt-4 rounded-md border bg-background p-3">
-                <p className="text-sm font-medium">活動者候補</p>
-                <div className="mt-3 space-y-2">
-                {state.suggestions.performers.map((performer) => (
-                    <div
-                    key={performer.id}
-                    className="flex flex-col gap-2 rounded-md border p-3 sm:flex-row sm:items-center sm:justify-between"
-                    >
-                    <div className="min-w-0">
-                        <p className="font-medium">{performer.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                        {performer.groupName ?? "所属なし"} / {performerReasonLabel(performer.reason)}から推定
-                        </p>
-                    </div>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => addPerformerToPicker(performer.id)}
-                    >
-                        既存活動者に追加
-                    </Button>
-                    </div>
-                ))}
-                </div>
-            </div>
-            ) : (
-            <p className="mt-4 text-sm text-muted-foreground">
-                活動者候補は見つかりませんでした。
-            </p>
-            )}
-            {state.suggestions.songs.length > 0 ? (
-            <div className="mt-4 rounded-md border bg-background p-3">
-                <p className="text-sm font-medium">楽曲候補</p>
-                <div className="mt-3 space-y-2">
-                {state.suggestions.songs.map((song) => (
-                    <div
-                    key={song.id}
-                    className="flex flex-col gap-2 rounded-md border p-3 sm:flex-row sm:items-center sm:justify-between"
-                    >
-                    <div className="min-w-0">
-                        <p className="font-medium">{song.title}</p>
-                        <p className="text-xs text-muted-foreground">
-                        {song.artistNames.length > 0 ? song.artistNames.join(", ") : "アーティスト未登録"} /{" "}
-                        {songReasonLabel(song.reason)}から推定
-                        </p>
-                    </div>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => applySongSuggestionToForm(song)}
-                    >
-                        楽曲情報に反映
-                    </Button>
-                    </div>
-                ))}
-                </div>
-            </div>
-            ) : (
-            <p className="mt-4 text-sm text-muted-foreground">
-                楽曲候補は見つかりませんでした。
-            </p>
-            )}
 
+                {state.metadata.cache ? (
+                  <p className="text-xs text-muted-foreground">
+                    取得元: {cacheLabel(state.metadata.cache)}
+                  </p>
+                ) : null}
+
+                <a
+                  href={state.metadata.canonicalUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 text-sm text-primary underline"
+                >
+                  YouTubeで開く
+                  <ExternalLink className="size-3" />
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div className="rounded-md border bg-background p-4">
+              <p className="text-sm font-medium">活動者候補</p>
+
+              {state.suggestions.performers.length > 0 ? (
+                <div className="mt-3 max-h-80 space-y-2 overflow-y-auto pr-1">
+                  {state.suggestions.performers.map((performer) => (
+                    <div
+                      key={performer.id}
+                      className="flex flex-col gap-3 rounded-md border p-3 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="break-words font-medium">{performer.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {performer.groupName ?? "所属なし"} / {performerReasonLabel(performer.reason)}から推定
+                        </p>
+                      </div>
+
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="shrink-0"
+                        onClick={() => addPerformerToPicker(performer.id)}
+                      >
+                        既存活動者に追加
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-3 text-sm text-muted-foreground">
+                  活動者候補は見つかりませんでした。
+                </p>
+              )}
+            </div>
+
+            <div className="rounded-md border bg-background p-4">
+              <p className="text-sm font-medium">楽曲候補</p>
+
+              {state.suggestions.songs.length > 0 ? (
+                <div className="mt-3 max-h-80 space-y-2 overflow-y-auto pr-1">
+                  {state.suggestions.songs.map((song) => (
+                    <div
+                      key={song.id}
+                      className="flex flex-col gap-3 rounded-md border p-3 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="break-words font-medium">{song.title}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {song.artistNames.length > 0
+                            ? song.artistNames.join(", ")
+                            : "アーティスト未登録"}{" "}
+                          / {songReasonLabel(song.reason)}から推定
+                        </p>
+                      </div>
+
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="shrink-0"
+                        onClick={() => applySongSuggestionToForm(song)}
+                      >
+                        楽曲情報に反映
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-3 text-sm text-muted-foreground">
+                  楽曲候補は見つかりませんでした。
+                </p>
+              )}
+            </div>
           </div>
         </div>
       ) : null}
