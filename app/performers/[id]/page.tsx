@@ -121,24 +121,44 @@ export default async function PerformerDetailPage({ params }: { params: Promise<
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold">歌唱履歴</h2>
+        <div className="flex items-center gap-2">
+          {performer.colorCode ? (
+            <span
+              aria-hidden="true"
+              className="size-3 rounded-full border"
+              style={{ backgroundColor: performer.colorCode }}
+            />
+          ) : null}
+          <h2 className="text-lg font-semibold">歌唱履歴</h2>
+        </div>
+
         <div className="overflow-hidden rounded-md border bg-card">
-          <div className="divide-y">
-            {performer.covers.map(({ cover }) => (
-              <div key={cover.id} className="p-4">
-                <Link href={`/covers/${cover.id}`} className="font-medium text-primary underline">
-                  {cover.song.title}
-                </Link>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {cover.song.artists.map(({ artist }) => artist.name).join(", ")} /{" "}
-                  {formatDate(cover.performedAt)}
-                </p>
-                <Badge variant="muted" className="mt-2">
-                  {coverTypeLabel(cover.coverType)}
-                </Badge>
-              </div>
-            ))}
-          </div>
+          {performer.covers.length > 0 ? (
+            <div className="divide-y">
+              {performer.covers.map(({ cover }) => (
+                <div
+                  key={cover.id}
+                  className="border-l-4 p-4 transition-colors hover:bg-muted/40"
+                  style={{ borderLeftColor: performer.colorCode ?? "transparent" }}
+                >
+                  <Link href={`/covers/${cover.id}`} className="font-medium text-primary underline">
+                    {cover.song.title}
+                  </Link>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {cover.song.artists.map(({ artist }) => artist.name).join(", ")} /{" "}
+                    {formatDate(cover.performedAt)}
+                  </p>
+                  <Badge variant="muted" className="mt-2">
+                    {coverTypeLabel(cover.coverType)}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="p-4 text-sm text-muted-foreground">
+              この活動者の歌唱履歴はまだ登録されていません。
+            </p>
+          )}
         </div>
       </section>
     </div>
