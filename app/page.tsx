@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Database, FilePlus2, Search, Sparkles, UserPlus } from "lucide-react";
 
 import { CoverCard } from "@/components/covers/cover-card";
+import { CoverCarousel } from "@/components/home/cover-carousel";
 import { PageHeading } from "@/components/page-heading";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -160,9 +161,13 @@ function AnniversaryCoverSection({ groups }: { groups: AnniversaryCoverGroup[] }
                 </div>
               </div>
 
-              <div className="space-y-3 p-4">
+              <div className="p-4">
                 {group.covers.length > 0 ? (
-                  group.covers.map((cover) => <CoverCard key={cover.id} cover={cover} />)
+                  <CoverCarousel>
+                    {group.covers.map((cover) => (
+                      <CoverCard key={cover.id} cover={cover} />
+                    ))}
+                  </CoverCarousel>
                 ) : (
                   <p className="rounded-md border bg-muted/30 p-4 text-sm text-muted-foreground">
                     この活動者のカバー記録はまだ登録されていません。
@@ -209,11 +214,11 @@ function HomeCoverSection({
       </div>
 
       {covers.length > 0 ? (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <CoverCarousel>
           {covers.map((cover) => (
             <CoverCard key={cover.id} cover={cover} />
           ))}
-        </div>
+        </CoverCarousel>
       ) : (
         <div className="rounded-md border bg-card p-4 text-sm text-muted-foreground">
           表示できるカバー記録がありません。
