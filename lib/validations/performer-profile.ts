@@ -105,7 +105,7 @@ export const debutDateSchema = z.preprocess(
 );
 
 export const birthdaySchema = z.preprocess(
-  parseDateInput,
+  parseBirthdayInput,
   z.date({ invalid_type_error: "誕生日は MM-DD 形式で入力してください。" }).optional()
 );
 
