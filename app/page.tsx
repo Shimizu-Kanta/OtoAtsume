@@ -1,13 +1,19 @@
 import Link from "next/link";
-import { Database, FilePlus2, Search, UserPlus } from "lucide-react";
+import { Database, FilePlus2, Search, Sparkles, UserPlus } from "lucide-react";
 
-import { CoverList } from "@/components/covers/cover-list";
+import { CoverCard } from "@/components/covers/cover-card";
 import { PageHeading } from "@/components/page-heading";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { getLatestCovers } from "@/lib/data/covers";
+import {
+  getLatestCovers,
+  getRandomCovers,
+  getTodayAnniversaryCoverGroups,
+  type AnniversaryCoverGroup,
+  type CoverListItem
+} from "@/lib/data/covers";
 import { getPublicStats } from "@/lib/data/stats";
-import { cn } from "@/lib/utils";
+import { cn, formatDateInput } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +24,12 @@ export default async function HomePage({
 }) {
   const params = await searchParams;
   const applicationDone = params.application === "1";
-  const [latestCovers, stats] = await Promise.all([getLatestCovers(8), getPublicStats()]);
+  const [randomCovers, anniversaryCoverGroups, latestCovers, stats] = await Promise.all([
+    getRandomCovers(6),
+    getTodayAnniversaryCoverGroups(3),
+    getLatestCovers(6),
+    getPublicStats()
+  ]);
 
   return (
     <div className="space-y-8">
@@ -78,15 +89,136 @@ export default async function HomePage({
         </div>
       </section>
 
-      <section className="space-y-3">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="text-lg font-semibold">新着カバー記録</h2>
-          <Link href="/covers" className="text-sm text-primary underline">
-            すべて見る
-          </Link>
-        </div>
-        <CoverList covers={latestCovers} />
-      </section>
+      <AnniversaryCoverSection groups={anniversaryCoverGroups} />
+
+      <HomeCoverSection
+        title="ランダムカバー"
+        description="登録されているカバー記録からランダムに表示しています。"
+        covers={randomCovers}
+      />
+
+      <HomeCoverSection
+        title="新着カバー記録"
+        description="歌唱日が新しいカバー記録を表示しています。"
+        covers={latestCovers}
+        actionHref="/covers"
+        actionLabel="すべて見る"
+      />
     </div>
+  );
+}
+
+function AnniversaryCoverSection({ groups }: { groups: AnniversaryCoverGroup[] }) {
+  return (
+    <section className="space-y-3">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2">
+            <Sparkles className="size-5 text-primary" aria-hidden="true" />
+            <h2 className="text-lg font-semibold">アニバーサリーカバー</h2>
+          </div>
+          <p className="mt-1 text-sm text-muted-foreground">
+            今日がデビュー日の活動者のカバー記録を表示しています。
+          </p>
+        </div>
+      </div>
+
+      {groups.length > 0 ? (
+        <div className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">
+          {groups.map((group) => (
+            <section
+              key={group.performer.id}
+              className="overflow-hidden rounded-md border bg-card"
+              style={{
+                borderTopColor: group.performer.colorCode ?? undefined,
+                borderTopWidth: group.performer.colorCode ? 4 : undefined
+              }}
+            >
+              <div
+                className="border-b p-4"
+                style={{
+                  background: group.performer.colorCode
+                    ? `linear-gradient(135deg, ${group.performer.colorCode}1A, transparent 60%)`
+                    : undefined
+                }}
+              >
+                <div className="flex items-start gap-2">
+                  {group.performer.colorCode ? (
+                    <span
+                      aria-hidden="true"
+                      className="mt-1 size-3 rounded-full border"
+                      style={{ backgroundColor: group.performer.colorCode }}
+                    />
+                  ) : null}
+                  <div>
+                    <h3 className="font-semibold">{group.performer.name}のデビュー日です！</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {group.performer.group?.name ?? "所属グループなし"}
+                      {group.performer.debutDate ? ` / ${formatDateInput(group.performer.debutDate)}` : ""}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3 p-4">
+                {group.covers.length > 0 ? (
+                  group.covers.map((cover) => <CoverCard key={cover.id} cover={cover} />)
+                ) : (
+                  <p className="rounded-md border bg-muted/30 p-4 text-sm text-muted-foreground">
+                    この活動者のカバー記録はまだ登録されていません。
+                  </p>
+                )}
+              </div>
+            </section>
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-md border bg-card p-4 text-sm text-muted-foreground">
+          今日がデビュー日の活動者は見つかりませんでした。
+        </div>
+      )}
+    </section>
+  );
+}
+
+function HomeCoverSection({
+  title,
+  description,
+  covers,
+  actionHref,
+  actionLabel
+}: {
+  title: string;
+  description: string;
+  covers: CoverListItem[];
+  actionHref?: string;
+  actionLabel?: string;
+}) {
+  return (
+    <section className="space-y-3">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold">{title}</h2>
+          <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+        </div>
+        {actionHref && actionLabel ? (
+          <Link href={actionHref} className="text-sm text-primary underline">
+            {actionLabel}
+          </Link>
+        ) : null}
+      </div>
+
+      {covers.length > 0 ? (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {covers.map((cover) => (
+            <CoverCard key={cover.id} cover={cover} />
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-md border bg-card p-4 text-sm text-muted-foreground">
+          表示できるカバー記録がありません。
+        </div>
+      )}
+    </section>
   );
 }
