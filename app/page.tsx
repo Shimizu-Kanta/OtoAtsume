@@ -119,7 +119,7 @@ function AnniversaryCoverSection({ groups }: { groups: AnniversaryCoverGroup[] }
             <h2 className="text-lg font-semibold">アニバーサリーカバー</h2>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
-            今日がデビュー日の活動者のカバー記録を表示しています。
+            今日がデビュー記念日・誕生日の活動者のカバー記録を表示しています。
           </p>
         </div>
       </div>
@@ -152,11 +152,13 @@ function AnniversaryCoverSection({ groups }: { groups: AnniversaryCoverGroup[] }
                     />
                   ) : null}
                   <div>
-                    <h3 className="font-semibold">{group.performer.name}のデビュー日です！</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {group.performer.group?.name ?? "所属グループなし"}
-                      {group.performer.debutDate ? ` / ${formatDateInput(group.performer.debutDate)}` : ""}
-                    </p>
+                  <h3 className="font-semibold">
+                    {group.performer.name}の{anniversaryTypeLabel(group.anniversaryTypes)}です！
+                  </h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {group.performer.group?.name ?? "所属グループなし"}
+                    {anniversaryDateText(group)}
+                  </p>
                   </div>
                 </div>
               </div>
@@ -179,7 +181,7 @@ function AnniversaryCoverSection({ groups }: { groups: AnniversaryCoverGroup[] }
         </div>
       ) : (
         <div className="rounded-md border bg-card p-4 text-sm text-muted-foreground">
-          今日がデビュー日の活動者は見つかりませんでした。
+          今日がデビュー日の活動者・誕生日の活動者は見つかりませんでした。
         </div>
       )}
     </section>
@@ -226,4 +228,37 @@ function HomeCoverSection({
       )}
     </section>
   );
+}
+
+function anniversaryTypeLabel(types: AnniversaryCoverGroup["anniversaryTypes"]) {
+  if (types.includes("debut") && types.includes("birthday")) {
+    return "デビュー記念日・誕生日";
+  }
+
+  if (types.includes("birthday")) {
+    return "誕生日";
+  }
+
+  return "デビュー記念日";
+}
+
+function anniversaryDateText(group: AnniversaryCoverGroup) {
+  const parts: string[] = [];
+
+  if (group.anniversaryTypes.includes("debut") && group.performer.debutDate) {
+    parts.push(`デビュー日 ${formatDateInput(group.performer.debutDate)}`);
+  }
+
+  if (group.anniversaryTypes.includes("birthday") && group.performer.birthday) {
+    parts.push(`誕生日 ${formatBirthdayInput(group.performer.birthday)}`);
+  }
+
+  return parts.length > 0 ? ` / ${parts.join(" / ")}` : "";
+}
+
+function formatBirthdayInput(date: Date) {
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(date.getUTCDate()).padStart(2, "0");
+
+  return `${month}-${day}`;
 }

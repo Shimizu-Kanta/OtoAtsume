@@ -133,6 +133,19 @@ export default async function AdminPerformerEditPage({
             />
           </div>
           <div className="space-y-2">
+            <Label htmlFor="birthday">誕生日</Label>
+            <Input
+              id="birthday"
+              name="birthday"
+              type="text"
+              defaultValue={performer.birthday ? formatBirthdayInput(performer.birthday) : ""}
+              placeholder="05-01"
+            />
+            <p className="text-xs text-muted-foreground">
+              年は入力せず、MM-DD 形式で入力してください。保存時は自動的に 2000 年として扱います。
+            </p>
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="status">ステータス</Label>
             <Select id="status" name="status" defaultValue={performer.status}>
               <option value="APPROVED">公開</option>
@@ -208,4 +221,11 @@ export default async function AdminPerformerEditPage({
       </section>
     </div>
   );
+}
+
+function formatBirthdayInput(date: Date) {
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(date.getUTCDate()).padStart(2, "0");
+
+  return `${month}-${day}`;
 }

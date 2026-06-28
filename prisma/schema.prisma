@@ -35,6 +35,7 @@ model Performer {
   officialUrl String?
   colorCode   String?
   debutDate   DateTime?        @db.Date
+  birthday    DateTime?        @db.Date
   status      MasterDataStatus @default(APPROVED)
   aliases     PerformerAlias[]
   tags        PerformerTag[]
@@ -45,6 +46,7 @@ model Performer {
   @@index([name])
   @@index([groupId])
   @@index([debutDate])
+  @@index([birthday])
   @@map("performers")
 }
 

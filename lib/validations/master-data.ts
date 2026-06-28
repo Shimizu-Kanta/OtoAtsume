@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { normalizeNames } from "@/lib/utils";
 import { optionalText } from "@/lib/validations/shared";
-import { colorCodeSchema, debutDateSchema, tagNamesSchema } from "@/lib/validations/performer-profile";
+import { birthdaySchema, colorCodeSchema, debutDateSchema, tagNamesSchema } from "@/lib/validations/performer-profile";
 
 export const performerCreateSchema = z.object({
   name: z.string().trim().min(1).max(200),
@@ -15,6 +15,7 @@ export const performerCreateSchema = z.object({
   }),
   colorCode: colorCodeSchema,
   debutDate: debutDateSchema,
+  birthday: birthdaySchema,
   tags: tagNamesSchema,
   status: z.enum(["PENDING", "APPROVED", "HIDDEN"]).default("APPROVED")
 });
