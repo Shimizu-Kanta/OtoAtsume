@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { PerformerColorChip } from "@/components/performers/performer-color-chip";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { coverTypeLabel } from "@/lib/constants";
@@ -8,10 +9,6 @@ import { cn, formatDate, withTimestamp } from "@/lib/utils";
 
 function artistNames(cover: CoverListItem) {
   return cover.song.artists.map(({ artist }) => artist.name).join(", ");
-}
-
-function performerNames(cover: CoverListItem) {
-  return cover.performers.map(({ performer }) => performer.name).join(", ");
 }
 
 export function CoverList({ covers }: { covers: CoverListItem[] }) {
@@ -34,7 +31,16 @@ export function CoverList({ covers }: { covers: CoverListItem[] }) {
               </Link>
               <div className="mt-1 text-sm text-muted-foreground">{artistNames(cover)}</div>
               <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
-                <span>歌唱: {performerNames(cover)}</span>
+                <span className="text-muted-foreground">歌唱:</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {cover.performers.map(({ performer }) => (
+                    <PerformerColorChip
+                      key={performer.id}
+                      name={performer.name}
+                      colorCode={performer.colorCode}
+                    />
+                  ))}
+                </div>
                 <span className="text-muted-foreground">日付: {formatDate(cover.performedAt)}</span>
                 <Badge variant="muted">{coverTypeLabel(cover.coverType)}</Badge>
               </div>

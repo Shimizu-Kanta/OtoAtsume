@@ -19,10 +19,39 @@ export default async function PerformerDetailPage({ params }: { params: Promise<
 
   return (
     <div className="space-y-6">
-      <PageHeading
-        title={performer.name}
-        description={performer.group?.name ?? "所属グループなし"}
-      />
+      <section
+        className="overflow-hidden rounded-md border bg-card"
+        style={{
+          borderTopColor: performer.colorCode ?? undefined,
+          borderTopWidth: performer.colorCode ? 4 : undefined
+        }}
+      >
+        <div
+          className="p-5"
+          style={{
+            background: performer.colorCode
+              ? `linear-gradient(135deg, ${performer.colorCode}1A, transparent 55%)`
+              : undefined
+          }}
+        >
+          <PageHeading
+            title={performer.name}
+            description={performer.group?.name ?? "所属グループなし"}
+            actions={
+              performer.colorCode ? (
+                <span className="inline-flex items-center gap-2 rounded-sm border bg-background px-3 py-2 text-sm text-muted-foreground">
+                  <span
+                    aria-hidden="true"
+                    className="size-3 rounded-full border"
+                    style={{ backgroundColor: performer.colorCode }}
+                  />
+                  {performer.colorCode}
+                </span>
+              ) : null
+            }
+          />
+        </div>
+      </section>
 
       <section className="rounded-md border bg-card">
         <dl className="divide-y">

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Play } from "lucide-react";
 
+import { PerformerColorChip } from "@/components/performers/performer-color-chip";
 import { Badge } from "@/components/ui/badge";
 import { coverTypeLabel } from "@/lib/constants";
 import type { CoverListItem } from "@/lib/data/covers";
@@ -9,10 +10,6 @@ import { getYouTubeThumbnailUrl } from "@/lib/youtube";
 
 function artistNames(cover: CoverListItem) {
   return cover.song.artists.map(({ artist }) => artist.name).join(", ");
-}
-
-function performerNames(cover: CoverListItem) {
-  return cover.performers.map(({ performer }) => performer.name).join(", ");
 }
 
 export function CoverCard({ cover }: { cover: CoverListItem }) {
@@ -45,11 +42,19 @@ export function CoverCard({ cover }: { cover: CoverListItem }) {
           <p className="mt-1 truncate text-sm text-muted-foreground">{artistNames(cover)}</p>
         </div>
 
-        <div className="space-y-1 text-sm">
-          <p className="truncate">
-            <span className="text-muted-foreground">歌唱: </span>
-            {performerNames(cover)}
-          </p>
+        <div className="space-y-2 text-sm">
+          <div>
+            <p className="mb-1 text-muted-foreground">歌唱</p>
+            <div className="flex flex-wrap gap-1.5">
+              {cover.performers.map(({ performer }) => (
+                <PerformerColorChip
+                  key={performer.id}
+                  name={performer.name}
+                  colorCode={performer.colorCode}
+                />
+              ))}
+            </div>
+          </div>
           <p className="text-muted-foreground">日付: {formatDate(cover.performedAt)}</p>
         </div>
 
