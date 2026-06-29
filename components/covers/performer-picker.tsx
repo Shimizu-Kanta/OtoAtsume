@@ -36,6 +36,11 @@ export function PerformerPicker({
     });
   }, [performers, query]);
 
+  const selectedPerformers = useMemo(
+    () => performers.filter((performer) => selectedIds.has(performer.id)),
+    [performers, selectedIds]
+  );
+
   function toggle(id: string) {
     setSelectedIds((current) => {
       const next = new Set(current);
@@ -115,6 +120,37 @@ export function PerformerPicker({
           </div>
         )}
       </div>
+
+      <div className="rounded-md border bg-muted/30 p-3">
+        <p className="text-xs font-medium text-muted-foreground">選択中の活動者</p>
+
+        {selectedPerformers.length > 0 ? (
+          <div className="mt-2 flex flex-wrap gap-2">
+            {selectedPerformers.map((performer) => (
+              <button
+                key={performer.id}
+                type="button"
+                className="inline-flex items-center gap-2 rounded-full border bg-background px-3 py-1 text-sm hover:bg-muted"
+                onClick={() => toggle(performer.id)}
+                aria-label={`${performer.name}の選択を解除`}
+              >
+                <span className="font-medium">{performer.name}</span>
+                {performer.group ? (
+                  <span className="text-xs text-muted-foreground">{performer.group.name}</span>
+                ) : null}
+                <span aria-hidden="true" className="text-muted-foreground">
+                  ×
+                </span>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-2 text-sm text-muted-foreground">
+            活動者はまだ選択されていません。
+          </p>
+        )}
+      </div>
+
     </div>
   );
 }

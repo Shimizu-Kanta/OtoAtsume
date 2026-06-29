@@ -165,7 +165,7 @@ function AnniversaryCoverSection({ groups }: { groups: AnniversaryCoverGroup[] }
 
               <div className="p-4">
                 {group.covers.length > 0 ? (
-                  <CoverCarousel>
+                  <CoverCarousel itemLayout="single">
                     {group.covers.map((cover) => (
                       <CoverCard key={cover.id} cover={cover} />
                     ))}
