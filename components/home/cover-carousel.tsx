@@ -9,9 +9,10 @@ import { cn } from "@/lib/utils";
 type CoverCarouselProps = {
   children: ReactNode;
   className?: string;
+  itemLayout?: "responsive" | "single";
 };
 
-export function CoverCarousel({ children, className }: CoverCarouselProps) {
+export function CoverCarousel({ children, className, itemLayout = "responsive" }: CoverCarouselProps) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const items = Children.toArray(children);
 
@@ -33,6 +34,11 @@ export function CoverCarousel({ children, className }: CoverCarouselProps) {
   if (items.length === 0) {
     return null;
   }
+
+  const itemClassName =
+    itemLayout === "single"
+      ? "w-full shrink-0 snap-start"
+      : "w-[85%] shrink-0 snap-start sm:w-[calc((100%_-_1rem)/2)] xl:w-[calc((100%_-_2rem)/3)]";
 
   return (
     <div className={cn("space-y-3", className)}>
@@ -65,7 +71,7 @@ export function CoverCarousel({ children, className }: CoverCarouselProps) {
           {items.map((item, index) => (
             <div
               key={index}
-              className="w-[85%] shrink-0 snap-start sm:w-[calc((100%_-_1rem)/2)] xl:w-[calc((100%_-_2rem)/3)]"
+              className={itemClassName}
             >
               {item}
             </div>

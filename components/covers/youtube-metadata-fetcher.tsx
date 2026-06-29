@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ExternalLink, Wand2 } from "lucide-react";
+import { Check, ExternalLink, Wand2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
@@ -60,6 +60,7 @@ type FetchState =
 
 export function YouTubeMetadataFetcher() {
   const [state, setState] = useState<FetchState>({ status: "idle" });
+  const [addedPerformerIds, setAddedPerformerIds] = useState(() => new Set<string>());
 
   async function fetchMetadata() {
     const form = document.getElementById("cover-form");
@@ -76,6 +77,7 @@ export function YouTubeMetadataFetcher() {
       return;
     }
 
+    setAddedPerformerIds(new Set());
     setState({ status: "loading" });
 
     try {
@@ -110,6 +112,16 @@ export function YouTubeMetadataFetcher() {
         message: "YouTube動画情報の取得に失敗しました。"
       });
     }
+  }
+
+  function handleAddPerformer(performer: PerformerSuggestion) {
+    addPerformerToPicker(performer.id);
+
+    setAddedPerformerIds((current) => {
+      const next = new Set(current);
+      next.add(performer.id);
+      return next;
+    });
   }
 
   return (
@@ -182,29 +194,41 @@ export function YouTubeMetadataFetcher() {
 
               {state.suggestions.performers.length > 0 ? (
                 <div className="mt-3 max-h-80 space-y-2 overflow-y-auto pr-1">
-                  {state.suggestions.performers.map((performer) => (
-                    <div
-                      key={performer.id}
-                      className="flex flex-col gap-3 rounded-md border p-3 sm:flex-row sm:items-center sm:justify-between"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <p className="break-words font-medium">{performer.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {performer.groupName ?? "所属なし"} / {performerReasonLabel(performer.reason)}から推定
-                        </p>
-                      </div>
+                  {state.suggestions.performers.map((performer) => {
+                    const added = addedPerformerIds.has(performer.id);
 
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="shrink-0"
-                        onClick={() => addPerformerToPicker(performer.id)}
+                    return (
+                      <div
+                        key={performer.id}
+                        className="flex flex-col gap-3 rounded-md border p-3 sm:flex-row sm:items-center sm:justify-between"
                       >
-                        既存活動者に追加
-                      </Button>
-                    </div>
-                  ))}
+                        <div className="min-w-0 flex-1">
+                          <p className="break-words font-medium">{performer.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {performer.groupName ?? "所属なし"} / {performerReasonLabel(performer.reason)}から推定
+                          </p>
+                        </div>
+
+                        <Button
+                          type="button"
+                          variant={added ? "secondary" : "outline"}
+                          size="sm"
+                          className="shrink-0"
+                          disabled={added}
+                          onClick={() => handleAddPerformer(performer)}
+                        >
+                          {added ? (
+                            <>
+                              <Check className="size-4" />
+                              追加済み
+                            </>
+                          ) : (
+                            "既存活動者に追加"
+                          )}
+                        </Button>
+                      </div>
+                    );
+                  })}
                 </div>
               ) : (
                 <p className="mt-3 text-sm text-muted-foreground">
