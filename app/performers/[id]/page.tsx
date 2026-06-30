@@ -37,18 +37,6 @@ export default async function PerformerDetailPage({ params }: { params: Promise<
           <PageHeading
             title={performer.name}
             description={performer.group?.name ?? "所属グループなし"}
-            actions={
-              performer.colorCode ? (
-                <span className="inline-flex items-center gap-2 rounded-sm border bg-background px-3 py-2 text-sm text-muted-foreground">
-                  <span
-                    aria-hidden="true"
-                    className="size-3 rounded-full border"
-                    style={{ backgroundColor: performer.colorCode }}
-                  />
-                  {performer.colorCode}
-                </span>
-              ) : null
-            }
           />
         </div>
       </section>
