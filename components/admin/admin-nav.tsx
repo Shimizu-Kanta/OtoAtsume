@@ -2,6 +2,7 @@ import Link from "next/link";
 
 const adminNavItems = [
   { href: "/admin", label: "ダッシュボード" },
+  { href: "/admin/daily-reports", label: "日次レポート" },
   { href: "/admin/covers", label: "カバー記録" },
   { href: "/admin/reports", label: "通報" },
   { href: "/admin/performers?status=PENDING", label: "確認待ち活動者" },
