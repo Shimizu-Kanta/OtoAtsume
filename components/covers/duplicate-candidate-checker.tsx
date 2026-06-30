@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { AlertTriangle, Search } from "lucide-react";
 
@@ -28,19 +28,36 @@ type State =
   | { status: "found"; candidates: Candidate[] }
   | { status: "error"; message: string };
 
+type DuplicatePayload = {
+  performerIds: string[];
+  performerNames: FormDataEntryValue | null;
+  songTitle: FormDataEntryValue | null;
+  performedAt: FormDataEntryValue | null;
+  sourceUrl: FormDataEntryValue | null;
+  timestampSeconds: FormDataEntryValue | null;
+};
+
+type CheckDuplicateOptions = {
+  silent?: boolean;
+};
+
+const DUPLICATE_CHECK_EVENT = "otoatsume:check-duplicates";
+
 export function DuplicateCandidateChecker() {
   const [state, setState] = useState<State>({ status: "idle" });
 
-  async function checkDuplicates() {
+  const checkDuplicates = useCallback(async (options: CheckDuplicateOptions = {}) => {
     const form = document.getElementById("cover-form");
 
     if (!(form instanceof HTMLFormElement)) {
-      setState({ status: "error", message: "フォームを確認できませんでした。" });
+      if (!options.silent) {
+        setState({ status: "error", message: "フォームを確認できませんでした。" });
+      }
       return;
     }
 
     const formData = new FormData(form);
-    const payload = {
+    const payload: DuplicatePayload = {
       performerIds: formData.getAll("performerIds").map(String).filter(Boolean),
       performerNames: formData.get("performerNames"),
       songTitle: formData.get("songTitle"),
@@ -49,29 +66,60 @@ export function DuplicateCandidateChecker() {
       timestampSeconds: formData.get("timestampSeconds")
     };
 
-    setState({ status: "loading" });
-
-    const response = await fetch("/api/covers/duplicate-candidates", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-
-    if (!response.ok) {
-      setState({
-        status: "error",
-        message: "重複候補の確認に必要な項目を入力してください。"
-      });
+    if (!isDuplicatePayloadReady(payload)) {
+      if (!options.silent) {
+        setState({
+          status: "error",
+          message: "重複候補の確認に必要な項目を入力してください。"
+        });
+      }
       return;
     }
 
-    const data = (await response.json()) as { covers: Candidate[] };
-    setState(
-      data.covers.length > 0
-        ? { status: "found", candidates: data.covers }
-        : { status: "empty" }
-    );
-  }
+    setState({ status: "loading" });
+
+    try {
+      const response = await fetch("/api/covers/duplicate-candidates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        setState({
+          status: "error",
+          message: "重複候補の確認に必要な項目を入力してください。"
+        });
+        return;
+      }
+
+      const data = (await response.json()) as { covers: Candidate[] };
+
+      setState(
+        data.covers.length > 0
+          ? { status: "found", candidates: data.covers }
+          : { status: "empty" }
+      );
+    } catch (error) {
+      console.error("Duplicate candidate check failed", error);
+      setState({
+        status: "error",
+        message: "重複候補の確認に失敗しました。"
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    function handleAutoCheck() {
+      void checkDuplicates({ silent: true });
+    }
+
+    window.addEventListener(DUPLICATE_CHECK_EVENT, handleAutoCheck);
+
+    return () => {
+      window.removeEventListener(DUPLICATE_CHECK_EVENT, handleAutoCheck);
+    };
+  }, [checkDuplicates]);
 
   return (
     <div className="rounded-md border bg-background p-4">
@@ -82,7 +130,12 @@ export function DuplicateCandidateChecker() {
             登録前に、同じ情報元・楽曲・活動者・歌唱日の記録がないか確認できます。
           </p>
         </div>
-        <Button type="button" variant="outline" onClick={checkDuplicates} disabled={state.status === "loading"}>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => void checkDuplicates()}
+          disabled={state.status === "loading"}
+        >
           <Search className="size-4" />
           {state.status === "loading" ? "確認中" : "確認する"}
         </Button>
@@ -119,5 +172,21 @@ export function DuplicateCandidateChecker() {
         </div>
       ) : null}
     </div>
+  );
+}
+
+function formText(value: FormDataEntryValue | null) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function isDuplicatePayloadReady(payload: DuplicatePayload) {
+  const hasPerformer =
+    payload.performerIds.length > 0 || formText(payload.performerNames).length > 0;
+
+  return (
+    hasPerformer &&
+    formText(payload.songTitle).length > 0 &&
+    formText(payload.performedAt).length > 0 &&
+    formText(payload.sourceUrl).length > 0
   );
 }
