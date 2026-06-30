@@ -16,13 +16,23 @@ export function CoverCard({ cover }: { cover: CoverListItem }) {
   const thumbnailUrl = getYouTubeThumbnailUrl(cover.sourceUrl);
   const title = cover.song.title;
   const sourceLabel = cover.sourceTitle ?? cover.sourceUrl;
+  const accentColor = cover.performers.find(({ performer }) => performer.colorCode)?.performer.colorCode;
 
   return (
     <Link
       href={`/covers/${cover.id}`}
-      className="group flex h-full min-w-0 flex-col overflow-hidden rounded-md border bg-card transition-colors hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="group flex h-full min-w-0 flex-col overflow-hidden rounded-md border border-t-4 bg-card transition-colors hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      style={{
+        borderTopColor: accentColor ?? "transparent",
+        backgroundImage: accentColor ? `linear-gradient(135deg, ${accentColor}14, transparent 42%)` : undefined
+      }}
     >
-      <div className="aspect-video w-full overflow-hidden bg-muted">
+      <div
+        className="aspect-video w-full overflow-hidden bg-muted"
+        style={{
+          backgroundImage: accentColor ? `linear-gradient(135deg, ${accentColor}24, transparent 62%)` : undefined
+        }}
+      >
         {thumbnailUrl ? (
           <img
             src={thumbnailUrl}
