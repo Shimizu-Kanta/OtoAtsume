@@ -145,3 +145,12 @@ function getUtcRangeForJstDate(dateKey: string) {
     end
   };
 }
+
+export async function listDailySiteReports(limit = 30) {
+  return db.dailySiteReport.findMany({
+    orderBy: {
+      date: "desc"
+    },
+    take: limit
+  });
+}
