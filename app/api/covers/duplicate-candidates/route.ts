@@ -28,6 +28,9 @@ export async function POST(request: Request) {
     const covers = await findPotentialDuplicateCoversForInput(parsed.data);
     return NextResponse.json({ covers });
   } catch (error) {
-    return serverError(error);
+    return serverError(error, {
+      type: "duplicate_check_error",
+      path: "/api/covers/duplicate-candidates"
+    });
   }
 }

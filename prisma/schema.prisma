@@ -221,6 +221,44 @@ model YouTubeVideoMetadataCache {
   @@map("youtube_video_metadata_cache")
 }
 
+model SiteAccessLog {
+  id        String   @id @default(uuid())
+  path      String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([path])
+  @@map("site_access_logs")
+}
+
+model AppErrorLog {
+  id        String   @id @default(uuid())
+  type      String
+  message   String?
+  path      String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([type])
+  @@map("app_error_logs")
+}
+
+model DailySiteReport {
+  id                    String   @id @default(uuid())
+  date                  DateTime @unique @db.Date
+  accessCount           Int
+  addedCoverCount       Int
+  addedSongCount        Int
+  pendingReportCount    Int
+  pendingPerformerCount Int
+  errorCounts           Json
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([date])
+  @@map("daily_site_reports")
+}
+
 enum AdminRole {
   ADMIN
 }
