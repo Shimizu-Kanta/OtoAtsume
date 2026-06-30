@@ -16,6 +16,7 @@ export async function createPerformerAction(formData: FormData) {
     officialUrl: formData.get("officialUrl"),
     colorCode: formData.get("colorCode"),
     debutDate: formData.get("debutDate"),
+    birthday: formData.get("birthday"),
     tags: formData.get("tags"),
     status: formData.get("status") || "APPROVED"
   });

@@ -122,6 +122,13 @@ export default async function AdminPerformersPage({
             <Label htmlFor="debutDate">デビュー日</Label>
             <Input id="debutDate" name="debutDate" type="date" />
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="birthday">誕生日</Label>
+            <Input id="birthday" name="birthday" type="text" placeholder="06-28" />
+            <p className="text-xs text-muted-foreground">
+              MM-DD 形式で入力してください。
+            </p>
+          </div>
           <div className="space-y-2 md:col-span-2">
             <Label htmlFor="tags">タグ</Label>
             <Input id="tags" name="tags" placeholder="Vsinger;歌枠;オリ曲あり" />
@@ -167,6 +174,11 @@ export default async function AdminPerformersPage({
                   {performer.debutDate ? (
                     <span className="text-xs text-muted-foreground">
                       デビュー日: {performer.debutDate.toISOString().slice(0, 10)}
+                    </span>
+                  ) : null}
+                  {performer.birthday ? (
+                    <span className="text-xs text-muted-foreground">
+                      誕生日: {formatBirthdayInput(performer.birthday)}
                     </span>
                   ) : null}
                   {performer.tags.map(({ tag }) => (
@@ -236,4 +248,11 @@ function statusLabel(status: MasterDataStatus) {
   }
 
   return status;
+}
+
+function formatBirthdayInput(date: Date) {
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(date.getUTCDate()).padStart(2, "0");
+
+  return `${month}-${day}`;
 }
