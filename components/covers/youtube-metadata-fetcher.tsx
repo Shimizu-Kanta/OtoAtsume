@@ -107,6 +107,7 @@ export function YouTubeMetadataFetcher() {
         metadata: data.metadata, 
         suggestions: data.suggestions 
     });
+    requestDuplicateCheck();
     } catch (error) {
       console.error("YouTube metadata fetcher failed", error);
       setState({
@@ -129,6 +130,7 @@ export function YouTubeMetadataFetcher() {
   function handleApplySongSuggestion(song: SongSuggestion) {
     applySongSuggestionToForm(song);
     setAppliedSongSuggestionId(song.id);
+    requestDuplicateCheck();
   }
 
   return (
@@ -408,4 +410,8 @@ function cacheLabel(cache: NonNullable<YouTubeMetadata["cache"]>) {
   }
 
   return cache;
+}
+
+function requestDuplicateCheck() {
+  window.dispatchEvent(new CustomEvent("otoatsume:check-duplicates"));
 }

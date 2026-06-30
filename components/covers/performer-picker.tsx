@@ -78,6 +78,10 @@ export function PerformerPicker({
     };
   }, []);
 
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("otoatsume:check-duplicates"));
+  }, [selectedIds]);
+
   return (
     <div className="space-y-3">
       {[...selectedIds].map((id) => (
