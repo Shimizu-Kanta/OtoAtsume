@@ -78,6 +78,12 @@ export default async function PerformerDetailPage({ params }: { params: Promise<
             </dd>
           </div>
           <div className="grid gap-1 p-4 md:grid-cols-4">
+            <dt className="text-sm text-muted-foreground">誕生日</dt>
+            <dd className="md:col-span-3">
+              {performer.birthday ? formatBirthdayInput(performer.birthday) : "-"}
+            </dd>
+          </div>
+          <div className="grid gap-1 p-4 md:grid-cols-4">
             <dt className="text-sm text-muted-foreground">タグ</dt>
             <dd className="md:col-span-3">
               {performer.tags.length > 0 ? (
@@ -163,4 +169,11 @@ export default async function PerformerDetailPage({ params }: { params: Promise<
       </section>
     </div>
   );
+}
+
+function formatBirthdayInput(date: Date) {
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(date.getUTCDate()).padStart(2, "0");
+
+  return `${month}-${day}`;
 }
