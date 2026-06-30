@@ -61,6 +61,7 @@ type FetchState =
 export function YouTubeMetadataFetcher() {
   const [state, setState] = useState<FetchState>({ status: "idle" });
   const [addedPerformerIds, setAddedPerformerIds] = useState(() => new Set<string>());
+  const [appliedSongSuggestionId, setAppliedSongSuggestionId] = useState<string | null>(null);
 
   async function fetchMetadata() {
     const form = document.getElementById("cover-form");
@@ -78,6 +79,7 @@ export function YouTubeMetadataFetcher() {
     }
 
     setAddedPerformerIds(new Set());
+    setAppliedSongSuggestionId(null);
     setState({ status: "loading" });
 
     try {
@@ -122,6 +124,11 @@ export function YouTubeMetadataFetcher() {
       next.add(performer.id);
       return next;
     });
+  }
+
+  function handleApplySongSuggestion(song: SongSuggestion) {
+    applySongSuggestionToForm(song);
+    setAppliedSongSuggestionId(song.id);
   }
 
   return (
@@ -242,32 +249,44 @@ export function YouTubeMetadataFetcher() {
 
               {state.suggestions.songs.length > 0 ? (
                 <div className="mt-3 max-h-80 space-y-2 overflow-y-auto pr-1">
-                  {state.suggestions.songs.map((song) => (
-                    <div
-                      key={song.id}
-                      className="flex flex-col gap-3 rounded-md border p-3 sm:flex-row sm:items-center sm:justify-between"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <p className="break-words font-medium">{song.title}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {song.artistNames.length > 0
-                            ? song.artistNames.join(", ")
-                            : "アーティスト未登録"}{" "}
-                          / {songReasonLabel(song.reason)}から推定
-                        </p>
-                      </div>
+                  {state.suggestions.songs.map((song) => {
+                    const applied = appliedSongSuggestionId === song.id;
 
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="shrink-0"
-                        onClick={() => applySongSuggestionToForm(song)}
+                    return (
+                      <div
+                        key={song.id}
+                        className="flex flex-col gap-3 rounded-md border p-3 sm:flex-row sm:items-center sm:justify-between"
                       >
-                        楽曲情報に反映
-                      </Button>
-                    </div>
-                  ))}
+                        <div className="min-w-0 flex-1">
+                          <p className="break-words font-medium">{song.title}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {song.artistNames.length > 0
+                              ? song.artistNames.join(", ")
+                              : "アーティスト未登録"}{" "}
+                            / {songReasonLabel(song.reason)}から推定
+                          </p>
+                        </div>
+
+                        <Button
+                          type="button"
+                          variant={applied ? "secondary" : "outline"}
+                          size="sm"
+                          className="shrink-0"
+                          disabled={applied}
+                          onClick={() => handleApplySongSuggestion(song)}
+                        >
+                          {applied ? (
+                            <>
+                              <Check className="size-4" />
+                              反映済み
+                            </>
+                          ) : (
+                            "楽曲情報に反映"
+                          )}
+                        </Button>
+                      </div>
+                    );
+                  })}
                 </div>
               ) : (
                 <p className="mt-3 text-sm text-muted-foreground">
