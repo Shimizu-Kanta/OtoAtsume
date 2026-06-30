@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { PageHeading } from "@/components/page-heading";
+import { PerformerColorChip } from "@/components/performers/performer-color-chip";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { coverTypeLabel } from "@/lib/constants";
@@ -27,6 +28,7 @@ export default async function CoverDetailPage({
 
   const artists = cover.song.artists.map(({ artist }) => artist.name).join(", ");
   const performers = cover.performers.map(({ performer }) => performer);
+  const accentColor = performers.find((performer) => performer.colorCode)?.colorCode;
   const created = query.created === "1";
   const reported = query.reported === "1";
   const thumbnailUrl = getYouTubeThumbnailUrl(cover.sourceUrl);
@@ -59,18 +61,27 @@ export default async function CoverDetailPage({
         </div>
       ) : null}
 
-      <section className="rounded-md border bg-card">
+      <section
+        className="overflow-hidden rounded-md border border-t-4 bg-card"
+        style={{
+          borderTopColor: accentColor ?? "transparent",
+          backgroundImage: accentColor ? `linear-gradient(135deg, ${accentColor}10, transparent 38%)` : undefined
+        }}
+      >
         {thumbnailUrl ? (
           <a
             href={withTimestamp(cover.sourceUrl, cover.timestampSeconds)}
             target="_blank"
             rel="noreferrer"
             className="block border-b bg-muted"
+            style={{
+              backgroundImage: accentColor ? `linear-gradient(135deg, ${accentColor}24, transparent 58%)` : undefined
+            }}
           >
             <img
               src={thumbnailUrl}
               alt={`${cover.song.title} のサムネイル`}
-              className="aspect-video max-h-[420px] w-full object-cover"
+              className="aspect-video max-h-[420px] w-full object-contain p-2 sm:p-4"
             />
           </a>
         ) : null}
@@ -83,10 +94,12 @@ export default async function CoverDetailPage({
                   <Link
                     key={performer.id}
                     href={`/performers/${performer.id}`}
-                    className="text-primary underline"
+                    className="inline-flex max-w-full underline-offset-4 hover:underline"
                   >
-                    {performer.name}
-                    {performer.group ? ` / ${performer.group.name}` : ""}
+                    <PerformerColorChip
+                      name={`${performer.name}${performer.group ? ` / ${performer.group.name}` : ""}`}
+                      colorCode={performer.colorCode}
+                    />
                   </Link>
                 ))}
               </div>
