@@ -6,7 +6,7 @@ import { PageHeading } from "@/components/page-heading";
 
 export const metadata: Metadata = {
   title: "問い合わせ",
-  description: "うたあつめへの問い合わせ、修正依頼、削除依頼の案内"
+  description: "うたあつめへの問い合わせ、不具合報告、要望の案内"
 };
 
 const issueUrl = "https://github.com/Shimizu-Kanta/OtoAtsume/issues";
@@ -16,14 +16,14 @@ export default function ContactPage() {
     <div className="mx-auto max-w-4xl space-y-6">
       <PageHeading
         title="問い合わせ"
-        description="掲載情報の修正・削除依頼、不具合報告、運営への連絡はこちらを確認してください。"
+        description="サイト全体の不具合報告、機能要望、運営への連絡はこちらを確認してください。"
       />
 
       <section className="space-y-3 rounded-md border bg-card p-5">
-        <h2 className="text-lg font-semibold">カバー記録の誤り・問題を報告する</h2>
+        <h2 className="text-lg font-semibold">カバー記録の誤り・問題について</h2>
         <p className="text-sm leading-7 text-muted-foreground">
-          既に登録されているカバー記録に誤り、重複、リンク切れ、非公開情報の掲載などがある場合は、対象のカバー記録詳細ページにある通報機能から連絡してください。
-          対象データを特定しやすいため、通常はこちらの方法を推奨します。
+          既に登録されているカバー記録に誤り、重複、リンク切れ、非公開情報の掲載などがある場合は、対象のカバー記録詳細ページにある通報ボタンから連絡してください。
+          対象データを特定しやすいため、記録ごとの問題は通報ボタンの利用を推奨します。
         </p>
         <Link href="/covers" className="inline-flex text-sm text-primary underline">
           カバー記録を探す
@@ -31,7 +31,7 @@ export default function ContactPage() {
       </section>
 
       <section className="space-y-3 rounded-md border bg-card p-5">
-        <h2 className="text-lg font-semibold">活動者の追加・修正を依頼する</h2>
+        <h2 className="text-lg font-semibold">活動者を追加したい場合</h2>
         <p className="text-sm leading-7 text-muted-foreground">
           活動者が登録されていない場合は、活動者申請フォームから申請できます。活動者名、公式URL、所属グループなど、確認できる公開情報を入力してください。
         </p>
@@ -65,16 +65,16 @@ export default function ContactPage() {
         <h2 className="text-lg font-semibold">問い合わせ時に書いてほしい内容</h2>
         <ul className="list-disc space-y-2 pl-5 text-sm leading-7 text-muted-foreground">
           <li>対象ページのURL</li>
-          <li>修正・削除してほしい内容</li>
-          <li>正しい情報を確認できる公式サイト、公式SNS、動画、ニュース記事などのURL</li>
+          <li>困っている内容、確認したい内容、または要望</li>
           <li>不具合の場合は、発生した画面、操作手順、利用しているブラウザ</li>
+          <li>必要に応じて、内容を確認できる公式サイト、公式SNS、動画、ニュース記事などのURL</li>
         </ul>
       </section>
 
       <section className="space-y-3 rounded-md border bg-card p-5">
         <h2 className="text-lg font-semibold">対応について</h2>
         <p className="text-sm leading-7 text-muted-foreground">
-          連絡内容を確認したうえで、必要に応じて修正、非表示、削除、または今後の改善として検討します。すべての問い合わせへの個別返信や対応を保証するものではありません。
+          連絡内容を確認したうえで、必要に応じて対応、または今後の改善として検討します。すべての問い合わせへの個別返信や対応を保証するものではありません。
         </p>
       </section>
     </div>
