@@ -9,7 +9,8 @@ export const metadata: Metadata = {
   description: "おとあつめへの問い合わせ、不具合報告、要望の案内"
 };
 
-const issueUrl = "https://github.com/Shimizu-Kanta/OtoAtsume/issues";
+const contactFormUrl =
+  "https://docs.google.com/forms/d/e/1FAIpQLSe7WTPSDoUO9zvVuwFFftXTW0ZWiG4k-2ow9bcnKmTx4BW0gw/viewform";
 
 export default function ContactPage() {
   return (
@@ -44,19 +45,19 @@ export default function ContactPage() {
         <h2 className="text-lg font-semibold">不具合・要望・その他の問い合わせ</h2>
         <div className="space-y-3 text-sm leading-7 text-muted-foreground">
           <p>
-            サイト全体の不具合、表示崩れ、機能要望、利用規約・プライバシーポリシーに関する連絡は、GitHub Issues から送信してください。
+            サイト全体の不具合、表示崩れ、機能要望、利用規約・プライバシーポリシーに関する連絡は、Googleフォームから送信してください。
           </p>
           <p>
-            GitHub Issues は公開されるため、メールアドレス、電話番号、住所、氏名などの個人情報や、非公開情報は書き込まないでください。
+            フォームは外部ページで開きます。個人情報、非公開情報、メンバー限定配信や購入者限定コンテンツの具体的な内容は入力しないでください。
           </p>
         </div>
         <a
-          href={issueUrl}
+          href={contactFormUrl}
           target="_blank"
           rel="noreferrer"
           className="inline-flex items-center gap-1 text-sm text-primary underline"
         >
-          GitHub Issues を開く
+          問い合わせフォームを開く
           <ExternalLink className="size-3" />
         </a>
       </section>
@@ -68,6 +69,7 @@ export default function ContactPage() {
           <li>困っている内容、確認したい内容、または要望</li>
           <li>不具合の場合は、発生した画面、操作手順、利用しているブラウザ</li>
           <li>必要に応じて、内容を確認できる公式サイト、公式SNS、動画、ニュース記事などのURL</li>
+          <li>返信が必要な場合は、フォーム内の返信先メールアドレス欄</li>
         </ul>
       </section>
 
