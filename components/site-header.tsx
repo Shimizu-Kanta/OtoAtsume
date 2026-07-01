@@ -13,7 +13,7 @@ export function SiteHeader() {
       <div className="container-page flex min-h-16 flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <Link href="/" className="text-lg font-semibold tracking-normal">
-            うたあつめ
+            おとあつめ
           </Link>
           <span className="hidden rounded-sm bg-muted px-2 py-1 text-xs text-muted-foreground sm:inline-flex">
             歌唱記録DB

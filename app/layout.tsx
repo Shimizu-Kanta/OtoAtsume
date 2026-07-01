@@ -7,10 +7,10 @@ import { AccessLogger } from "@/components/telemetry/access-logger";
 
 export const metadata: Metadata = {
   title: {
-    default: "うたあつめ",
-    template: "%s | うたあつめ"
+    default: "おとあつめ",
+    template: "%s | おとあつめ"
   },
-  description: "歌ってみた、歌枠、ライブ等の歌唱記録を集めるデータベース"
+  description: "歌唱記録を集めるデータベース"
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

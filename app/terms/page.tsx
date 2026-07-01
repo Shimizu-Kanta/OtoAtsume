@@ -5,7 +5,7 @@ import { PageHeading } from "@/components/page-heading";
 
 export const metadata: Metadata = {
   title: "利用規約",
-  description: "うたあつめの利用規約"
+  description: "おとあつめの利用規約"
 };
 
 const updatedAt = "2026年7月2日";
@@ -15,13 +15,13 @@ export default function TermsPage() {
     <div className="mx-auto max-w-4xl space-y-6">
       <PageHeading
         title="利用規約"
-        description="うたあつめを利用する前に確認していただきたいルールです。"
+        description="おとあつめを利用する前に確認していただきたいルールです。"
       />
 
       <div className="rounded-md border bg-card p-5 text-sm leading-7 text-muted-foreground">
         <p>最終更新日: {updatedAt}</p>
         <p className="mt-3">
-          うたあつめは、VTuber、配信者、歌い手などの歌ってみた動画・歌枠・ライブ歌唱記録を登録・閲覧するためのデータベースサービスです。
+          おとあつめは、VTuber、配信者、歌い手などの歌ってみた動画・歌枠・ライブ歌唱記録を登録・閲覧するためのデータベースサービスです。
           本サービスを利用する場合、本規約に同意したものとみなします。
         </p>
       </div>
