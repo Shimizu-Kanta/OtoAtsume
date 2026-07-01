@@ -35,7 +35,7 @@ export default async function HomePage({
   return (
     <div className="space-y-8">
       <PageHeading
-        title="うたあつめ"
+        title="おとあつめ"
         description="VTuber、配信者、歌い手などの歌ってみた動画・歌枠・ライブ歌唱記録を集めるデータベースです。一般ユーザー登録やプロフィール機能はありません。"
         actions={
           <>
