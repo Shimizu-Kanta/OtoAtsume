@@ -35,7 +35,7 @@ function formatDailyReportMessage(report: DailySiteReportSummary) {
       : "- なし";
 
   return [
-    "📊 **うたあつめ 日次レポート**",
+    "📊 **おとあつめ 日次レポート**",
     `対象日: ${report.date}`,
     "",
     `一日のアクセス数: ${report.accessCount}`,
