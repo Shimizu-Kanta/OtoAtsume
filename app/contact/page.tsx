@@ -6,7 +6,7 @@ import { PageHeading } from "@/components/page-heading";
 
 export const metadata: Metadata = {
   title: "問い合わせ",
-  description: "うたあつめへの問い合わせ、不具合報告、要望の案内"
+  description: "おとあつめへの問い合わせ、不具合報告、要望の案内"
 };
 
 const issueUrl = "https://github.com/Shimizu-Kanta/OtoAtsume/issues";
