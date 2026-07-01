@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import "./globals.css";
+import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { AccessLogger } from "@/components/telemetry/access-logger";
 
@@ -19,6 +20,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <AccessLogger />
         <SiteHeader />
         <main className="container-page py-8">{children}</main>
+        <SiteFooter />
       </body>
     </html>
   );
