@@ -197,7 +197,7 @@ GitHub Actions では Cloud SQL Auth Proxy を起動し、`MIGRATION_DATABASE_UR
 - `/covers/:id/report` 通報
 - `/performers` 活動者一覧
 - `/songs` 楽曲一覧
-- `/performer-applications/new` 活動者申請
+- `/performer-applications/new` 活動者申請(非公開)
 
 管理者向け画面:
 

@@ -32,16 +32,6 @@ export default function ContactPage() {
       </section>
 
       <section className="space-y-3 rounded-md border bg-card p-5">
-        <h2 className="text-lg font-semibold">活動者を追加したい場合</h2>
-        <p className="text-sm leading-7 text-muted-foreground">
-          活動者が登録されていない場合は、活動者申請フォームから申請できます。活動者名、公式URL、所属グループなど、確認できる公開情報を入力してください。
-        </p>
-        <Link href="/performer-applications/new" className="inline-flex text-sm text-primary underline">
-          活動者を申請する
-        </Link>
-      </section>
-
-      <section className="space-y-3 rounded-md border bg-card p-5">
         <h2 className="text-lg font-semibold">不具合・要望・その他の問い合わせ</h2>
         <div className="space-y-3 text-sm leading-7 text-muted-foreground">
           <p>

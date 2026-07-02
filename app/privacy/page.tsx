@@ -28,7 +28,7 @@ export default function PrivacyPage() {
       <section className="space-y-3 rounded-md border bg-card p-5">
         <h2 className="text-lg font-semibold">1. 取得する情報</h2>
         <ul className="list-disc space-y-2 pl-5 text-sm leading-7 text-muted-foreground">
-          <li>投稿・通報・活動者申請の入力内容</li>
+          <li>投稿・通報の入力内容</li>
           <li>アクセスした公開ページのパス</li>
           <li>レート制限のためにハッシュ化されたアクセス元情報</li>
           <li>管理者ログイン時の Google アカウントのメールアドレス</li>
