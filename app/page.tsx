@@ -43,13 +43,6 @@ export default async function HomePage({
               <FilePlus2 className="size-4" />
               カバー記録を登録
             </Link>
-            <Link
-              href="/performer-applications/new"
-              className={cn(buttonVariants({ variant: "outline" }), "w-full sm:w-auto")}
-            >
-              <UserPlus className="size-4" />
-              活動者を申請
-            </Link>
           </>
         }
       />

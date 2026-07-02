@@ -31,15 +31,6 @@ export default async function PerformersPage({
       <PageHeading
         title="活動者"
         description="活動者名、別名、所属グループで検索できます。タグ絞り込みとデビュー日順の並び替えに対応しています。"
-        actions={
-          <Link
-            href="/performer-applications/new"
-            className={cn(buttonVariants({ variant: "outline" }), "w-full sm:w-auto")}
-          >
-            <UserPlus className="size-4" />
-            活動者申請
-          </Link>
-        }
       />
 
       <form action="/performers" className="space-y-4 rounded-md border bg-card p-4">
