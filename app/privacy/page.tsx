@@ -5,7 +5,7 @@ import { PageHeading } from "@/components/page-heading";
 
 export const metadata: Metadata = {
   title: "プライバシーポリシー",
-  description: "うたあつめのプライバシーポリシー"
+  description: "おとあつめのプライバシーポリシー"
 };
 
 const updatedAt = "2026年7月2日";
@@ -15,13 +15,13 @@ export default function PrivacyPage() {
     <div className="mx-auto max-w-4xl space-y-6">
       <PageHeading
         title="プライバシーポリシー"
-        description="うたあつめで取り扱う情報と、その利用目的について説明します。"
+        description="おとあつめで取り扱う情報と、その利用目的について説明します。"
       />
 
       <div className="rounded-md border bg-card p-5 text-sm leading-7 text-muted-foreground">
         <p>最終更新日: {updatedAt}</p>
         <p className="mt-3">
-          うたあつめは、一般利用者のユーザー登録やプロフィール機能を提供しません。ただし、サービスの提供、荒らし対策、セキュリティ確保、運用改善のため、以下の情報を取り扱うことがあります。
+          おとあつめは、一般利用者のユーザー登録やプロフィール機能を提供しません。ただし、サービスの提供、荒らし対策、セキュリティ確保、運用改善のため、以下の情報を取り扱うことがあります。
         </p>
       </div>
 
