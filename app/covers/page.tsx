@@ -44,42 +44,55 @@ export default async function CoversPage({
         }
       />
 
-      <form action="/covers" className="rounded-md border bg-card p-4">
+      <form action="/covers" className="overflow-hidden rounded-3xl border border-primary/10 bg-card/90 p-5 shadow-sm">
         {safeView ? <input type="hidden" name="view" value={safeView} /> : null}
-        <div className="form-grid">
-          <Input name="performer" defaultValue={search.performer} placeholder="活動者名・別名" />
-          <Input name="song" defaultValue={search.song} placeholder="楽曲名" />
-          <Input name="artist" defaultValue={search.artist} placeholder="原曲アーティスト名" />
-          <Select name="coverType" defaultValue={search.coverType ?? ""}>
-            <option value="">歌唱種別すべて</option>
-            {coverTypeOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </Select>
+        <div className="mb-5 flex flex-col gap-2 border-b pb-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 className="text-base font-semibold">検索条件</h2>
+            <p className="mt-1 text-sm text-muted-foreground">楽曲名・活動者名などで絞り込めます。</p>
+          </div>
+          <p className="text-sm font-medium text-primary">{covers.length}件</p>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div className="space-y-2">
+            <Label htmlFor="performer">活動者</Label>
+            <Input id="performer" name="performer" defaultValue={search.performer} placeholder="活動者名・別名" />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="song">楽曲</Label>
+            <Input id="song" name="song" defaultValue={search.song} placeholder="楽曲名" />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="artist">原曲アーティスト</Label>
+            <Input id="artist" name="artist" defaultValue={search.artist} placeholder="原曲アーティスト名" />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="coverType">歌唱種別</Label>
+            <Select id="coverType" name="coverType" defaultValue={search.coverType ?? ""}>
+              <option value="">歌唱種別すべて</option>
+              {coverTypeOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </Select>
+          </div>
 
           <div className="space-y-2">
             <Label htmlFor="dateFrom">歌唱日（開始）</Label>
-            <Input
-              id="dateFrom"
-              name="dateFrom"
-              type="date"
-              defaultValue={search.dateFrom}
-            />
+            <Input id="dateFrom" name="dateFrom" type="date" defaultValue={search.dateFrom} />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="dateTo">歌唱日（終了）</Label>
-            <Input
-              id="dateTo"
-              name="dateTo"
-              type="date"
-              defaultValue={search.dateTo}
-            />
+            <Input id="dateTo" name="dateTo" type="date" defaultValue={search.dateTo} />
           </div>
         </div>
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="mt-5 flex flex-wrap gap-2">
           <button type="submit" className={cn(buttonVariants())}>
             <Search className="size-4" />
             検索
