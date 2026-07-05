@@ -67,19 +67,19 @@ export function CoverResults({
   }
 
   return (
-    <div className="space-y-4" data-pending={isPending ? "true" : undefined}>
+    <div className="space-y-5" data-pending={isPending ? "true" : undefined}>
       <CoverViewToggle value={viewMode} totalCount={covers.length} onValueChange={handleViewChange} />
 
       {viewMode === "list" ? (
         <CoverList covers={covers} />
       ) : covers.length > 0 ? (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {covers.map((cover) => (
             <CoverCard key={cover.id} cover={cover} />
           ))}
         </div>
       ) : (
-        <div className="rounded-md border bg-card p-6 text-sm text-muted-foreground">
+        <div className="rounded-3xl border border-primary/10 bg-card/90 p-6 text-sm text-muted-foreground shadow-sm">
           条件に一致するカバー記録はありません。
         </div>
       )}
