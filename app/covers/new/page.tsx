@@ -52,6 +52,25 @@ export default async function NewCoverPage({
       </div>
 
       <form id="cover-form" action={createCoverAction} className="space-y-6 rounded-md border bg-card p-5">
+
+        <section className="form-grid">
+          <div className="space-y-2 md:col-span-2">
+            <Label htmlFor="sourceUrl">情報元URL</Label>
+            <Input id="sourceUrl" name="sourceUrl" type="url" required defaultValue={initialSourceUrl ?? ""} />
+          </div>
+          <div className="md:col-span-2">
+            <YouTubeMetadataFetcher autoFetch={autoFetchMetadata} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="sourceTitle">配信・動画・ライブ名</Label>
+            <Input id="sourceTitle" name="sourceTitle" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="timestampSeconds">タイムスタンプ秒数</Label>
+            <Input id="timestampSeconds" name="timestampSeconds" type="number" min="0" />
+          </div>
+        </section>
+
         <section className="form-grid">
           <div className="space-y-2">
             <Label htmlFor="performerIds">既存の活動者</Label>
@@ -86,24 +105,6 @@ export default async function NewCoverPage({
                 </option>
               ))}
             </Select>
-          </div>
-        </section>
-
-        <section className="form-grid">
-          <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="sourceUrl">情報元URL</Label>
-            <Input id="sourceUrl" name="sourceUrl" type="url" required defaultValue={initialSourceUrl ?? ""} />
-          </div>
-          <div className="md:col-span-2">
-            <YouTubeMetadataFetcher autoFetch={autoFetchMetadata} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="sourceTitle">配信・動画・ライブ名</Label>
-            <Input id="sourceTitle" name="sourceTitle" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="timestampSeconds">タイムスタンプ秒数</Label>
-            <Input id="timestampSeconds" name="timestampSeconds" type="number" min="0" />
           </div>
         </section>
 
