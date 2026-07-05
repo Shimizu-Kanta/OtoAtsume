@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Check, ExternalLink, Wand2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -58,12 +58,13 @@ type FetchState =
     }
   | { status: "error"; message: string };
 
-export function YouTubeMetadataFetcher() {
+export function YouTubeMetadataFetcher({ autoFetch = false} : { autoFetch?: boolean }) {
   const [state, setState] = useState<FetchState>({ status: "idle" });
+  const autoFetchedRef = useRef(false);
   const [addedPerformerIds, setAddedPerformerIds] = useState(() => new Set<string>());
   const [appliedSongSuggestionId, setAppliedSongSuggestionId] = useState<string | null>(null);
 
-  async function fetchMetadata() {
+  const fetchMetadata = useCallback(async function fetchMetadata() {
     const form = document.getElementById("cover-form");
 
     if (!(form instanceof HTMLFormElement)) {
@@ -115,7 +116,16 @@ export function YouTubeMetadataFetcher() {
         message: "YouTube動画情報の取得に失敗しました。"
       });
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    if (!autoFetch || autoFetchedRef.current) {
+      return;
+    }
+
+    autoFetchedRef.current = true;
+    void fetchMetadata();
+  }, [autoFetch, fetchMetadata]);
 
   function handleAddPerformer(performer: PerformerSuggestion) {
     addPerformerToPicker(performer.id);

@@ -4,7 +4,7 @@ import { Database, FilePlus2, Search, Sparkles, UserPlus } from "lucide-react";
 import { CoverCard } from "@/components/covers/cover-card";
 import { CoverCarousel } from "@/components/home/cover-carousel";
 import { PageHeading } from "@/components/page-heading";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   getLatestCovers,
@@ -38,12 +38,25 @@ export default async function HomePage({
         title="おとあつめ"
         description="VTuber、配信者、歌い手などの歌ってみた動画・歌枠・ライブ歌唱記録を集めるデータベースです。一般ユーザー登録やプロフィール機能はありません。"
         actions={
-          <>
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+            <form action="/covers/new" className="flex w-full gap-2 sm:w-[360px]">
+              <input type="hidden" name="autoFetch" value="1" />
+              <Input
+                name="sourceUrl"
+                type="url"
+                placeholder="追加したい楽曲URL"
+                className="min-w-0 flex-1"
+              />
+              <Button type="submit" variant="outline" className="shrink-0">
+                URL入力
+              </Button>
+            </form>
+
             <Link href="/covers/new" className={cn(buttonVariants(), "w-full sm:w-auto")}>
               <FilePlus2 className="size-4" />
               カバー記録を登録
             </Link>
-          </>
+          </div>
         }
       />
 

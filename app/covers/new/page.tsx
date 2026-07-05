@@ -25,6 +25,8 @@ export default async function NewCoverPage({
 }) {
   const params = await searchParams;
   const error = getSearchParam(params, "error");
+  const initialSourceUrl = getSearchParam(params, "sourceUrl");
+  const autoFetchMetadata = Boolean(initialSourceUrl && getSearchParam(params, "autoFetch") === "1");
   const performers = await getPerformerOptions();
 
   return (
@@ -90,10 +92,10 @@ export default async function NewCoverPage({
         <section className="form-grid">
           <div className="space-y-2 md:col-span-2">
             <Label htmlFor="sourceUrl">情報元URL</Label>
-            <Input id="sourceUrl" name="sourceUrl" type="url" required />
+            <Input id="sourceUrl" name="sourceUrl" type="url" required defaultValue={initialSourceUrl ?? ""} />
           </div>
           <div className="md:col-span-2">
-            <YouTubeMetadataFetcher />
+            <YouTubeMetadataFetcher autoFetch={autoFetchMetadata} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="sourceTitle">配信・動画・ライブ名</Label>
