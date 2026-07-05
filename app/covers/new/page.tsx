@@ -61,14 +61,6 @@ export default async function NewCoverPage({
           <div className="md:col-span-2">
             <YouTubeMetadataFetcher autoFetch={autoFetchMetadata} />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="sourceTitle">配信・動画・ライブ名</Label>
-            <Input id="sourceTitle" name="sourceTitle" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="timestampSeconds">タイムスタンプ秒数</Label>
-            <Input id="timestampSeconds" name="timestampSeconds" type="number" min="0" />
-          </div>
         </section>
 
         <section className="form-grid">
@@ -105,6 +97,14 @@ export default async function NewCoverPage({
                 </option>
               ))}
             </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="sourceTitle">配信・動画・ライブ名</Label>
+            <Input id="sourceTitle" name="sourceTitle" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="timestampSeconds">タイムスタンプ秒数</Label>
+            <Input id="timestampSeconds" name="timestampSeconds" type="number" min="0" />
           </div>
         </section>
 
