@@ -38,7 +38,7 @@ export default async function HomePage({
           <div className="flex min-w-0 flex-col justify-center">
             <p className="text-sm font-semibold tracking-[0.24em] text-primary">OTO ATSUME</p>
             <h1 className="mt-4 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-              歌ってみた・歌枠・ライブ歌唱記録を、探しやすく集める。
+              みんなで作る、みんなの推しの歌唱記録データベースサイト
             </h1>
             <p className="mt-4 max-w-2xl text-sm leading-7 text-muted-foreground sm:text-base">
               VTuber、配信者、歌い手などの歌唱記録を集めるデータベースです。ユーザー登録なしで、楽曲・活動者・原曲アーティストから記録を探せます。
