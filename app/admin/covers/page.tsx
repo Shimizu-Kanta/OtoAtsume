@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { DeleteSubmitButton } from "@/components/admin/delete-submit-button";
 import {
   contentStatusLabel,
   contentStatusOptions,
@@ -14,7 +15,7 @@ import {
 } from "@/lib/constants";
 import { getAdminCovers } from "@/lib/data/covers";
 import { formatDate, getSearchParam } from "@/lib/utils";
-import { updateCoverStatusAction } from "./actions";
+import { deleteCoverAction, updateCoverStatusAction } from "./actions";
 import { requireAdminPage } from "@/lib/auth/admin";
 
 export const dynamic = "force-dynamic";
@@ -26,6 +27,8 @@ export default async function AdminCoversPage({
 }) {
   await requireAdminPage();
   const params = await searchParams;
+  const error = getSearchParam(params, "error");
+  const deleted = getSearchParam(params, "deleted") === "1";
   const search = {
     performer: getSearchParam(params, "performer"),
     song: getSearchParam(params, "song"),
@@ -42,6 +45,18 @@ export default async function AdminCoversPage({
     <div className="space-y-6">
       <AdminNav />
       <PageHeading title="カバー記録管理" description="カバー記録を検索し、編集・非表示対応できます。" />
+
+      {error ? (
+        <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm">
+          {error}
+        </div>
+      ) : null}
+
+      {deleted ? (
+        <div className="rounded-md border border-secondary/40 bg-secondary/10 p-4 text-sm">
+          カバー記録を削除しました。
+        </div>
+      ) : null}
 
       <form action="/admin/covers" className="rounded-md border bg-card p-4">
         <div className="form-grid">
@@ -123,6 +138,15 @@ export default async function AdminCoversPage({
                   <Link href={`/covers/${cover.id}`} className="rounded-md border px-3 py-2 text-sm">
                     公開画面
                   </Link>
+                  <form action={deleteCoverAction}>
+                    <input type="hidden" name="id" value={cover.id} />
+                    <DeleteSubmitButton
+                      size="sm"
+                      confirmMessage={`カバー記録「${cover.song.title}」を削除します。関連する通報も削除されます。よろしいですか？`}
+                    >
+                      削除
+                    </DeleteSubmitButton>
+                  </form>
                 </div>
               </div>
             </div>

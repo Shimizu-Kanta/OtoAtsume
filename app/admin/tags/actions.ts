@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { requireAdminPage } from "@/lib/auth/admin";
-import { createAdminTag, updateAdminTag } from "@/lib/data/tags";
+import { createAdminTag, deleteAdminTagIfUnused, updateAdminTag } from "@/lib/data/tags";
 import { tagCreateSchema } from "@/lib/validations/master-data";
 
 function errorRedirect(message: string): never {
@@ -43,4 +43,23 @@ export async function updateTagAction(tagId: string, formData: FormData) {
   revalidatePath("/admin/performers");
   revalidatePath("/performers");
   redirect("/admin/tags?updated=1");
+}
+
+export async function deleteTagAction(tagId: string, _formData?: FormData) {
+  await requireAdminPage();
+
+  const result = await deleteAdminTagIfUnused(tagId);
+
+  if (!result.ok) {
+    if (result.reason === "hasPerformers") {
+      errorRedirect(`このタグは活動者 ${result.performerCount} 件に使われているため削除できません。`);
+    }
+
+    errorRedirect("タグが見つかりません。");
+  }
+
+  revalidatePath("/admin/tags");
+  revalidatePath("/admin/performers");
+  revalidatePath("/performers");
+  redirect("/admin/tags?deleted=1");
 }

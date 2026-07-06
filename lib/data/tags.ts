@@ -92,3 +92,42 @@ export async function replacePerformerTags(
     skipDuplicates: true
   });
 }
+
+export async function deleteAdminTagIfUnused(id: string) {
+  const { db } = await import("@/lib/db");
+
+  const tag = await db.tag.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      name: true,
+      _count: {
+        select: {
+          performers: true
+        }
+      }
+    }
+  });
+
+  if (!tag) {
+    return { ok: false as const, reason: "notFound" as const };
+  }
+
+  if (tag._count.performers > 0) {
+    return {
+      ok: false as const,
+      reason: "hasPerformers" as const,
+      name: tag.name,
+      performerCount: tag._count.performers
+    };
+  }
+
+  await db.tag.delete({
+    where: { id }
+  });
+
+  return {
+    ok: true as const,
+    name: tag.name
+  };
+}
