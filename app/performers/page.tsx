@@ -1,12 +1,14 @@
 import Link from "next/link";
-import { Search, UserPlus } from "lucide-react";
+import { Search } from "lucide-react";
 
 import { PageHeading } from "@/components/page-heading";
+import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
-import { listTags } from "@/lib/data/tags";
 import { getPerformers, type PerformerSort } from "@/lib/data/performers";
+import { listTags } from "@/lib/data/tags";
 import { cn, formatDateInput, getSearchParam } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -33,105 +35,144 @@ export default async function PerformersPage({
         description="活動者名、別名、所属グループで検索できます。タグ絞り込みとデビュー日順の並び替えに対応しています。"
       />
 
-      <form action="/performers" className="space-y-4 rounded-md border bg-card p-4">
-        <div className="grid gap-3 md:grid-cols-[1fr_220px_auto]">
-          <Input name="q" defaultValue={q} placeholder="活動者名・別名・グループ名" />
-          <Select name="sort" defaultValue={sort}>
-            <option value="nameAsc">名前順</option>
-            <option value="debutDateAsc">デビュー日 昇順</option>
-            <option value="debutDateDesc">デビュー日 降順</option>
-          </Select>
-          <button type="submit" className={cn(buttonVariants())}>
+      <form action="/performers" className="overflow-hidden rounded-3xl border border-primary/10 bg-card/90 p-5 shadow-sm">
+        <div className="mb-5 flex flex-col gap-2 border-b pb-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 className="text-base font-semibold">活動者を探す</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              名前・別名・所属グループ・タグを組み合わせて絞り込めます。
+            </p>
+          </div>
+          <p className="text-sm font-medium text-primary">{performers.length}件</p>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-[1fr_220px_auto] md:items-end">
+          <div className="space-y-2">
+            <Label htmlFor="performer-q">検索キーワード</Label>
+            <Input id="performer-q" name="q" defaultValue={q} placeholder="活動者名・別名・グループ名" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="performer-sort">並び替え</Label>
+            <Select id="performer-sort" name="sort" defaultValue={sort}>
+              <option value="nameAsc">名前順</option>
+              <option value="debutDateAsc">デビュー日 昇順</option>
+              <option value="debutDateDesc">デビュー日 降順</option>
+            </Select>
+          </div>
+          <button type="submit" className={cn(buttonVariants(), "w-full md:w-auto")}>
             <Search className="size-4" />
             検索
           </button>
         </div>
+
         {tags.length > 0 ? (
-          <div className="flex flex-wrap gap-2">
-            {tags.map((tag) => (
-              <label
-                key={tag.id}
-                className={cn(
-                  "inline-flex cursor-pointer items-center gap-2 rounded-sm border px-2 py-1 text-sm",
-                  selectedTagSet.has(tag.name) && "border-primary bg-primary/10 text-primary"
-                )}
-              >
-                <input
-                  type="checkbox"
-                  name="tag"
-                  value={tag.name}
-                  defaultChecked={selectedTagSet.has(tag.name)}
-                  className="size-4"
-                />
-                {tag.name}
-              </label>
-            ))}
+          <div className="mt-5 border-t pt-4">
+            <p className="mb-3 text-sm font-medium text-muted-foreground">タグで絞り込み</p>
+            <div className="flex flex-wrap gap-2">
+              {tags.map((tag) => {
+                const selected = selectedTagSet.has(tag.name);
+
+                return (
+                  <label
+                    key={tag.id}
+                    className={cn(
+                      "inline-flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
+                      selected
+                        ? "border-primary/40 bg-primary/15 text-primary shadow-sm"
+                        : "border-border bg-background/80 text-muted-foreground hover:border-primary/30 hover:bg-primary/10 hover:text-primary"
+                    )}
+                  >
+                    <input
+                      type="checkbox"
+                      name="tag"
+                      value={tag.name}
+                      defaultChecked={selected}
+                      className="size-4 accent-primary"
+                    />
+                    {tag.name}
+                  </label>
+                );
+              })}
+            </div>
           </div>
         ) : null}
       </form>
 
-      <div className="overflow-hidden rounded-md border bg-card">
-        <div className="divide-y">
+      {performers.length > 0 ? (
+        <div className="grid gap-4 lg:grid-cols-2">
           {performers.map((performer) => (
-            <div
+            <article
               key={performer.id}
-              className="grid gap-2 border-l-8 p-4 transition-colors hover:bg-muted/40 md:grid-cols-[1fr_auto]"
+              className="overflow-hidden rounded-3xl border border-primary/10 bg-card/90 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
               style={{
-                borderLeftColor: performer.colorCode ?? "transparent",
+                borderTopColor: performer.colorCode ?? undefined,
+                borderTopWidth: performer.colorCode ? 4 : undefined,
                 backgroundImage: performer.colorCode
-                  ? `linear-gradient(90deg, ${performer.colorCode}1F, transparent 34%)`
+                  ? `linear-gradient(135deg, ${performer.colorCode}14, transparent 42%)`
                   : undefined
               }}
             >
-              <div>
-                <Link href={`/performers/${performer.id}`} className="font-medium text-primary underline">
-                  {performer.name}
-                </Link>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {performer.group?.name ?? "所属なし"} / 歌唱記録 {performer._count.covers} 件
-                </p>
-                <div className="mt-2 flex flex-wrap items-center gap-2">
+              <div className="flex h-full flex-col gap-4 p-5">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <Link
+                      href={`/performers/${performer.id}`}
+                      className="text-lg font-bold text-foreground underline-offset-4 hover:text-primary hover:underline"
+                    >
+                      {performer.name}
+                    </Link>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {performer.group?.name ?? "所属なし"} / 歌唱記録 {performer._count.covers} 件
+                    </p>
+                  </div>
                   {performer.colorCode ? (
-                    <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                      <span
-                        className="size-3 rounded-sm border"
-                        style={{ backgroundColor: performer.colorCode }}
-                      />
-                      {performer.colorCode}
-                    </span>
+                    <span
+                      aria-label={`活動者カラー ${performer.colorCode}`}
+                      className="mt-1 size-8 shrink-0 rounded-full border shadow-sm"
+                      style={{ backgroundColor: performer.colorCode }}
+                    />
                   ) : null}
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
                   {performer.debutDate ? (
-                    <span className="text-xs text-muted-foreground">
-                      デビュー日: {formatDateInput(performer.debutDate)}
-                    </span>
+                    <Badge variant="muted">デビュー日 {formatDateInput(performer.debutDate)}</Badge>
                   ) : null}
                   {performer.tags.map(({ tag }) => (
-                    <span key={tag.id} className="rounded-sm bg-muted px-2 py-1 text-xs text-muted-foreground">
+                    <Badge key={tag.id} variant="outline">
                       {tag.name}
-                    </span>
+                    </Badge>
                   ))}
                 </div>
+
                 {performer.youtubeUrl ? (
                   <a
                     href={performer.youtubeUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="mt-1 block truncate text-sm text-primary underline"
+                    className="block truncate text-sm text-primary underline-offset-4 hover:underline"
                   >
                     {performer.youtubeUrl}
                   </a>
                 ) : null}
+
+                <div className="mt-auto flex justify-end border-t pt-4">
+                  <Link
+                    href={`/performers/${performer.id}`}
+                    className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+                  >
+                    詳細を見る
+                  </Link>
+                </div>
               </div>
-              <Link
-                href={`/performers/${performer.id}`}
-                className={cn(buttonVariants({ variant: "outline", size: "sm" }), "w-fit")}
-              >
-                詳細
-              </Link>
-            </div>
+            </article>
           ))}
         </div>
-      </div>
+      ) : (
+        <div className="rounded-3xl border border-primary/10 bg-card/90 p-6 text-sm text-muted-foreground shadow-sm">
+          条件に一致する活動者は見つかりませんでした。
+        </div>
+      )}
     </div>
   );
 }
