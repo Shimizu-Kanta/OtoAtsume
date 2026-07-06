@@ -31,7 +31,7 @@ export default async function CoverDetailPage({
   const accentColor = performers.find((performer) => performer.colorCode)?.colorCode;
   const created = query.created === "1";
   const reported = query.reported === "1";
-  const thumbnailUrl = getYouTubeThumbnailUrl(cover.sourceUrl);
+  const thumbnailUrl = cover.sourceImageUrl ?? getYouTubeThumbnailUrl(cover.sourceUrl);
   const sourceTitle = cover.sourceTitle?.trim();
   const hasTimestamp = cover.timestampSeconds != null;
   const sourceUrlWithTimestamp = withTimestamp(cover.sourceUrl, cover.timestampSeconds);

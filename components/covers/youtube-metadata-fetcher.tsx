@@ -6,7 +6,7 @@ import { Check, ExternalLink, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type YouTubeMetadata = {
-  videoId: string;
+  videoId?: string;
   canonicalUrl: string;
   timestampSeconds?: number;
   sourceTitle: string;
@@ -17,7 +17,7 @@ type YouTubeMetadata = {
   channelTitle: string;
   thumbnailUrl?: string;
   tags: string[];
-  cache: "hit" | "miss" | "refresh";
+  cache: "hit" | "miss" | "refresh" | "webpage";
 };
 
 type PerformerSuggestion = {
@@ -84,6 +84,10 @@ export function YouTubeMetadataFetcher({ autoFetch = false} : { autoFetch?: bool
     setState({ status: "loading" });
 
     try {
+      const endpoint = isProbablyYouTubeUrl(sourceUrl)
+        ? "/api/youtube/metadata"
+        : "/api/source/metadata";
+
       const response = await fetch("/api/youtube/metadata", {
         method: "POST",
         headers: {
@@ -149,7 +153,7 @@ export function YouTubeMetadataFetcher({ autoFetch = false} : { autoFetch?: bool
         <div>
           <p className="text-sm font-medium">YouTube URL補助</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            情報元URLから動画タイトル・投稿日・タイムスタンプを取得してフォームに反映します。
+            情報元URLからタイトル・投稿日・画像などを取得してフォームに反映します。
           </p>
         </div>
 
@@ -399,7 +403,14 @@ function performerReasonLabel(reason: PerformerSuggestion["reason"]) {
 function applyMetadataToForm(form: HTMLFormElement, metadata: YouTubeMetadata) {
   setFormValue(form, "sourceUrl", metadata.canonicalUrl);
   setFormValue(form, "sourceTitle", metadata.sourceTitle);
-  setFormValue(form, "performedAt", metadata.publishedDate);
+
+  if (metadata.publishedDate) {
+    setFormValue(form, "performedAt", metadata.publishedDate);
+  }
+
+  if (metadata.thumbnailUrl) {
+    setFormValue(form, "sourceImageUrl", metadata.thumbnailUrl);
+  }
 
   if (metadata.timestampSeconds !== undefined) {
     setFormValue(form, "timestampSeconds", String(metadata.timestampSeconds));
@@ -419,9 +430,30 @@ function cacheLabel(cache: NonNullable<YouTubeMetadata["cache"]>) {
     return "YouTube APIで更新";
   }
 
+  if (cache === "webpage") {
+    return "OGP";
+  }
+
   return cache;
 }
 
 function requestDuplicateCheck() {
   window.dispatchEvent(new CustomEvent("otoatsume:check-duplicates"));
+}
+
+function isProbablyYouTubeUrl(value: string) {
+  try {
+    const url = new URL(value);
+    const host = url.hostname.toLowerCase();
+
+    return (
+      host === "youtu.be" ||
+      host === "youtube.com" ||
+      host === "www.youtube.com" ||
+      host === "music.youtube.com" ||
+      host.endsWith(".youtube.com")
+    );
+  } catch {
+    return false;
+  }
 }

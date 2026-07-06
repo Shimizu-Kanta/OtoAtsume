@@ -14,6 +14,18 @@ const coverTypeValues = coverTypeOptions.map((option) => option.value) as [
   ...string[]
 ];
 
+const optionalUrl = z.preprocess(
+  (value) => {
+    if (typeof value !== "string") {
+      return value;
+    }
+
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : undefined;
+  },
+  z.string().trim().url().max(2000).optional()
+);
+
 export const coverCreateSchema = z
   .object({
     performerIds: formStringArray,
@@ -24,6 +36,7 @@ export const coverCreateSchema = z
     coverType: z.enum(coverTypeValues),
     sourceUrl: z.string().trim().url().max(2000),
     sourceTitle: optionalText(300),
+    sourceImageUrl: optionalUrl,
     timestampSeconds: optionalNonNegativeInteger
   })
   .superRefine((value, context) => {

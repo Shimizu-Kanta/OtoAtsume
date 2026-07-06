@@ -48,6 +48,7 @@ export async function createCoverAction(formData: FormData) {
     coverType: formData.get("coverType"),
     sourceUrl: formData.get("sourceUrl"),
     sourceTitle: formData.get("sourceTitle"),
+    sourceImageUrl: formData.get("sourceImageUrl"),
     timestampSeconds: formData.get("timestampSeconds")
   });
 
