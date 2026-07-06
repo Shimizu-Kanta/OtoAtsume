@@ -13,7 +13,7 @@ function artistNames(cover: CoverListItem) {
 }
 
 export function CoverCard({ cover }: { cover: CoverListItem }) {
-  const thumbnailUrl = getYouTubeThumbnailUrl(cover.sourceUrl);
+  const thumbnailUrl = cover.sourceImageUrl ?? getYouTubeThumbnailUrl(cover.sourceUrl);
   const title = cover.song.title;
   const sourceLabel = cover.sourceTitle ?? cover.sourceUrl;
   const accentColor = cover.performers.find(({ performer }) => performer.colorCode)?.performer.colorCode;

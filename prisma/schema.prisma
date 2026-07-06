@@ -128,6 +128,7 @@ model Cover {
   coverType        CoverType
   sourceUrl        String
   sourceTitle      String?
+  sourceImageUrl   String?
   timestampSeconds Int?
   status           ContentStatus    @default(APPROVED)
   ipHash           String?

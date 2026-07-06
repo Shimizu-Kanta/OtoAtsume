@@ -75,6 +75,7 @@ export default async function NewCoverPage({
               defaultValue={initialSourceUrl ?? ""}
               placeholder="https://www.youtube.com/watch?v=..."
             />
+            <Input id="sourceImageUrl" name="sourceImageUrl" type="hidden" />
           </div>
           <YouTubeMetadataFetcher autoFetch={autoFetchMetadata} />
         </FormSection>

@@ -511,6 +511,7 @@ export async function createCover(input: CoverCreateInput) {
         coverType: input.coverType as CoverType,
         sourceUrl: input.sourceUrl,
         sourceTitle: input.sourceTitle,
+        sourceImageUrl: input.sourceImageUrl,
         timestampSeconds: input.timestampSeconds,
         status: initialCoverStatus(),
         performers: {
