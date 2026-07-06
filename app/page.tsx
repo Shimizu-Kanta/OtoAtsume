@@ -38,10 +38,15 @@ export default async function HomePage({
           <div className="flex min-w-0 flex-col justify-center">
             <p className="text-sm font-semibold tracking-[0.24em] text-primary">OTO ATSUME</p>
             <h1 className="mt-4 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-              みんなで作る、みんなの推しの歌唱記録データベースサイト
+              <span className="block sm:inline">みんなで作る、</span>
+              <span className="block sm:inline">みんなの推しの、</span>
+              <span className="block">歌唱記録データベース</span>
             </h1>
             <p className="mt-4 max-w-2xl text-sm leading-7 text-muted-foreground sm:text-base">
-              VTuber、配信者、歌い手などの歌唱記録を集めるデータベースです。ユーザー登録なしで、楽曲・活動者・原曲アーティストから記録を探せます。
+              <span className="block sm:inline">VTuber、配信者、歌い手などの</span>
+              <span className="block sm:inline">歌唱記録を集めるデータベースです。</span>
+              <span className="block sm:inline">ユーザ登録なしで、楽曲・活動者・原曲アーティストから</span>
+              <span className="block">歌唱記録を探せます。</span>
             </p>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
