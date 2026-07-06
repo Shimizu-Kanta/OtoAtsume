@@ -340,6 +340,11 @@ export async function listAdminSongs() {
     include: {
       artists: {
         include: { artist: true }
+      },
+      _count: {
+        select: {
+          covers: true
+        }
       }
     },
     orderBy: { createdAt: "desc" },
@@ -353,6 +358,11 @@ export async function getAdminSong(id: string) {
     include: {
       artists: {
         include: { artist: true }
+      },
+      _count: {
+        select: {
+          covers: true
+        }
       }
     }
   });
@@ -484,4 +494,105 @@ export async function updateAdminCoverStatus(id: string, status: ContentStatus) 
     where: { id },
     data: { status }
   });
+}
+
+export async function deleteAdminCover(id: string) {
+  const cover = await db.cover.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      song: {
+        select: {
+          title: true
+        }
+      }
+    }
+  });
+
+  if (!cover) {
+    return { ok: false as const, reason: "notFound" as const };
+  }
+
+  await db.cover.delete({
+    where: { id }
+  });
+
+  return {
+    ok: true as const,
+    title: cover.song.title
+  };
+}
+
+export async function deleteAdminSongIfUnused(id: string) {
+  const song = await db.song.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      title: true,
+      _count: {
+        select: {
+          covers: true
+        }
+      }
+    }
+  });
+
+  if (!song) {
+    return { ok: false as const, reason: "notFound" as const };
+  }
+
+  if (song._count.covers > 0) {
+    return {
+      ok: false as const,
+      reason: "hasCovers" as const,
+      title: song.title,
+      coverCount: song._count.covers
+    };
+  }
+
+  await db.song.delete({
+    where: { id }
+  });
+
+  return {
+    ok: true as const,
+    title: song.title
+  };
+}
+
+export async function deleteAdminArtistIfUnused(id: string) {
+  const artist = await db.artist.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      name: true,
+      _count: {
+        select: {
+          songs: true
+        }
+      }
+    }
+  });
+
+  if (!artist) {
+    return { ok: false as const, reason: "notFound" as const };
+  }
+
+  if (artist._count.songs > 0) {
+    return {
+      ok: false as const,
+      reason: "hasSongs" as const,
+      name: artist.name,
+      songCount: artist._count.songs
+    };
+  }
+
+  await db.artist.delete({
+    where: { id }
+  });
+
+  return {
+    ok: true as const,
+    name: artist.name
+  };
 }
