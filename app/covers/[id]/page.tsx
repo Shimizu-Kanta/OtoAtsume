@@ -9,16 +9,69 @@ import { coverTypeLabel } from "@/lib/constants";
 import { getCoverById } from "@/lib/data/covers";
 import { cn, formatDate, formatSeconds, withTimestamp } from "@/lib/utils";
 import { getYouTubeThumbnailUrl } from "@/lib/youtube";
+import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
 
-export default async function CoverDetailPage({
-  params,
-  searchParams
-}: {
+type CoverDetailPageProps = {
   params: Promise<{ id: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
+};
+
+export async function generateMetadata({
+  params
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const cover = await getCoverById(id);
+
+  if (!cover) {
+    return {
+      title: "カバー記録が見つかりません"
+    };
+  }
+
+  const artists = cover.song.artists.map(({ artist }) => artist.name).join(", ");
+  const performers = cover.performers.map(({ performer }) => performer.name).join(", ");
+  const title = `${cover.song.title} / ${performers}`;
+  const description = artists
+    ? `${cover.song.title} - ${artists} の歌唱記録です。`
+    : `${cover.song.title} の歌唱記録です。`;
+
+  const imageUrl = cover.sourceImageUrl ?? "/ogp.png";
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: `/covers/${cover.id}`
+    },
+    openGraph: {
+      type: "article",
+      url: `/covers/${cover.id}`,
+      siteName: "おとあつめ",
+      title,
+      description,
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: title
+        }
+      ]
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [imageUrl]
+    }
+  };
+}
+
+export default async function CoverDetailPage({ params, searchParams }: CoverDetailPageProps) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
   const cover = await getCoverById(id);
 
