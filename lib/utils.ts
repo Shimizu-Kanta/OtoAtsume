@@ -76,6 +76,18 @@ export function withTimestamp(sourceUrl: string, timestampSeconds: number | null
   return `${sourceUrl}${separator}t=${timestampSeconds}`;
 }
 
+const OPTIMIZABLE_IMAGE_HOSTS = new Set(["img.youtube.com", "i.ytimg.com"]);
+
+// Keep in sync with images.remotePatterns in next.config.mjs — unconfigured
+// hosts must fall back to unoptimized rendering or next/image throws at runtime.
+export function isOptimizableImageUrl(url: string) {
+  try {
+    return OPTIMIZABLE_IMAGE_HOSTS.has(new URL(url).hostname);
+  } catch {
+    return false;
+  }
+}
+
 export function getSearchParam(
   searchParams: Record<string, string | string[] | undefined>,
   key: string

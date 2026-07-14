@@ -7,8 +7,50 @@ import { buttonVariants } from "@/components/ui/button";
 import { coverTypeLabel } from "@/lib/constants";
 import { getSongById } from "@/lib/data/songs";
 import { cn, formatDate } from "@/lib/utils";
+import type { Metadata } from "next";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
+
+export async function generateMetadata({
+  params
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const song = await getSongById(id);
+
+  if (!song) {
+    return {
+      title: "楽曲情報が見つかりません"
+    };
+  }
+
+  const artists = song.artists.map(({ artist }) => artist.name).join(", ");
+  const title = artists ? `${song.title} / ${artists}` : song.title;
+  const description = artists
+    ? `${song.title}（${artists}）のカバー記録${song.covers.length}件を掲載。歌ってみた・歌枠・ライブでの歌唱記録をまとめています。`
+    : `${song.title} のカバー記録${song.covers.length}件を掲載。歌ってみた・歌枠・ライブでの歌唱記録をまとめています。`;
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: `/songs/${song.id}`
+    },
+    openGraph: {
+      type: "website",
+      url: `/songs/${song.id}`,
+      siteName: "おとあつめ",
+      title,
+      description
+    },
+    twitter: {
+      card: "summary",
+      title,
+      description
+    }
+  };
+}
 
 export default async function SongDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

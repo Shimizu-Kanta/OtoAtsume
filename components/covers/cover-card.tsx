@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Play } from "lucide-react";
 
@@ -5,7 +6,7 @@ import { PerformerColorChip } from "@/components/performers/performer-color-chip
 import { Badge } from "@/components/ui/badge";
 import { coverTypeLabel } from "@/lib/constants";
 import type { CoverListItem } from "@/lib/data/covers";
-import { formatDate } from "@/lib/utils";
+import { formatDate, isOptimizableImageUrl } from "@/lib/utils";
 import { getYouTubeThumbnailUrl } from "@/lib/youtube";
 
 function artistNames(cover: CoverListItem) {
@@ -35,11 +36,13 @@ export function CoverCard({ cover }: { cover: CoverListItem }) {
         }}
       >
         {thumbnailUrl ? (
-          <img
+          <Image
             src={thumbnailUrl}
             alt={`${title} のサムネイル`}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
-            loading="lazy"
+            fill
+            sizes="(min-width: 1024px) 320px, (min-width: 640px) 45vw, 90vw"
+            unoptimized={!isOptimizableImageUrl(thumbnailUrl)}
+            className="object-cover transition-transform duration-300 group-hover:scale-[1.04]"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-muted-foreground">

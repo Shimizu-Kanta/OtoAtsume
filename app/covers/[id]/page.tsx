@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CalendarDays, ExternalLink, Flag, LinkIcon, Music2, Play, Timer, Users } from "lucide-react";
@@ -7,11 +8,13 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { coverTypeLabel } from "@/lib/constants";
 import { getCoverById } from "@/lib/data/covers";
-import { cn, formatDate, formatSeconds, withTimestamp } from "@/lib/utils";
+import { cn, formatDate, formatSeconds, isOptimizableImageUrl, withTimestamp } from "@/lib/utils";
 import { getYouTubeThumbnailUrl } from "@/lib/youtube";
 import type { Metadata } from "next";
 
-export const dynamic = "force-dynamic";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://oto-atsume.com";
+
+export const revalidate = 3600;
 
 type CoverDetailPageProps = {
   params: Promise<{ id: string }>;
@@ -89,8 +92,38 @@ export default async function CoverDetailPage({ params, searchParams }: CoverDet
   const hasTimestamp = cover.timestampSeconds != null;
   const sourceUrlWithTimestamp = withTimestamp(cover.sourceUrl, cover.timestampSeconds);
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "MusicRecording",
+    name: cover.song.title,
+    url: `${siteUrl}/covers/${cover.id}`,
+    datePublished: cover.performedAt.toISOString(),
+    byArtist: performers.map((performer) => ({
+      "@type": "Person",
+      name: performer.name
+    })),
+    ...(cover.song.artists.length > 0
+      ? {
+          recordingOf: {
+            "@type": "MusicComposition",
+            name: cover.song.title,
+            composer: cover.song.artists.map(({ artist }) => ({
+              "@type": "Person",
+              name: artist.name
+            }))
+          }
+        }
+      : {}),
+    ...(thumbnailUrl ? { thumbnailUrl } : {}),
+    sameAs: cover.sourceUrl
+  };
+
   return (
     <div className="space-y-6">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
+      />
       {created ? (
         <div className="rounded-3xl border border-secondary/40 bg-secondary/20 p-4 text-sm font-medium text-secondary-foreground shadow-sm">
           カバー記録を登録しました。
@@ -115,19 +148,23 @@ export default async function CoverDetailPage({ params, searchParams }: CoverDet
             href={sourceUrlWithTimestamp}
             target="_blank"
             rel="noreferrer"
-            className="group relative block overflow-hidden bg-muted"
+            className="group relative block aspect-video overflow-hidden bg-muted"
             style={{
               backgroundImage: accentColor ? `linear-gradient(135deg, ${accentColor}24, transparent 62%)` : undefined
             }}
           >
             {thumbnailUrl ? (
-              <img
+              <Image
                 src={thumbnailUrl}
                 alt={`${cover.song.title} のサムネイル`}
-                className="aspect-video h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                fill
+                sizes="(min-width: 1024px) 55vw, 100vw"
+                priority
+                unoptimized={!isOptimizableImageUrl(thumbnailUrl)}
+                className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
               />
             ) : (
-              <div className="flex aspect-video h-full w-full items-center justify-center text-muted-foreground">
+              <div className="flex h-full w-full items-center justify-center text-muted-foreground">
                 <Play className="size-12" aria-hidden="true" />
               </div>
             )}

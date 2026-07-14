@@ -7,8 +7,50 @@ import { buttonVariants } from "@/components/ui/button";
 import { coverTypeLabel } from "@/lib/constants";
 import { getPerformerById } from "@/lib/data/performers";
 import { cn, formatDate, formatDateInput } from "@/lib/utils";
+import type { Metadata } from "next";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
+
+export async function generateMetadata({
+  params
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const performer = await getPerformerById(id);
+
+  if (!performer) {
+    return {
+      title: "活動者情報が見つかりません"
+    };
+  }
+
+  const groupName = performer.group?.name;
+  const title = groupName ? `${performer.name} / ${groupName}` : performer.name;
+  const description = groupName
+    ? `${performer.name}（${groupName}）の歌唱記録${performer.covers.length}件を掲載。歌ってみた・歌枠・ライブでの歌唱記録をまとめています。`
+    : `${performer.name} の歌唱記録${performer.covers.length}件を掲載。歌ってみた・歌枠・ライブでの歌唱記録をまとめています。`;
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: `/performers/${performer.id}`
+    },
+    openGraph: {
+      type: "profile",
+      url: `/performers/${performer.id}`,
+      siteName: "おとあつめ",
+      title,
+      description
+    },
+    twitter: {
+      card: "summary",
+      title,
+      description
+    }
+  };
+}
 
 export default async function PerformerDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
