@@ -2,8 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CalendarDays, Shuffle, Users } from "lucide-react";
 
+import { Breadcrumb } from "@/components/breadcrumb";
 import { CoverCard } from "@/components/covers/cover-card";
 import { CoverCarousel } from "@/components/home/cover-carousel";
+import { PerformerCard } from "@/components/performers/performer-card";
 import { buttonVariants } from "@/components/ui/button";
 import type { CoverListItem } from "@/lib/data/covers";
 import {
@@ -12,7 +14,8 @@ import {
   getGroupLatestCovers,
   getGroupRandomCovers
 } from "@/lib/data/groups";
-import { cn, formatDateInput } from "@/lib/utils";
+import { getGroupPerformerCount, getGroupPerformers } from "@/lib/data/performers";
+import { cn } from "@/lib/utils";
 import type { Metadata } from "next";
 
 export const revalidate = 3600;
@@ -31,9 +34,12 @@ export async function generateMetadata({
     };
   }
 
-  const coverCount = await getGroupCoverCount(group.id);
+  const [performerCount, coverCount] = await Promise.all([
+    getGroupPerformerCount(group.id),
+    getGroupCoverCount(group.id)
+  ]);
   const title = group.name;
-  const description = `${group.name}所属の活動者${group.performers.length}名の歌唱記録${coverCount}件を掲載。歌ってみた・歌枠・ライブでの歌唱記録をまとめています。`;
+  const description = `${group.name}所属の活動者${performerCount}名の歌唱記録${coverCount}件を掲載。歌ってみた・歌枠・ライブでの歌唱記録をまとめています。`;
 
   return {
     title,
@@ -49,7 +55,7 @@ export async function generateMetadata({
       description
     },
     twitter: {
-      card: "summary",
+      card: "summary_large_image",
       title,
       description
     }
@@ -64,7 +70,8 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
     notFound();
   }
 
-  const [coverCount, latestCovers, randomCovers] = await Promise.all([
+  const [performers, coverCount, latestCovers, randomCovers] = await Promise.all([
+    getGroupPerformers(group.id),
     getGroupCoverCount(group.id),
     getGroupLatestCovers(group.id, 12),
     getGroupRandomCovers(group.id, 6)
@@ -72,6 +79,14 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
 
   return (
     <div className="space-y-6">
+      <Breadcrumb
+        items={[
+          { name: "ホーム", href: "/" },
+          { name: "グループ", href: "/groups" },
+          { name: group.name, href: `/groups/${group.id}` }
+        ]}
+      />
+
       <section className="overflow-hidden rounded-[2rem] border border-primary/10 bg-card/90 shadow-sm">
         <div className="bg-primary/10 p-5 sm:p-7">
           <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
@@ -81,7 +96,7 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
                 {group.name}
               </h1>
               <p className="mt-3 text-sm text-muted-foreground">
-                所属活動者 {group.performers.length} 名 / 歌唱記録 {coverCount.toLocaleString("ja-JP")} 件
+                所属活動者 {performers.length} 名 / 歌唱記録 {coverCount.toLocaleString("ja-JP")} 件
               </p>
             </div>
 
@@ -124,53 +139,10 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
           </div>
         </div>
 
-        {group.performers.length > 0 ? (
+        {performers.length > 0 ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {group.performers.map((performer) => (
-              <article
-                key={performer.id}
-                className="overflow-hidden rounded-3xl border border-primary/10 bg-card/90 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
-                style={{
-                  borderTopColor: performer.colorCode ?? undefined,
-                  borderTopWidth: performer.colorCode ? 4 : undefined,
-                  backgroundImage: performer.colorCode
-                    ? `linear-gradient(135deg, ${performer.colorCode}14, transparent 42%)`
-                    : undefined
-                }}
-              >
-                <div className="flex h-full flex-col gap-4 p-5">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <Link
-                        href={`/performers/${performer.id}`}
-                        className="text-lg font-bold text-foreground underline-offset-4 hover:text-primary hover:underline"
-                      >
-                        {performer.name}
-                      </Link>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        歌唱記録 {performer._count.covers} 件
-                        {performer.debutDate ? ` / デビュー日 ${formatDateInput(performer.debutDate)}` : ""}
-                      </p>
-                    </div>
-                    {performer.colorCode ? (
-                      <span
-                        aria-label={`活動者カラー ${performer.colorCode}`}
-                        className="mt-1 size-8 shrink-0 rounded-full border shadow-sm"
-                        style={{ backgroundColor: performer.colorCode }}
-                      />
-                    ) : null}
-                  </div>
-
-                  <div className="mt-auto flex justify-end border-t pt-4">
-                    <Link
-                      href={`/performers/${performer.id}`}
-                      className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-                    >
-                      詳細を見る
-                    </Link>
-                  </div>
-                </div>
-              </article>
+            {performers.map((performer) => (
+              <PerformerCard key={performer.id} performer={performer} />
             ))}
           </div>
         ) : (

@@ -15,7 +15,10 @@ export const metadata: Metadata = {
   },
   description: "VTuber、配信者、歌い手などの歌ってみた動画・歌枠・ライブ歌唱記録を集めるデータベースです。",
   alternates: {
-    canonical: "/"
+    canonical: "/",
+    types: {
+      "application/rss+xml": "/feed.xml"
+    }
   },
   openGraph: {
     type: "website",

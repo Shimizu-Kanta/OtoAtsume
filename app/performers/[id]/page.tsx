@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Cake, CalendarDays, ExternalLink, Music2, Palette, Tag, Youtube } from "lucide-react";
+import { Cake, CalendarDays, ExternalLink, Music2, Palette, Tag, Users, Youtube } from "lucide-react";
 
+import { Breadcrumb } from "@/components/breadcrumb";
+import { PerformerCard } from "@/components/performers/performer-card";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { coverTypeLabel } from "@/lib/constants";
-import { getPerformerById } from "@/lib/data/performers";
+import { getGroupPerformers, getPerformerById } from "@/lib/data/performers";
 import { cn, formatDate, formatDateInput } from "@/lib/utils";
 import type { Metadata } from "next";
 
@@ -45,7 +47,7 @@ export async function generateMetadata({
       description
     },
     twitter: {
-      card: "summary",
+      card: "summary_large_image",
       title,
       description
     }
@@ -60,8 +62,20 @@ export default async function PerformerDetailPage({ params }: { params: Promise<
     notFound();
   }
 
+  const groupMates = performer.group
+    ? await getGroupPerformers(performer.group.id, { excludePerformerId: performer.id, take: 6 })
+    : [];
+
   return (
     <div className="space-y-6">
+      <Breadcrumb
+        items={[
+          { name: "ホーム", href: "/" },
+          { name: "活動者", href: "/performers" },
+          { name: performer.name, href: `/performers/${performer.id}` }
+        ]}
+      />
+
       <section
         className="overflow-hidden rounded-[2rem] border border-primary/10 bg-card/90 shadow-sm"
         style={{
@@ -80,7 +94,18 @@ export default async function PerformerDetailPage({ params }: { params: Promise<
                 {performer.name}
               </h1>
               <p className="mt-3 text-sm text-muted-foreground">
-                {performer.group?.name ?? "所属グループなし"} / 歌唱履歴 {performer.covers.length} 件
+                {performer.group ? (
+                  <Link
+                    href={`/groups/${performer.group.id}`}
+                    className="text-primary underline-offset-4 hover:underline"
+                  >
+                    {performer.group.name}
+                  </Link>
+                ) : (
+                  "所属グループなし"
+                )}
+                {" / 歌唱履歴 "}
+                {performer.covers.length} 件
               </p>
             </div>
 
@@ -232,6 +257,36 @@ export default async function PerformerDetailPage({ params }: { params: Promise<
           )}
         </div>
       </section>
+
+      {performer.group && groupMates.length > 0 ? (
+        <section className="space-y-4">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <Users className="size-4" aria-hidden="true" />
+              </span>
+              <div>
+                <h2 className="text-xl font-bold tracking-tight">同じグループの活動者</h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {performer.group.name}に所属する他の活動者です。
+                </p>
+              </div>
+            </div>
+            <Link
+              href={`/groups/${performer.group.id}`}
+              className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+            >
+              グループページを見る
+            </Link>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {groupMates.map((groupMate) => (
+              <PerformerCard key={groupMate.id} performer={groupMate} />
+            ))}
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 }

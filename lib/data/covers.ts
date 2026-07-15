@@ -176,6 +176,40 @@ export async function getLatestCovers(take = 8) {
   return getApprovedCovers({ take });
 }
 
+export async function getOtherCoversByPerformers(
+  performerIds: string[],
+  excludeCoverId: string,
+  take = 6
+) {
+  if (performerIds.length === 0) {
+    return [];
+  }
+
+  return db.cover.findMany({
+    where: {
+      status: ContentStatus.APPROVED,
+      id: { not: excludeCoverId },
+      performers: { some: { performerId: { in: performerIds } } }
+    },
+    include: coverListInclude,
+    orderBy: [{ performedAt: "desc" }, { createdAt: "desc" }],
+    take
+  });
+}
+
+export async function getOtherCoversBySong(songId: string, excludeCoverId: string, take = 6) {
+  return db.cover.findMany({
+    where: {
+      status: ContentStatus.APPROVED,
+      id: { not: excludeCoverId },
+      songId
+    },
+    include: coverListInclude,
+    orderBy: [{ performedAt: "desc" }, { createdAt: "desc" }],
+    take
+  });
+}
+
 export type AnniversaryType = "debut" | "birthday";
 
 export type AnniversaryCoverGroup = {

@@ -3,11 +3,19 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CalendarDays, ExternalLink, Flag, LinkIcon, Music2, Play, Timer, Users } from "lucide-react";
 
+import { Breadcrumb } from "@/components/breadcrumb";
+import { CoverCard } from "@/components/covers/cover-card";
+import { CoverCarousel } from "@/components/home/cover-carousel";
 import { PerformerColorChip } from "@/components/performers/performer-color-chip";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { coverTypeLabel } from "@/lib/constants";
-import { getCoverById } from "@/lib/data/covers";
+import {
+  getCoverById,
+  getOtherCoversByPerformers,
+  getOtherCoversBySong,
+  type CoverListItem
+} from "@/lib/data/covers";
 import { cn, formatDate, formatSeconds, isOptimizableImageUrl, withTimestamp } from "@/lib/utils";
 import { getYouTubeThumbnailUrl } from "@/lib/youtube";
 import type { Metadata } from "next";
@@ -42,8 +50,6 @@ export async function generateMetadata({
     ? `${cover.song.title} - ${artists} の歌唱記録です。`
     : `${cover.song.title} の歌唱記録です。`;
 
-  const imageUrl = cover.sourceImageUrl ?? "/ogp.png";
-
   return {
     title,
     description,
@@ -55,21 +61,12 @@ export async function generateMetadata({
       url: `/covers/${cover.id}`,
       siteName: "おとあつめ",
       title,
-      description,
-      images: [
-        {
-          url: imageUrl,
-          width: 1200,
-          height: 630,
-          alt: title
-        }
-      ]
+      description
     },
     twitter: {
       card: "summary_large_image",
       title,
-      description,
-      images: [imageUrl]
+      description
     }
   };
 }
@@ -91,6 +88,14 @@ export default async function CoverDetailPage({ params, searchParams }: CoverDet
   const sourceTitle = cover.sourceTitle?.trim();
   const hasTimestamp = cover.timestampSeconds != null;
   const sourceUrlWithTimestamp = withTimestamp(cover.sourceUrl, cover.timestampSeconds);
+
+  const [otherPerformerCovers, otherSongCovers] = await Promise.all([
+    getOtherCoversByPerformers(
+      performers.map((performer) => performer.id),
+      cover.id
+    ),
+    getOtherCoversBySong(cover.songId, cover.id)
+  ]);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -123,6 +128,13 @@ export default async function CoverDetailPage({ params, searchParams }: CoverDet
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
+      />
+      <Breadcrumb
+        items={[
+          { name: "ホーム", href: "/" },
+          { name: "カバー記録", href: "/covers" },
+          { name: cover.song.title, href: `/covers/${cover.id}` }
+        ]}
       />
       {created ? (
         <div className="rounded-3xl border border-secondary/40 bg-secondary/20 p-4 text-sm font-medium text-secondary-foreground shadow-sm">
@@ -284,7 +296,66 @@ export default async function CoverDetailPage({ params, searchParams }: CoverDet
           </div>
         </div>
       </section>
+
+      {otherPerformerCovers.length > 0 ? (
+        <RelatedCoversSection
+          title="同じ活動者の他のカバー記録"
+          description="この記録の活動者による他のカバー記録です。"
+          covers={otherPerformerCovers}
+        />
+      ) : null}
+
+      {otherSongCovers.length > 0 ? (
+        <RelatedCoversSection
+          title="同じ楽曲の他のカバー記録"
+          description="同じ楽曲を歌った他の活動者のカバー記録です。"
+          covers={otherSongCovers}
+          action={
+            <Link
+              href={`/songs/${cover.songId}`}
+              className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+            >
+              楽曲ページを見る
+            </Link>
+          }
+        />
+      ) : null}
     </div>
+  );
+}
+
+function RelatedCoversSection({
+  title,
+  description,
+  covers,
+  action
+}: {
+  title: string;
+  description: string;
+  covers: CoverListItem[];
+  action?: React.ReactNode;
+}) {
+  return (
+    <section className="space-y-4">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <span className="inline-flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <Music2 className="size-4" aria-hidden="true" />
+          </span>
+          <div>
+            <h2 className="text-xl font-bold tracking-tight">{title}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+          </div>
+        </div>
+        {action}
+      </div>
+
+      <CoverCarousel>
+        {covers.map((cover) => (
+          <CoverCard key={cover.id} cover={cover} />
+        ))}
+      </CoverCarousel>
+    </section>
   );
 }
 

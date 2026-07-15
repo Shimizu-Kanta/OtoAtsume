@@ -3,26 +3,6 @@ import { ContentStatus, MasterDataStatus, Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { coverListInclude, getRandomCovers } from "@/lib/data/covers";
 
-export const groupDetailInclude = {
-  performers: {
-    where: { status: MasterDataStatus.APPROVED },
-    include: {
-      _count: {
-        select: {
-          covers: {
-            where: { cover: { status: ContentStatus.APPROVED } }
-          }
-        }
-      }
-    },
-    orderBy: { name: "asc" }
-  }
-} satisfies Prisma.GroupInclude;
-
-export type GroupDetail = Prisma.GroupGetPayload<{
-  include: typeof groupDetailInclude;
-}>;
-
 function groupCoverWhere(groupId: string): Prisma.CoverWhereInput {
   return {
     status: ContentStatus.APPROVED,
@@ -54,8 +34,7 @@ export async function getGroups() {
 
 export async function getGroupById(id: string) {
   return db.group.findUnique({
-    where: { id },
-    include: groupDetailInclude
+    where: { id }
   });
 }
 

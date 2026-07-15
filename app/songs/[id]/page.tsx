@@ -2,10 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CalendarDays, Disc3, ExternalLink, Music2, Users } from "lucide-react";
 
+import { Breadcrumb } from "@/components/breadcrumb";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { coverTypeLabel } from "@/lib/constants";
-import { getSongById } from "@/lib/data/songs";
+import { getRelatedSongsByArtist, getSongById, type SongListItem } from "@/lib/data/songs";
 import { cn, formatDate } from "@/lib/utils";
 import type { Metadata } from "next";
 
@@ -45,7 +46,7 @@ export async function generateMetadata({
       description
     },
     twitter: {
-      card: "summary",
+      card: "summary_large_image",
       title,
       description
     }
@@ -61,9 +62,21 @@ export default async function SongDetailPage({ params }: { params: Promise<{ id:
   }
 
   const artists = song.artists.map(({ artist }) => artist.name).join(", ") || "アーティスト未設定";
+  const relatedSongs = await getRelatedSongsByArtist(
+    song.artists.map(({ artist }) => artist.id),
+    song.id
+  );
 
   return (
     <div className="space-y-6">
+      <Breadcrumb
+        items={[
+          { name: "ホーム", href: "/" },
+          { name: "楽曲", href: "/songs" },
+          { name: song.title, href: `/songs/${song.id}` }
+        ]}
+      />
+
       <section className="overflow-hidden rounded-[2rem] border border-primary/10 bg-card/90 shadow-sm">
         <div className="bg-primary/10 p-5 sm:p-7">
           <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
@@ -202,7 +215,52 @@ export default async function SongDetailPage({ params }: { params: Promise<{ id:
           )}
         </div>
       </section>
+
+      {relatedSongs.length > 0 ? (
+        <section className="space-y-4">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <Disc3 className="size-4" aria-hidden="true" />
+            </span>
+            <div>
+              <h2 className="text-xl font-bold tracking-tight">同じアーティストの他の楽曲</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                原曲アーティストが共通する登録済みの楽曲です。
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {relatedSongs.map((relatedSong) => (
+              <RelatedSongCard key={relatedSong.id} song={relatedSong} />
+            ))}
+          </div>
+        </section>
+      ) : null}
     </div>
+  );
+}
+
+function RelatedSongCard({ song }: { song: SongListItem }) {
+  const artists = song.artists.map(({ artist }) => artist.name).join(", ") || "アーティスト未設定";
+
+  return (
+    <article className="overflow-hidden rounded-3xl border border-primary/10 bg-card/90 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md">
+      <div className="flex h-full flex-col gap-3 p-5">
+        <div className="min-w-0">
+          <Link
+            href={`/songs/${song.id}`}
+            className="font-bold text-foreground underline-offset-4 hover:text-primary hover:underline"
+          >
+            {song.title}
+          </Link>
+          <p className="mt-1 truncate text-sm text-muted-foreground">{artists}</p>
+        </div>
+        <div className="mt-auto">
+          <Badge variant="muted">カバー記録 {song._count.covers} 件</Badge>
+        </div>
+      </div>
+    </article>
   );
 }
 
