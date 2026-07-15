@@ -3,6 +3,7 @@ import Link from "next/link";
 const navItems = [
   { href: "/covers", label: "カバー記録" },
   { href: "/performers", label: "活動者" },
+  { href: "/groups", label: "グループ" },
   { href: "/songs", label: "楽曲" },
   { href: "/covers/new", label: "登録" }
 ];

@@ -193,11 +193,14 @@ export type AnniversaryCoverGroup = {
   covers: CoverListItem[];
 };
 
-export async function getRandomCovers(take = 6) {
+export async function getRandomCovers(take = 6, where: Prisma.CoverWhereInput = {}) {
+  const coverWhere: Prisma.CoverWhereInput = {
+    status: ContentStatus.APPROVED,
+    ...where
+  };
+
   const total = await db.cover.count({
-    where: {
-      status: ContentStatus.APPROVED
-    }
+    where: coverWhere
   });
 
   if (total === 0) {
@@ -209,9 +212,7 @@ export async function getRandomCovers(take = 6) {
   const skip = maxSkip > 0 ? Math.floor(Math.random() * (maxSkip + 1)) : 0;
 
   const covers = await db.cover.findMany({
-    where: {
-      status: ContentStatus.APPROVED
-    },
+    where: coverWhere,
     include: coverListInclude,
     orderBy: [{ createdAt: "desc" }],
     skip,

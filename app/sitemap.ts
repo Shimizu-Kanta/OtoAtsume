@@ -10,7 +10,7 @@ const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://oto-atsume.com").t
 export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [covers, performers, songs] = await Promise.all([
+  const [covers, performers, songs, groups] = await Promise.all([
     db.cover.findMany({
       where: { status: ContentStatus.APPROVED },
       select: { id: true, updatedAt: true }
@@ -21,6 +21,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }),
     db.song.findMany({
       select: { id: true, updatedAt: true }
+    }),
+    db.group.findMany({
+      where: {
+        performers: { some: { status: MasterDataStatus.APPROVED } }
+      },
+      select: { id: true }
     })
   ]);
 
@@ -28,7 +34,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: siteUrl, changeFrequency: "daily", priority: 1 },
     { url: `${siteUrl}/covers`, changeFrequency: "daily", priority: 0.8 },
     { url: `${siteUrl}/songs`, changeFrequency: "daily", priority: 0.8 },
-    { url: `${siteUrl}/performers`, changeFrequency: "daily", priority: 0.8 }
+    { url: `${siteUrl}/performers`, changeFrequency: "daily", priority: 0.8 },
+    { url: `${siteUrl}/groups`, changeFrequency: "weekly", priority: 0.8 }
   ];
 
   const coverEntries: MetadataRoute.Sitemap = covers.map((cover) => ({
@@ -52,5 +59,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6
   }));
 
-  return [...staticEntries, ...coverEntries, ...performerEntries, ...songEntries];
+  const groupEntries: MetadataRoute.Sitemap = groups.map((group) => ({
+    url: `${siteUrl}/groups/${group.id}`,
+    changeFrequency: "weekly",
+    priority: 0.6
+  }));
+
+  return [...staticEntries, ...coverEntries, ...performerEntries, ...songEntries, ...groupEntries];
 }
