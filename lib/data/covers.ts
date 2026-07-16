@@ -8,6 +8,7 @@ import {
 } from "@prisma/client";
 
 import { db } from "@/lib/db";
+import { pageSkip, paginate } from "@/lib/pagination";
 import { normalizeNames } from "@/lib/utils";
 import type {
   AdminCoverEditInput,
@@ -53,6 +54,8 @@ export type CoverDetail = Prisma.CoverGetPayload<{
   include: typeof coverDetailInclude;
 }>;
 
+export type CoverSort = "performedAtDesc" | "performedAtAsc";
+
 export type CoverSearch = {
   performer?: string;
   song?: string;
@@ -61,7 +64,7 @@ export type CoverSearch = {
   dateTo?: string;
   coverType?: string;
   status?: string;
-  take?: number;
+  sort?: CoverSort;
 };
 
 function insensitiveContains(value: string) {
@@ -144,22 +147,46 @@ function buildCoverWhere(search: CoverSearch = {}, onlyApproved = true): Prisma.
   return and.length > 0 ? { AND: and } : {};
 }
 
-export async function getApprovedCovers(search: CoverSearch = {}) {
-  return db.cover.findMany({
-    where: buildCoverWhere(search, true),
-    include: coverListInclude,
-    orderBy: [{ performedAt: "desc" }, { createdAt: "desc" }],
-    take: search.take ?? 50
-  });
+function coverOrderBy(sort: CoverSort | undefined): Prisma.CoverOrderByWithRelationInput[] {
+  if (sort === "performedAtAsc") {
+    return [{ performedAt: "asc" }, { createdAt: "asc" }];
+  }
+
+  return [{ performedAt: "desc" }, { createdAt: "desc" }];
 }
 
-export async function getAdminCovers(search: CoverSearch = {}) {
-  return db.cover.findMany({
-    where: buildCoverWhere(search, false),
-    include: coverListInclude,
-    orderBy: [{ createdAt: "desc" }],
-    take: search.take ?? 100
-  });
+export async function getApprovedCovers(search: CoverSearch = {}, page = 1, perPage = 20) {
+  const where = buildCoverWhere(search, true);
+
+  const [items, totalCount] = await Promise.all([
+    db.cover.findMany({
+      where,
+      include: coverListInclude,
+      orderBy: coverOrderBy(search.sort),
+      skip: pageSkip(page, perPage),
+      take: perPage
+    }),
+    db.cover.count({ where })
+  ]);
+
+  return paginate(items, totalCount, page, perPage);
+}
+
+export async function getAdminCovers(search: CoverSearch = {}, page = 1, perPage = 50) {
+  const where = buildCoverWhere(search, false);
+
+  const [items, totalCount] = await Promise.all([
+    db.cover.findMany({
+      where,
+      include: coverListInclude,
+      orderBy: [{ createdAt: "desc" }],
+      skip: pageSkip(page, perPage),
+      take: perPage
+    }),
+    db.cover.count({ where })
+  ]);
+
+  return paginate(items, totalCount, page, perPage);
 }
 
 export async function getCoverById(id: string, includeHidden = false) {
@@ -173,7 +200,20 @@ export async function getCoverById(id: string, includeHidden = false) {
 }
 
 export async function getLatestCovers(take = 8) {
-  return getApprovedCovers({ take });
+  const { items } = await getApprovedCovers({}, 1, take);
+  return items;
+}
+
+export async function getOtherCoversBySourceUrl(sourceUrl: string, excludeCoverId: string) {
+  return db.cover.findMany({
+    where: {
+      sourceUrl,
+      status: ContentStatus.APPROVED,
+      id: { not: excludeCoverId }
+    },
+    include: coverListInclude,
+    orderBy: [{ timestampSeconds: { sort: "asc", nulls: "last" } }, { performedAt: "asc" }]
+  });
 }
 
 export async function getOtherCoversByPerformers(

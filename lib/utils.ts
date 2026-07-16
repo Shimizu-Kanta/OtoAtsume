@@ -95,3 +95,21 @@ export function getSearchParam(
   const value = searchParams[key];
   return Array.isArray(value) ? value[0] : value;
 }
+
+export function getSearchParamAll(
+  searchParams: Record<string, string | string[] | undefined>,
+  key: string
+) {
+  const value = searchParams[key];
+
+  if (Array.isArray(value)) {
+    return value;
+  }
+
+  return value ? [value] : [];
+}
+
+export function parsePageParam(value: string | undefined) {
+  const page = Number(value);
+  return Number.isInteger(page) && page > 0 ? page : 1;
+}

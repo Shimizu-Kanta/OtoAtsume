@@ -1,6 +1,7 @@
 import { ContentStatus, MasterDataStatus, Prisma } from "@prisma/client";
 
 import { db } from "@/lib/db";
+import { pageSkip, paginate } from "@/lib/pagination";
 
 export const performerListInclude = {
   group: true,
@@ -74,45 +75,58 @@ function performerOrderBy(sort: PerformerSort | undefined): Prisma.PerformerOrde
   return [{ name: "asc" }];
 }
 
-export async function getPerformers(search: PerformerSearch = {}) {
+export async function getPerformers(search: PerformerSearch = {}, page = 1, perPage = 20) {
   const query = search.query?.trim();
   const tagNames = search.tagNames?.map((tag) => tag.trim()).filter(Boolean) ?? [];
 
-  const performers = await db.performer.findMany({
-    where: {
-      status: MasterDataStatus.APPROVED,
-      ...(query
-        ? {
-            OR: [
-              { name: { contains: query, mode: Prisma.QueryMode.insensitive } },
-              {
-                aliases: {
-                  some: { alias: { contains: query, mode: Prisma.QueryMode.insensitive } }
-                }
-              },
-              { group: { name: { contains: query, mode: Prisma.QueryMode.insensitive } } }
-            ]
-          }
-        : {}),
-      ...(tagNames.length > 0
-        ? {
-            tags: {
-              some: {
-                tag: { name: { in: tagNames } }
+  const where: Prisma.PerformerWhereInput = {
+    status: MasterDataStatus.APPROVED,
+    ...(query
+      ? {
+          OR: [
+            { name: { contains: query, mode: Prisma.QueryMode.insensitive } },
+            {
+              aliases: {
+                some: { alias: { contains: query, mode: Prisma.QueryMode.insensitive } }
               }
+            },
+            { group: { name: { contains: query, mode: Prisma.QueryMode.insensitive } } }
+          ]
+        }
+      : {}),
+    ...(tagNames.length > 0
+      ? {
+          tags: {
+            some: {
+              tag: { name: { in: tagNames } }
             }
           }
-        : {})
-    },
-    include: performerListInclude,
-    orderBy: performerOrderBy(search.sort)
-  });
+        }
+      : {})
+  };
 
-  if (!query || performers.length > 0) {
-    return performers;
+  const [items, totalCount] = await Promise.all([
+    db.performer.findMany({
+      where,
+      include: performerListInclude,
+      orderBy: performerOrderBy(search.sort),
+      skip: pageSkip(page, perPage),
+      take: perPage
+    }),
+    db.performer.count({ where })
+  ]);
+
+  if (!query || totalCount > 0) {
+    return paginate(items, totalCount, page, perPage);
   }
 
-  return findPerformersBySimilarity(query, tagNames);
+  const similar = await findPerformersBySimilarity(query, tagNames);
+  return paginate(
+    similar.slice(pageSkip(page, perPage), pageSkip(page, perPage) + perPage),
+    similar.length,
+    page,
+    perPage
+  );
 }
 
 // contains検索（名前・別名・グループ名）が0件のときのみ実行する

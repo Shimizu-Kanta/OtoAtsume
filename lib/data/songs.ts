@@ -1,6 +1,7 @@
 import { ContentStatus, Prisma } from "@prisma/client";
 
 import { db } from "@/lib/db";
+import { pageSkip, paginate } from "@/lib/pagination";
 
 export const songListInclude = {
   artists: {
@@ -40,33 +41,71 @@ export type SongListItem = Prisma.SongGetPayload<{
   include: typeof songListInclude;
 }>;
 
-export async function getSongs(query?: string) {
-  const trimmed = query?.trim();
+export type SongSort = "titleAsc" | "titleDesc" | "coverCountDesc";
 
-  const songs = await db.song.findMany({
-    where: trimmed
-      ? {
-          OR: [
-            { title: { contains: trimmed, mode: Prisma.QueryMode.insensitive } },
-            {
-              artists: {
-                some: {
-                  artist: { name: { contains: trimmed, mode: Prisma.QueryMode.insensitive } }
-                }
-              }
-            }
-          ]
-        }
-      : {},
-    include: songListInclude,
-    orderBy: { title: "asc" }
-  });
+export type SongSearch = {
+  query?: string;
+  sort?: SongSort;
+};
 
-  if (!trimmed || songs.length > 0) {
-    return songs;
+// 注意（五十音順の精度について）:
+// PostgreSQLのデフォルト照合順序では、ひらがな・カタカナ・漢字・英数字が混在する
+// タイトルの厳密な五十音順（人間の感覚に合う「あいうえお順」）は再現できない。
+// まずは title の文字列順で提供し、精度が問題になった場合は Song / Performer に
+// よみがな（reading）カラムを追加してそちらでソートする対応を検討する。
+function songOrderBy(sort: SongSort | undefined): Prisma.SongOrderByWithRelationInput[] {
+  if (sort === "titleDesc") {
+    return [{ title: "desc" }];
   }
 
-  return findSongsBySimilarity(trimmed);
+  // Prisma の orderBy はリレーション件数にステータス条件を掛けられないため、
+  // 全ステータスのカバー件数で並ぶ（承認済み以外はごく少数のため近似として許容）。
+  if (sort === "coverCountDesc") {
+    return [{ covers: { _count: "desc" } }, { title: "asc" }];
+  }
+
+  return [{ title: "asc" }];
+}
+
+export async function getSongs(search: SongSearch = {}, page = 1, perPage = 20) {
+  const trimmed = search.query?.trim();
+  const where: Prisma.SongWhereInput = trimmed
+    ? {
+        OR: [
+          { title: { contains: trimmed, mode: Prisma.QueryMode.insensitive } },
+          {
+            artists: {
+              some: {
+                artist: { name: { contains: trimmed, mode: Prisma.QueryMode.insensitive } }
+              }
+            }
+          }
+        ]
+      }
+    : {};
+
+  const [items, totalCount] = await Promise.all([
+    db.song.findMany({
+      where,
+      include: songListInclude,
+      orderBy: songOrderBy(search.sort),
+      skip: pageSkip(page, perPage),
+      take: perPage
+    }),
+    db.song.count({ where })
+  ]);
+
+  if (!trimmed || totalCount > 0) {
+    return paginate(items, totalCount, page, perPage);
+  }
+
+  const similar = await findSongsBySimilarity(trimmed);
+  return paginate(
+    similar.slice(pageSkip(page, perPage), pageSkip(page, perPage) + perPage),
+    similar.length,
+    page,
+    perPage
+  );
 }
 
 // contains検索が0件のときのみ実行する pg_trgm ベースの類似検索フォールバック。

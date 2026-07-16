@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Search } from "lucide-react";
 
 import { PageHeading } from "@/components/page-heading";
+import { Pagination } from "@/components/pagination";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,9 +10,26 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { getPerformers, type PerformerSort } from "@/lib/data/performers";
 import { listTags } from "@/lib/data/tags";
-import { cn, formatDateInput, getSearchParam } from "@/lib/utils";
+import { cn, formatDateInput, getSearchParam, parsePageParam } from "@/lib/utils";
+import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  searchParams
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}): Promise<Metadata> {
+  const params = await searchParams;
+  const page = parsePageParam(getSearchParam(params, "page"));
+
+  return {
+    title: "活動者",
+    alternates: {
+      canonical: page > 1 ? `/performers?page=${page}` : "/performers"
+    }
+  };
+}
 
 export default async function PerformersPage({
   searchParams
@@ -21,9 +39,10 @@ export default async function PerformersPage({
   const params = await searchParams;
   const q = getSearchParam(params, "q");
   const sort = normalizePerformerSort(getSearchParam(params, "sort"));
+  const page = parsePageParam(getSearchParam(params, "page"));
   const selectedTags = getSelectedTags(params);
-  const [performers, tags] = await Promise.all([
-    getPerformers({ query: q, tagNames: selectedTags, sort }),
+  const [{ items: performers, totalCount, totalPages }, tags] = await Promise.all([
+    getPerformers({ query: q, tagNames: selectedTags, sort }, page),
     listTags()
   ]);
   const selectedTagSet = new Set(selectedTags);
@@ -43,7 +62,7 @@ export default async function PerformersPage({
               名前・別名・所属グループ・タグを組み合わせて絞り込めます。
             </p>
           </div>
-          <p className="text-sm font-medium text-primary">{performers.length}件</p>
+          <p className="text-sm font-medium text-primary">{totalCount.toLocaleString("ja-JP")}件</p>
         </div>
 
         <div className="grid gap-4 md:grid-cols-[1fr_220px_auto] md:items-end">
@@ -173,6 +192,8 @@ export default async function PerformersPage({
           条件に一致する活動者は見つかりませんでした。
         </div>
       )}
+
+      <Pagination page={page} totalPages={totalPages} basePath="/performers" params={params} />
     </div>
   );
 }

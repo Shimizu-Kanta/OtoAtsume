@@ -14,8 +14,8 @@ export async function GET() {
     return auth.response;
   }
 
-  const performers = await listAdminPerformers();
-  return NextResponse.json({ performers });
+  const { items: performers, totalCount, page, totalPages } = await listAdminPerformers();
+  return NextResponse.json({ performers, totalCount, page, totalPages });
 }
 
 export async function POST(request: Request) {

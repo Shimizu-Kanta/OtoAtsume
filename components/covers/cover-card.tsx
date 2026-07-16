@@ -1,12 +1,12 @@
-import Image from "next/image";
 import Link from "next/link";
 import { Play } from "lucide-react";
 
+import { CoverThumbnail } from "@/components/covers/cover-thumbnail";
 import { PerformerColorChip } from "@/components/performers/performer-color-chip";
 import { Badge } from "@/components/ui/badge";
 import { coverTypeLabel } from "@/lib/constants";
 import type { CoverListItem } from "@/lib/data/covers";
-import { formatDate, isOptimizableImageUrl } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
 import { getYouTubeThumbnailUrl } from "@/lib/youtube";
 
 function artistNames(cover: CoverListItem) {
@@ -35,20 +35,14 @@ export function CoverCard({ cover }: { cover: CoverListItem }) {
           backgroundImage: accentColor ? `linear-gradient(135deg, ${accentColor}24, transparent 62%)` : undefined
         }}
       >
-        {thumbnailUrl ? (
-          <Image
-            src={thumbnailUrl}
-            alt={`${title} のサムネイル`}
-            fill
-            sizes="(min-width: 1024px) 320px, (min-width: 640px) 45vw, 90vw"
-            unoptimized={!isOptimizableImageUrl(thumbnailUrl)}
-            className="object-cover transition-transform duration-300 group-hover:scale-[1.04]"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-            <Play className="size-9" aria-hidden="true" />
-          </div>
-        )}
+        <CoverThumbnail
+          src={thumbnailUrl}
+          alt={`${title} のサムネイル`}
+          coverType={cover.coverType}
+          sizes="(min-width: 1024px) 320px, (min-width: 640px) 45vw, 90vw"
+          imageClassName="object-cover transition-transform duration-300 group-hover:scale-[1.04]"
+          iconClassName="size-9"
+        />
         <div className="absolute inset-0 bg-gradient-to-t from-foreground/45 via-foreground/5 to-transparent opacity-80" />
         <span className="absolute bottom-3 right-3 inline-flex size-10 items-center justify-center rounded-full bg-card/90 text-primary shadow-sm transition-transform group-hover:scale-105">
           <Play className="ml-0.5 size-4" aria-hidden="true" />

@@ -2,14 +2,37 @@ import Link from "next/link";
 import { Disc3, ExternalLink, Music2, Search } from "lucide-react";
 
 import { PageHeading } from "@/components/page-heading";
+import { Pagination } from "@/components/pagination";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { getSongs, type SongListItem } from "@/lib/data/songs";
-import { cn, getSearchParam } from "@/lib/utils";
+import { Select } from "@/components/ui/select";
+import { getSongs, type SongListItem, type SongSort } from "@/lib/data/songs";
+import { cn, getSearchParam, parsePageParam } from "@/lib/utils";
+import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  searchParams
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}): Promise<Metadata> {
+  const params = await searchParams;
+  const page = parsePageParam(getSearchParam(params, "page"));
+
+  return {
+    title: "楽曲",
+    alternates: {
+      canonical: page > 1 ? `/songs?page=${page}` : "/songs"
+    }
+  };
+}
+
+function normalizeSongSort(value: string | undefined): SongSort {
+  return value === "titleDesc" || value === "coverCountDesc" ? value : "titleAsc";
+}
 
 export default async function SongsPage({
   searchParams
@@ -18,7 +41,9 @@ export default async function SongsPage({
 }) {
   const params = await searchParams;
   const q = getSearchParam(params, "q");
-  const songs = await getSongs(q);
+  const sort = normalizeSongSort(getSearchParam(params, "sort"));
+  const page = parsePageParam(getSearchParam(params, "page"));
+  const { items: songs, totalCount, totalPages } = await getSongs({ query: q, sort }, page);
 
   return (
     <div className="space-y-6">
@@ -32,13 +57,21 @@ export default async function SongsPage({
               楽曲名・原曲アーティスト名から、登録済みのカバー記録を探せます。
             </p>
           </div>
-          <p className="text-sm font-medium text-primary">{songs.length}件</p>
+          <p className="text-sm font-medium text-primary">{totalCount.toLocaleString("ja-JP")}件</p>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
+        <div className="grid gap-4 md:grid-cols-[1fr_220px_auto] md:items-end">
           <div className="space-y-2">
             <Label htmlFor="song-q">検索キーワード</Label>
             <Input id="song-q" name="q" defaultValue={q} placeholder="楽曲名・アーティスト名" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="song-sort">並び替え</Label>
+            <Select id="song-sort" name="sort" defaultValue={sort}>
+              <option value="titleAsc">楽曲名 昇順</option>
+              <option value="titleDesc">楽曲名 降順</option>
+              <option value="coverCountDesc">カバー記録が多い順</option>
+            </Select>
           </div>
           <button type="submit" className={cn(buttonVariants(), "w-full md:w-auto")}>
             <Search className="size-4" />
@@ -58,6 +91,8 @@ export default async function SongsPage({
           条件に一致する楽曲は見つかりませんでした。
         </div>
       )}
+
+      <Pagination page={page} totalPages={totalPages} basePath="/songs" params={params} />
     </div>
   );
 }

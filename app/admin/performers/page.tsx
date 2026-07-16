@@ -3,14 +3,20 @@ import Link from "next/link";
 import { MasterDataStatus } from "@prisma/client";
 import { AdminNav } from "@/components/admin/admin-nav";
 import { PageHeading } from "@/components/page-heading";
+import { Pagination } from "@/components/pagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { requireAdminPage } from "@/lib/auth/admin";
-import { listAdminPerformers, listGroups } from "@/lib/data/admin";
-import { getSearchParam } from "@/lib/utils";
+import {
+  listAdminPerformers,
+  listGroups,
+  normalizePerformerMissingFields,
+  performerMissingFieldOptions
+} from "@/lib/data/admin";
+import { getSearchParam, getSearchParamAll, parsePageParam } from "@/lib/utils";
 import { createPerformerAction } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -25,11 +31,13 @@ export default async function AdminPerformersPage({
   const query = await searchParams;
   const q = getSearchParam(query, "q");
   const status = normalizeMasterDataStatus(getSearchParam(query, "status"));
+  const missingFields = normalizePerformerMissingFields(getSearchParamAll(query, "missing"));
+  const page = parsePageParam(getSearchParam(query, "page"));
   const deleted = getSearchParam(query, "deleted");
   const error = getSearchParam(query, "error");
 
-  const [performers, groups] = await Promise.all([
-    listAdminPerformers(q, status),
+  const [{ items: performers, totalCount, totalPages }, groups] = await Promise.all([
+    listAdminPerformers({ query: q, status, missingFields }, page),
     listGroups()
   ]);
 
@@ -66,12 +74,38 @@ export default async function AdminPerformersPage({
             </Link>
           </div>
         </div>
+
+        <div className="mt-4 border-t pt-4">
+          <p className="mb-2 text-sm font-medium text-muted-foreground">未入力項目で絞り込み</p>
+          <div className="flex flex-wrap gap-x-4 gap-y-2">
+            {performerMissingFieldOptions.map((option) => (
+              <label key={option.value} className="inline-flex cursor-pointer items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  name="missing"
+                  value={option.value}
+                  defaultChecked={missingFields.includes(option.value)}
+                  className="size-4 accent-primary"
+                />
+                {option.label}
+              </label>
+            ))}
+          </div>
+        </div>
       </form>
             <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
         <p>
-          表示中: {performers.length} 件
+          全 {totalCount.toLocaleString("ja-JP")} 件 / {page}ページ目（表示中 {performers.length} 件）
           {status ? ` / ${statusLabel(status)}` : ""}
           {q ? ` / 検索: ${q}` : ""}
+          {missingFields.length > 0
+            ? ` / ${missingFields
+                .map(
+                  (field) =>
+                    performerMissingFieldOptions.find((option) => option.value === field)?.label ?? field
+                )
+                .join("・")}`
+            : ""}
         </p>
         <Link href="/admin/performers?status=PENDING" className="text-primary underline">
           確認待ち活動者を見る
@@ -214,6 +248,8 @@ export default async function AdminPerformersPage({
           </p>
         )}
       </div>
+
+      <Pagination page={page} totalPages={totalPages} basePath="/admin/performers" params={query} />
     </div>
   );
 }

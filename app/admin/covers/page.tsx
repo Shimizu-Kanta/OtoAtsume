@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { AdminNav } from "@/components/admin/admin-nav";
 import { PageHeading } from "@/components/page-heading";
+import { Pagination } from "@/components/pagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +15,7 @@ import {
   coverTypeOptions
 } from "@/lib/constants";
 import { getAdminCovers } from "@/lib/data/covers";
-import { formatDate, getSearchParam } from "@/lib/utils";
+import { formatDate, getSearchParam, parsePageParam } from "@/lib/utils";
 import { deleteCoverAction, updateCoverStatusAction } from "./actions";
 import { requireAdminPage } from "@/lib/auth/admin";
 
@@ -36,10 +37,10 @@ export default async function AdminCoversPage({
     dateFrom: getSearchParam(params, "dateFrom"),
     dateTo: getSearchParam(params, "dateTo"),
     coverType: getSearchParam(params, "coverType"),
-    status: getSearchParam(params, "status"),
-    take: 100
+    status: getSearchParam(params, "status")
   };
-  const covers = await getAdminCovers(search);
+  const page = parsePageParam(getSearchParam(params, "page"));
+  const { items: covers, totalCount, totalPages } = await getAdminCovers(search, page);
 
   return (
     <div className="space-y-6">
@@ -89,6 +90,10 @@ export default async function AdminCoversPage({
           </Link>
         </div>
       </form>
+
+      <p className="text-sm text-muted-foreground">
+        全 {totalCount.toLocaleString("ja-JP")} 件 / {page}ページ目（表示中 {covers.length} 件）
+      </p>
 
       <div className="overflow-hidden rounded-md border bg-card">
         <div className="divide-y">
@@ -153,6 +158,8 @@ export default async function AdminCoversPage({
           ))}
         </div>
       </div>
+
+      <Pagination page={page} totalPages={totalPages} basePath="/admin/covers" params={params} />
     </div>
   );
 }

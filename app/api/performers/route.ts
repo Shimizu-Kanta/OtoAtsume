@@ -1,17 +1,22 @@
 import { NextResponse } from "next/server";
 
 import { getPerformers, type PerformerSort } from "@/lib/data/performers";
+import { parsePageParam } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const performers = await getPerformers({
-    query: searchParams.get("q") ?? undefined,
-    tagNames: getSelectedTags(searchParams),
-    sort: normalizePerformerSort(searchParams.get("sort"))
-  });
-  return NextResponse.json({ performers });
+  const page = parsePageParam(searchParams.get("page") ?? undefined);
+  const { items: performers, totalCount, totalPages } = await getPerformers(
+    {
+      query: searchParams.get("q") ?? undefined,
+      tagNames: getSelectedTags(searchParams),
+      sort: normalizePerformerSort(searchParams.get("sort"))
+    },
+    page
+  );
+  return NextResponse.json({ performers, totalCount, page, totalPages });
 }
 
 function normalizePerformerSort(value: string | null): PerformerSort {

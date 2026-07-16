@@ -35,9 +35,11 @@ function resolveInitialViewMode(initialViewMode: string | null | undefined): Cov
 
 export function CoverResults({
   covers,
+  totalCount,
   initialViewMode
 }: {
   covers: CoverListItem[];
+  totalCount?: number;
   initialViewMode?: string | null;
 }) {
   const router = useRouter();
@@ -68,7 +70,7 @@ export function CoverResults({
 
   return (
     <div className="space-y-5" data-pending={isPending ? "true" : undefined}>
-      <CoverViewToggle value={viewMode} totalCount={covers.length} onValueChange={handleViewChange} />
+      <CoverViewToggle value={viewMode} totalCount={totalCount ?? covers.length} onValueChange={handleViewChange} />
 
       {viewMode === "list" ? (
         <CoverList covers={covers} />

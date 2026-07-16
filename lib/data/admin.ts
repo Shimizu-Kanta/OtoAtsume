@@ -8,6 +8,7 @@ import {
 import { db } from "@/lib/db";
 import { coverDetailInclude, coverListInclude } from "@/lib/data/covers";
 import { replacePerformerTags } from "@/lib/data/tags";
+import { pageSkip, paginate } from "@/lib/pagination";
 import { normalizeNames } from "@/lib/utils";
 
 export async function listReports(status?: ReportStatus) {
@@ -99,13 +100,63 @@ export async function updateAdminGroup(id: string, name: string) {
   });
 }
 
-export async function listAdminPerformers(query?: string, status?: MasterDataStatus) {
-  const keyword = query?.trim();
+export const performerMissingFieldOptions = [
+  { value: "birthday", label: "誕生日未入力" },
+  { value: "debutDate", label: "デビュー日未入力" },
+  { value: "officialUrl", label: "公式URL未入力" },
+  { value: "colorCode", label: "カラーコード未入力" }
+] as const;
+
+export type PerformerMissingField = (typeof performerMissingFieldOptions)[number]["value"];
+
+export function normalizePerformerMissingFields(values: string[]): PerformerMissingField[] {
+  const allowed = new Set(performerMissingFieldOptions.map((option) => option.value));
+  return Array.from(new Set(values)).filter((value): value is PerformerMissingField =>
+    allowed.has(value as PerformerMissingField)
+  );
+}
+
+function buildMissingPerformerFilters(missingFields: PerformerMissingField[]) {
   const filters: Prisma.PerformerWhereInput[] = [];
 
-  if (status) {
-    filters.push({ status });
+  if (missingFields.includes("birthday")) {
+    filters.push({ birthday: null });
   }
+
+  if (missingFields.includes("debutDate")) {
+    filters.push({ debutDate: null });
+  }
+
+  if (missingFields.includes("officialUrl")) {
+    filters.push({ officialUrl: null });
+  }
+
+  if (missingFields.includes("colorCode")) {
+    filters.push({ colorCode: null });
+  }
+
+  return filters;
+}
+
+export type AdminPerformerSearch = {
+  query?: string;
+  status?: MasterDataStatus;
+  missingFields?: PerformerMissingField[];
+};
+
+export async function listAdminPerformers(
+  search: AdminPerformerSearch = {},
+  page = 1,
+  perPage = 50
+) {
+  const keyword = search.query?.trim();
+  const filters: Prisma.PerformerWhereInput[] = [];
+
+  if (search.status) {
+    filters.push({ status: search.status });
+  }
+
+  filters.push(...buildMissingPerformerFilters(search.missingFields ?? []));
 
   if (keyword) {
     filters.push({
@@ -164,19 +215,27 @@ export async function listAdminPerformers(query?: string, status?: MasterDataSta
     });
   }
 
-  return db.performer.findMany({
-    where: filters.length > 0 ? { AND: filters } : undefined,
-    include: {
-      group: true,
-      aliases: true,
-      tags: {
-        include: { tag: true },
-        orderBy: { tag: { name: "asc" } }
-      }
-    },
-    orderBy: { createdAt: "desc" },
-    take: 100
-  });
+  const where = filters.length > 0 ? { AND: filters } : undefined;
+
+  const [items, totalCount] = await Promise.all([
+    db.performer.findMany({
+      where,
+      include: {
+        group: true,
+        aliases: true,
+        tags: {
+          include: { tag: true },
+          orderBy: { tag: { name: "asc" } }
+        }
+      },
+      orderBy: { createdAt: "desc" },
+      skip: pageSkip(page, perPage),
+      take: perPage
+    }),
+    db.performer.count({ where })
+  ]);
+
+  return paginate(items, totalCount, page, perPage);
 }
 
 export async function getAdminPerformer(id: string) {
@@ -335,21 +394,36 @@ export async function deleteAdminPerformerIfUnused(id: string, confirmName: stri
   });
 }
 
-export async function listAdminSongs() {
-  return db.song.findMany({
-    include: {
-      artists: {
-        include: { artist: true }
-      },
-      _count: {
-        select: {
-          covers: true
+export type AdminSongSearch = {
+  missingOriginalUrl?: boolean;
+};
+
+export async function listAdminSongs(search: AdminSongSearch = {}, page = 1, perPage = 50) {
+  const where: Prisma.SongWhereInput | undefined = search.missingOriginalUrl
+    ? { originalUrl: null }
+    : undefined;
+
+  const [items, totalCount] = await Promise.all([
+    db.song.findMany({
+      where,
+      include: {
+        artists: {
+          include: { artist: true }
+        },
+        _count: {
+          select: {
+            covers: true
+          }
         }
-      }
-    },
-    orderBy: { createdAt: "desc" },
-    take: 100
-  });
+      },
+      orderBy: { createdAt: "desc" },
+      skip: pageSkip(page, perPage),
+      take: perPage
+    }),
+    db.song.count({ where })
+  ]);
+
+  return paginate(items, totalCount, page, perPage);
 }
 
 export async function getAdminSong(id: string) {

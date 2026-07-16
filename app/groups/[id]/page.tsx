@@ -6,6 +6,7 @@ import { Breadcrumb } from "@/components/breadcrumb";
 import { CoverCard } from "@/components/covers/cover-card";
 import { CoverCarousel } from "@/components/home/cover-carousel";
 import { PerformerCard } from "@/components/performers/performer-card";
+import { ShareButton } from "@/components/share-button";
 import { buttonVariants } from "@/components/ui/button";
 import type { CoverListItem } from "@/lib/data/covers";
 import {
@@ -17,6 +18,8 @@ import {
 import { getGroupPerformerCount, getGroupPerformers } from "@/lib/data/performers";
 import { cn } from "@/lib/utils";
 import type { Metadata } from "next";
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://oto-atsume.com";
 
 export const revalidate = 3600;
 
@@ -105,6 +108,7 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
                 <Users className="size-4" aria-hidden="true" />
                 グループ一覧へ
               </Link>
+              <ShareButton url={`${siteUrl}/groups/${group.id}`} title={`${group.name} | おとあつめ`} />
             </div>
           </div>
         </div>

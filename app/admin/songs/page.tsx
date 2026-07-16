@@ -1,12 +1,13 @@
 import { AdminNav } from "@/components/admin/admin-nav";
 import Link from "next/link";
 import { PageHeading } from "@/components/page-heading";
+import { Pagination } from "@/components/pagination";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { DeleteSubmitButton } from "@/components/admin/delete-submit-button";
-import { getSearchParam } from "@/lib/utils";
+import { getSearchParam, parsePageParam } from "@/lib/utils";
 import { requireAdminPage } from "@/lib/auth/admin";
 import { listAdminArtists, listAdminSongs } from "@/lib/data/admin";
 import { createSongAction, deleteSongAction } from "./actions";
@@ -19,7 +20,13 @@ export default async function AdminSongsPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   await requireAdminPage();
-  const [songs, artists, params] = await Promise.all([listAdminSongs(), listAdminArtists(), searchParams]);
+  const params = await searchParams;
+  const missingOriginalUrl = getSearchParam(params, "missing") === "originalUrl";
+  const page = parsePageParam(getSearchParam(params, "page"));
+  const [{ items: songs, totalCount, totalPages }, artists] = await Promise.all([
+    listAdminSongs({ missingOriginalUrl }, page),
+    listAdminArtists()
+  ]);
   const error = getSearchParam(params, "error");
   const deleted = getSearchParam(params, "deleted") === "1";
 
@@ -27,6 +34,32 @@ export default async function AdminSongsPage({
     <div className="space-y-6">
       <AdminNav />
       <PageHeading title="楽曲管理" description="楽曲マスタを追加・確認します。" />
+
+      <form action="/admin/songs" className="rounded-md border bg-card p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <label className="inline-flex cursor-pointer items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              name="missing"
+              value="originalUrl"
+              defaultChecked={missingOriginalUrl}
+              className="size-4 accent-primary"
+            />
+            原曲URL未入力のみ表示
+          </label>
+          <div className="flex flex-wrap gap-2">
+            <Button type="submit">絞り込み</Button>
+            <Link href="/admin/songs" className="rounded-md border px-4 py-2 text-sm">
+              条件クリア
+            </Link>
+          </div>
+        </div>
+      </form>
+
+      <p className="text-sm text-muted-foreground">
+        全 {totalCount.toLocaleString("ja-JP")} 件 / {page}ページ目（表示中 {songs.length} 件）
+        {missingOriginalUrl ? " / 原曲URL未入力" : ""}
+      </p>
 
       {error ? (
         <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm">
@@ -99,6 +132,8 @@ export default async function AdminSongsPage({
           ))}
         </div>
       </div>
+
+      <Pagination page={page} totalPages={totalPages} basePath="/admin/songs" params={params} />
     </div>
   );
 }

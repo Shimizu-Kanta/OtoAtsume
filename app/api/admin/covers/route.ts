@@ -12,7 +12,7 @@ export async function GET(request: Request) {
   }
 
   const { searchParams } = new URL(request.url);
-  const covers = await getAdminCovers({
+  const { items: covers, totalCount, page, totalPages } = await getAdminCovers({
     performer: searchParams.get("performer") ?? undefined,
     song: searchParams.get("song") ?? undefined,
     artist: searchParams.get("artist") ?? undefined,
@@ -21,5 +21,5 @@ export async function GET(request: Request) {
     coverType: searchParams.get("coverType") ?? undefined
   });
 
-  return NextResponse.json({ covers });
+  return NextResponse.json({ covers, totalCount, page, totalPages });
 }

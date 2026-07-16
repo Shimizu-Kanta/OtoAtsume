@@ -1,12 +1,13 @@
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CalendarDays, ExternalLink, Flag, LinkIcon, Music2, Play, Timer, Users } from "lucide-react";
+import { CalendarDays, ExternalLink, Flag, Music2, Play, Radio, Timer, Users } from "lucide-react";
 
 import { Breadcrumb } from "@/components/breadcrumb";
 import { CoverCard } from "@/components/covers/cover-card";
+import { CoverThumbnail } from "@/components/covers/cover-thumbnail";
 import { CoverCarousel } from "@/components/home/cover-carousel";
 import { PerformerColorChip } from "@/components/performers/performer-color-chip";
+import { ShareButton } from "@/components/share-button";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { coverTypeLabel } from "@/lib/constants";
@@ -14,9 +15,10 @@ import {
   getCoverById,
   getOtherCoversByPerformers,
   getOtherCoversBySong,
+  getOtherCoversBySourceUrl,
   type CoverListItem
 } from "@/lib/data/covers";
-import { cn, formatDate, formatSeconds, isOptimizableImageUrl, withTimestamp } from "@/lib/utils";
+import { cn, formatDate, formatSeconds, withTimestamp } from "@/lib/utils";
 import { getYouTubeThumbnailUrl } from "@/lib/youtube";
 import type { Metadata } from "next";
 
@@ -89,12 +91,13 @@ export default async function CoverDetailPage({ params, searchParams }: CoverDet
   const hasTimestamp = cover.timestampSeconds != null;
   const sourceUrlWithTimestamp = withTimestamp(cover.sourceUrl, cover.timestampSeconds);
 
-  const [otherPerformerCovers, otherSongCovers] = await Promise.all([
+  const [otherPerformerCovers, otherSongCovers, sameSourceCovers] = await Promise.all([
     getOtherCoversByPerformers(
       performers.map((performer) => performer.id),
       cover.id
     ),
-    getOtherCoversBySong(cover.songId, cover.id)
+    getOtherCoversBySong(cover.songId, cover.id),
+    getOtherCoversBySourceUrl(cover.sourceUrl, cover.id)
   ]);
 
   const jsonLd = {
@@ -165,21 +168,15 @@ export default async function CoverDetailPage({ params, searchParams }: CoverDet
               backgroundImage: accentColor ? `linear-gradient(135deg, ${accentColor}24, transparent 62%)` : undefined
             }}
           >
-            {thumbnailUrl ? (
-              <Image
-                src={thumbnailUrl}
-                alt={`${cover.song.title} のサムネイル`}
-                fill
-                sizes="(min-width: 1024px) 55vw, 100vw"
-                priority
-                unoptimized={!isOptimizableImageUrl(thumbnailUrl)}
-                className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-                <Play className="size-12" aria-hidden="true" />
-              </div>
-            )}
+            <CoverThumbnail
+              src={thumbnailUrl}
+              alt={`${cover.song.title} のサムネイル`}
+              coverType={cover.coverType}
+              sizes="(min-width: 1024px) 55vw, 100vw"
+              priority
+              imageClassName="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+              iconClassName="size-12"
+            />
             <div className="absolute inset-0 bg-gradient-to-t from-foreground/45 via-transparent to-transparent" />
             <span className="absolute bottom-4 right-4 inline-flex items-center gap-2 rounded-full bg-card/90 px-4 py-2 text-sm font-semibold text-primary shadow-sm transition-transform group-hover:scale-105">
               <Play className="size-4" aria-hidden="true" />
@@ -211,12 +208,16 @@ export default async function CoverDetailPage({ params, searchParams }: CoverDet
                 <Flag className="size-4" aria-hidden="true" />
                 通報
               </Link>
+              <ShareButton
+                url={`${siteUrl}/covers/${cover.id}`}
+                title={`${cover.song.title} / ${performers.map((performer) => performer.name).join(", ")} | おとあつめ`}
+              />
             </div>
           </div>
         </div>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-3">
+      <section className={cn("grid gap-4", hasTimestamp ? "md:grid-cols-3" : "md:grid-cols-2")}>
         <InfoCard
           icon={<CalendarDays className="size-4" aria-hidden="true" />}
           label="歌唱日"
@@ -227,11 +228,13 @@ export default async function CoverDetailPage({ params, searchParams }: CoverDet
           label="歌唱種別"
           value={coverTypeLabel(cover.coverType)}
         />
-        <InfoCard
-          icon={<Timer className="size-4" aria-hidden="true" />}
-          label="タイムスタンプ"
-          value={hasTimestamp ? formatSeconds(cover.timestampSeconds) : "未設定"}
-        />
+        {hasTimestamp ? (
+          <InfoCard
+            icon={<Timer className="size-4" aria-hidden="true" />}
+            label="タイムスタンプ"
+            value={formatSeconds(cover.timestampSeconds)}
+          />
+        ) : null}
       </section>
 
       <section className="rounded-3xl border border-primary/10 bg-card/90 p-5 shadow-sm">
@@ -261,41 +264,48 @@ export default async function CoverDetailPage({ params, searchParams }: CoverDet
         </div>
       </section>
 
-      <section className="rounded-3xl border border-primary/10 bg-card/90 p-5 shadow-sm">
-        <div className="flex items-center gap-2">
-          <span className="inline-flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
-            <LinkIcon className="size-4" aria-hidden="true" />
-          </span>
-          <div>
-            <h2 className="text-lg font-bold tracking-tight">情報元</h2>
-            <p className="mt-1 text-sm text-muted-foreground">登録に使われた動画・配信・ライブ情報です。</p>
-          </div>
-        </div>
-
-        <div className="mt-4 space-y-3">
-          <div className="rounded-2xl border bg-background/70 p-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Source URL</p>
-            <a
-              href={sourceUrlWithTimestamp}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-1 block break-all text-sm text-primary underline-offset-4 hover:underline"
-            >
-              {cover.sourceUrl}
-            </a>
-          </div>
-          {sourceTitle ? (
-            <div className="rounded-2xl border bg-background/70 p-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Title</p>
-              <p className="mt-1 text-sm text-foreground">{sourceTitle}</p>
+      {sameSourceCovers.length > 0 ? (
+        <section className="rounded-3xl border border-primary/10 bg-card/90 p-5 shadow-sm">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <Radio className="size-4" aria-hidden="true" />
+            </span>
+            <div>
+              <h2 className="text-lg font-bold tracking-tight">この配信・ライブの他の歌唱記録</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                同じ情報元URLから登録されている歌唱記録です。
+              </p>
             </div>
-          ) : null}
-          <div className="flex flex-wrap gap-2">
-            <Badge variant="muted">{coverTypeLabel(cover.coverType)}</Badge>
-            {hasTimestamp ? <Badge variant="outline">{formatSeconds(cover.timestampSeconds)}</Badge> : null}
           </div>
-        </div>
-      </section>
+
+          <div className="mt-4 divide-y overflow-hidden rounded-2xl border bg-background/70">
+            {sameSourceCovers.map((sourceCover) => (
+              <div
+                key={sourceCover.id}
+                className="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="min-w-0">
+                  <Link
+                    href={`/covers/${sourceCover.id}`}
+                    className="font-semibold text-foreground underline-offset-4 hover:text-primary hover:underline"
+                  >
+                    {sourceCover.song.title}
+                  </Link>
+                  <p className="mt-0.5 text-sm text-muted-foreground">
+                    {sourceCover.performers.map(({ performer }) => performer.name).join(", ")}
+                  </p>
+                </div>
+                {sourceCover.timestampSeconds != null ? (
+                  <Badge variant="outline" className="shrink-0">
+                    <Timer className="mr-1 size-3" aria-hidden="true" />
+                    {formatSeconds(sourceCover.timestampSeconds)}
+                  </Badge>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {otherPerformerCovers.length > 0 ? (
         <RelatedCoversSection

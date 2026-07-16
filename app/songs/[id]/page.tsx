@@ -3,12 +3,15 @@ import { notFound } from "next/navigation";
 import { CalendarDays, Disc3, ExternalLink, Music2, Users } from "lucide-react";
 
 import { Breadcrumb } from "@/components/breadcrumb";
+import { ShareButton } from "@/components/share-button";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { coverTypeLabel } from "@/lib/constants";
 import { getRelatedSongsByArtist, getSongById, type SongListItem } from "@/lib/data/songs";
 import { cn, formatDate } from "@/lib/utils";
 import type { Metadata } from "next";
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://oto-atsume.com";
 
 export const revalidate = 3600;
 
@@ -104,6 +107,7 @@ export default async function SongDetailPage({ params }: { params: Promise<{ id:
                 <Music2 className="size-4" aria-hidden="true" />
                 カバー記録を探す
               </Link>
+              <ShareButton url={`${siteUrl}/songs/${song.id}`} title={`${song.title} | おとあつめ`} />
             </div>
           </div>
         </div>

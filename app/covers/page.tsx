@@ -3,15 +3,37 @@ import { FilePlus2, Search } from "lucide-react";
 
 import { CoverResults } from "@/components/covers/cover-results";
 import { PageHeading } from "@/components/page-heading";
+import { Pagination } from "@/components/pagination";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { coverTypeOptions } from "@/lib/constants";
-import { getApprovedCovers } from "@/lib/data/covers";
-import { cn, getSearchParam } from "@/lib/utils";
+import { getApprovedCovers, type CoverSort } from "@/lib/data/covers";
+import { cn, getSearchParam, parsePageParam } from "@/lib/utils";
+import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  searchParams
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}): Promise<Metadata> {
+  const params = await searchParams;
+  const page = parsePageParam(getSearchParam(params, "page"));
+
+  return {
+    title: "カバー記録",
+    alternates: {
+      canonical: page > 1 ? `/covers?page=${page}` : "/covers"
+    }
+  };
+}
+
+function normalizeCoverSort(value: string | undefined): CoverSort {
+  return value === "performedAtAsc" ? value : "performedAtDesc";
+}
 
 export default async function CoversPage({
   searchParams
@@ -19,17 +41,20 @@ export default async function CoversPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const params = await searchParams;
+  const sort = normalizeCoverSort(getSearchParam(params, "sort"));
   const search = {
     performer: getSearchParam(params, "performer"),
     song: getSearchParam(params, "song"),
     artist: getSearchParam(params, "artist"),
     dateFrom: getSearchParam(params, "dateFrom"),
     dateTo: getSearchParam(params, "dateTo"),
-    coverType: getSearchParam(params, "coverType")
+    coverType: getSearchParam(params, "coverType"),
+    sort
   };
+  const page = parsePageParam(getSearchParam(params, "page"));
   const view = getSearchParam(params, "view");
   const safeView = view === "card" || view === "list" ? view : undefined;
-  const covers = await getApprovedCovers(search);
+  const { items: covers, totalCount, totalPages } = await getApprovedCovers(search, page);
 
   return (
     <div className="space-y-6">
@@ -51,7 +76,7 @@ export default async function CoversPage({
             <h2 className="text-base font-semibold">検索条件</h2>
             <p className="mt-1 text-sm text-muted-foreground">楽曲名・活動者名などで絞り込めます。</p>
           </div>
-          <p className="text-sm font-medium text-primary">{covers.length}件</p>
+          <p className="text-sm font-medium text-primary">{totalCount.toLocaleString("ja-JP")}件</p>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -91,6 +116,14 @@ export default async function CoversPage({
             <Label htmlFor="dateTo">歌唱日（終了）</Label>
             <Input id="dateTo" name="dateTo" type="date" defaultValue={search.dateTo} />
           </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="sort">並び替え</Label>
+            <Select id="sort" name="sort" defaultValue={sort}>
+              <option value="performedAtDesc">歌唱日 新しい順</option>
+              <option value="performedAtAsc">歌唱日 古い順</option>
+            </Select>
+          </div>
         </div>
         <div className="mt-5 flex flex-wrap gap-2">
           <button type="submit" className={cn(buttonVariants())}>
@@ -103,7 +136,9 @@ export default async function CoversPage({
         </div>
       </form>
 
-      <CoverResults covers={covers} initialViewMode={view} />
+      <CoverResults covers={covers} totalCount={totalCount} initialViewMode={view} />
+
+      <Pagination page={page} totalPages={totalPages} basePath="/covers" params={params} />
     </div>
   );
 }

@@ -4,12 +4,15 @@ import { Cake, CalendarDays, ExternalLink, Music2, Palette, Tag, Users, Youtube 
 
 import { Breadcrumb } from "@/components/breadcrumb";
 import { PerformerCard } from "@/components/performers/performer-card";
+import { ShareButton } from "@/components/share-button";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { coverTypeLabel } from "@/lib/constants";
 import { getGroupPerformers, getPerformerById } from "@/lib/data/performers";
 import { cn, formatDate, formatDateInput } from "@/lib/utils";
 import type { Metadata } from "next";
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://oto-atsume.com";
 
 export const revalidate = 3600;
 
@@ -132,6 +135,10 @@ export default async function PerformerDetailPage({ params }: { params: Promise<
                   公式URL
                 </a>
               ) : null}
+              <ShareButton
+                url={`${siteUrl}/performers/${performer.id}`}
+                title={`${performer.name} | おとあつめ`}
+              />
             </div>
           </div>
         </div>
