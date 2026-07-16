@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Script from "next/script";
 
 import "./globals.css";
 import { SiteFooter } from "@/components/site-footer";
@@ -50,12 +49,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ja">
       <body>
+        {/* async 付き script は React 19 が <head> にホイストするため、
+            SSR の生 HTML に AdSense のコードスニペットがそのまま出力される */}
         {adsenseClientId ? (
-          <Script
+          <script
             async
             src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseClientId}`}
             crossOrigin="anonymous"
-            strategy="afterInteractive"
           />
         ) : null}
         <AccessLogger />
