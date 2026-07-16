@@ -122,6 +122,7 @@ Cloud Run には Secret Manager 経由で以下を設定します。DB パスワ
 | `GOOGLE_CLIENT_SECRET` | Google OAuth client secret |
 | `CAPTCHA_SECRET_KEY` | CAPTCHA 検証用 secret |
 | `NEXT_PUBLIC_CAPTCHA_SITE_KEY` | CAPTCHA site key |
+| `YOUTUBE_DATA_API_KEY` | YouTube URL 補助機能で使う YouTube Data API v3 の API key |
 
 CAPTCHA は Cloudflare Turnstile を使います。ローカル開発では `CAPTCHA_SECRET_KEY` / `NEXT_PUBLIC_CAPTCHA_SITE_KEY` が未設定でも投稿フォームの CAPTCHA は skip できます。本番では必ず両方を Secret Manager に設定してください。未設定の場合、本番の投稿・通報・活動者申請は保存されません。
 
@@ -145,6 +146,7 @@ gcloud secrets create GOOGLE_CLIENT_ID --data-file=-
 gcloud secrets create GOOGLE_CLIENT_SECRET --data-file=-
 gcloud secrets create CAPTCHA_SECRET_KEY --data-file=-
 gcloud secrets create NEXT_PUBLIC_CAPTCHA_SITE_KEY --data-file=-
+gcloud secrets create YOUTUBE_DATA_API_KEY --data-file=-
 ```
 
 Windows PowerShell では pipe 経由の `--data-file=-` が意図通り動かない場合があるため、temp file 経由で値を追加します。
