@@ -18,6 +18,10 @@ RUN pnpm install --frozen-lockfile
 
 FROM base AS builder
 ENV NEXT_STANDALONE=true
+# NEXT_PUBLIC_ 変数はクライアントバンドルにビルド時インライン化されるため、
+# build-arg で受け取る（未指定なら空 = AdSense 無効のままビルドされる）
+ARG NEXT_PUBLIC_ADSENSE_CLIENT_ID
+ENV NEXT_PUBLIC_ADSENSE_CLIENT_ID=$NEXT_PUBLIC_ADSENSE_CLIENT_ID
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN pnpm prisma generate

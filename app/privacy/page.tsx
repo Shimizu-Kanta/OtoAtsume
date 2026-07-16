@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   description: "おとあつめのプライバシーポリシー"
 };
 
-const updatedAt = "2026年7月2日";
+const updatedAt = "2026年7月16日";
 
 export default function PrivacyPage() {
   return (
@@ -69,18 +69,52 @@ export default function PrivacyPage() {
           <li>Cloudflare Turnstile: 投稿フォーム等の CAPTCHA 検証に使用します。</li>
           <li>YouTube Data API: YouTube URL から動画タイトル、投稿日、チャンネル名などを取得する補助機能に使用します。</li>
           <li>Google Cloud / Cloud Run / Cloud SQL: サービスのホスティングとデータ保存に使用します。</li>
+          <li>Google AdSense: 広告配信に使用します。</li>
         </ul>
       </section>
 
       <section className="space-y-3 rounded-md border bg-card p-5">
-        <h2 className="text-lg font-semibold">5. 第三者提供</h2>
+        <h2 className="text-lg font-semibold">5. 広告配信について</h2>
+        <div className="space-y-3 text-sm leading-7 text-muted-foreground">
+          <p>
+            本サービスは、第三者配信の広告サービス「Google AdSense」を利用しています。
+          </p>
+          <p>
+            Google などの第三者配信事業者は Cookie を使用し、ユーザーの本サービスや他のウェブサイトへの過去のアクセス情報に基づいて、パーソナライズされた広告を配信することがあります。
+          </p>
+          <p>
+            ユーザーは
+            <a
+              href="https://adssettings.google.com/"
+              target="_blank"
+              rel="noreferrer"
+              className="mx-1 text-primary underline"
+            >
+              Google の広告設定
+            </a>
+            から、パーソナライズ広告を無効にできます。Google による広告 Cookie の利用の詳細は
+            <a
+              href="https://policies.google.com/technologies/ads?hl=ja"
+              target="_blank"
+              rel="noreferrer"
+              className="mx-1 text-primary underline"
+            >
+              Google のポリシーと規約
+            </a>
+            を参照してください。
+          </p>
+        </div>
+      </section>
+
+      <section className="space-y-3 rounded-md border bg-card p-5">
+        <h2 className="text-lg font-semibold">6. 第三者提供</h2>
         <p className="text-sm leading-7 text-muted-foreground">
           法令に基づく場合、本人の同意がある場合、サービス運営に必要な委託先に取り扱いを委託する場合を除き、取得した情報を第三者に提供しません。
         </p>
       </section>
 
       <section className="space-y-3 rounded-md border bg-card p-5">
-        <h2 className="text-lg font-semibold">6. 情報の修正・削除</h2>
+        <h2 className="text-lg font-semibold">7. 情報の修正・削除</h2>
         <p className="text-sm leading-7 text-muted-foreground">
           掲載情報の修正・削除、または本ポリシーに関する問い合わせは、
           <Link href="/contact" className="mx-1 text-primary underline">
@@ -91,7 +125,7 @@ export default function PrivacyPage() {
       </section>
 
       <section className="space-y-3 rounded-md border bg-card p-5">
-        <h2 className="text-lg font-semibold">7. ポリシーの変更</h2>
+        <h2 className="text-lg font-semibold">8. ポリシーの変更</h2>
         <p className="text-sm leading-7 text-muted-foreground">
           管理者は、必要に応じて本ポリシーを変更できます。変更後の内容は、本ページに掲載した時点で効力を生じます。
         </p>

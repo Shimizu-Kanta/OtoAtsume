@@ -55,6 +55,41 @@ pnpm dev
 
 管理画面は一般公開 UI からリンクせず、管理者が `/admin` を直接開くかブックマークからアクセスする前提です。
 
+## Google AdSense
+
+広告配信には Google AdSense を使います。自動広告での審査通過を第一段階とし、手動配置ユニットにも対応しています。
+
+### 環境変数
+
+| 環境変数 | 用途 |
+| --- | --- |
+| `NEXT_PUBLIC_ADSENSE_CLIENT_ID` | AdSense のクライアント ID（`ca-pub-XXXXXXXXXXXXXXXX` 形式） |
+
+- 未設定の場合、AdSense スクリプトの読み込み・広告ユニットの描画を一切行いません（開発環境で広告を読み込まないため）。
+- クライアントコンポーネント（`AdUnit`）では `NEXT_PUBLIC_` 変数がビルド時にインライン化されるため、本番では GitHub Actions の Repository Variables に `NEXT_PUBLIC_ADSENSE_CLIENT_ID` を設定してください。Docker build の build-arg と Cloud Run のランタイム環境変数の両方に workflow が渡します。
+
+### ads.txt
+
+`public/ads.txt` にパブリッシャー ID を記載しています。AdSense アカウントを変更した場合は、`pub-XXXXXXXXXXXXXXXX` 部分を自分のパブリッシャー ID（クライアント ID の `ca-` を除いた部分）に置き換えてください。ads.txt は環境変数を参照できない静的ファイルです。
+
+```txt
+google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0
+```
+
+### 手動配置ユニット
+
+広告を手動配置する場合は `components/ads/ad-unit.tsx` の `AdUnit` を使います。AdSense 管理画面で広告ユニットを作成し、スロット ID を渡してください。
+
+```tsx
+import { AdUnit } from "@/components/ads/ad-unit";
+
+<AdUnit adSlot="1234567890" />
+```
+
+- `adFormat`（デフォルト `"auto"`）と `className` を指定できます。CLS 対策として枠には `min-h-[280px]` が設定済みです。
+- `/admin` 配下、`/covers/new`、`/performer-applications/new`、`/report` で終わるパスでは何も描画しません。
+- 開発環境では実広告の代わりにプレースホルダを表示します。
+
 ## Cloud Run デプロイ
 
 このリポジトリには `main` branch への push を契機に、Docker image を Artifact Registry に push し、Prisma migration を適用してから Cloud Run に deploy する GitHub Actions workflow を含めています。
@@ -159,6 +194,7 @@ Repository Variables:
 | `CLOUD_RUN_SERVICE` | `oto-atsume` |
 | `CLOUD_RUN_SERVICE_ACCOUNT` | `oto-atsume-runtime@my-project.iam.gserviceaccount.com` |
 | `CLOUD_SQL_CONNECTION_NAME` | `my-project:asia-northeast1:oto-atsume-db` |
+| `NEXT_PUBLIC_ADSENSE_CLIENT_ID` | `ca-pub-6526734700672974` |
 
 Repository Secrets:
 
