@@ -2,13 +2,16 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Cake, CalendarDays, ExternalLink, Music2, Palette, Tag, Users, Youtube } from "lucide-react";
 
+import { MasterDataStatus } from "@prisma/client";
+
 import { Breadcrumb } from "@/components/breadcrumb";
+import { PendingPerformerNotice } from "@/components/performers/pending-performer-notice";
 import { PerformerCard } from "@/components/performers/performer-card";
 import { ShareButton } from "@/components/share-button";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { coverTypeLabel } from "@/lib/constants";
-import { getGroupPerformers, getPerformerById } from "@/lib/data/performers";
+import { getGroupPerformers, getPerformerByIdAnyStatus } from "@/lib/data/performers";
 import { cn, formatDate, formatDateInput } from "@/lib/utils";
 import type { Metadata } from "next";
 
@@ -22,11 +25,18 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
-  const performer = await getPerformerById(id);
+  const performer = await getPerformerByIdAnyStatus(id);
 
-  if (!performer) {
+  if (!performer || performer.status === MasterDataStatus.HIDDEN) {
     return {
       title: "活動者情報が見つかりません"
+    };
+  }
+
+  if (performer.status === MasterDataStatus.PENDING) {
+    return {
+      title: `${performer.name}（確認中）`,
+      robots: { index: false, follow: false }
     };
   }
 
@@ -59,10 +69,14 @@ export async function generateMetadata({
 
 export default async function PerformerDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const performer = await getPerformerById(id);
+  const performer = await getPerformerByIdAnyStatus(id);
 
-  if (!performer) {
+  if (!performer || performer.status === MasterDataStatus.HIDDEN) {
     notFound();
+  }
+
+  if (performer.status === MasterDataStatus.PENDING) {
+    return <PendingPerformerNotice name={performer.name} />;
   }
 
   const groupMates = performer.group

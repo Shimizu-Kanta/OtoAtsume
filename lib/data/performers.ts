@@ -187,6 +187,16 @@ export async function getPerformerById(id: string) {
   });
 }
 
+// 確認待ち（PENDING）活動者ページで専用の案内を出すため、ステータスを問わず取得する。
+// performerDetailInclude の covers は APPROVED のカバー記録のみを含むため、
+// 非公開のカバー記録が漏れることはない。
+export async function getPerformerByIdAnyStatus(id: string) {
+  return db.performer.findFirst({
+    where: { id },
+    include: performerDetailInclude
+  });
+}
+
 export type GroupPerformersOptions = {
   excludePerformerId?: string;
   take?: number;
