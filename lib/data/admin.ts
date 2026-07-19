@@ -11,17 +11,25 @@ import { replacePerformerTags } from "@/lib/data/tags";
 import { pageSkip, paginate } from "@/lib/pagination";
 import { normalizeNames } from "@/lib/utils";
 
-export async function listReports(status?: ReportStatus) {
-  return db.report.findMany({
-    where: status ? { status } : {},
-    include: {
-      cover: {
-        include: coverListInclude
-      }
-    },
-    orderBy: { createdAt: "desc" },
-    take: 100
-  });
+export async function listReports(status?: ReportStatus, page = 1, perPage = 50) {
+  const where = status ? { status } : {};
+
+  const [items, totalCount] = await Promise.all([
+    db.report.findMany({
+      where,
+      include: {
+        cover: {
+          include: coverListInclude
+        }
+      },
+      orderBy: { createdAt: "desc" },
+      skip: pageSkip(page, perPage),
+      take: perPage
+    }),
+    db.report.count({ where })
+  ]);
+
+  return paginate(items, totalCount, page, perPage);
 }
 
 export async function getReport(id: string) {
@@ -48,17 +56,24 @@ export async function listGroups() {
   });
 }
 
-export async function listAdminGroups() {
-  return db.group.findMany({
-    include: {
-      _count: {
-        select: {
-          performers: true
+export async function listAdminGroups(page = 1, perPage = 50) {
+  const [items, totalCount] = await Promise.all([
+    db.group.findMany({
+      include: {
+        _count: {
+          select: {
+            performers: true
+          }
         }
-      }
-    },
-    orderBy: { name: "asc" }
-  });
+      },
+      orderBy: { name: "asc" },
+      skip: pageSkip(page, perPage),
+      take: perPage
+    }),
+    db.group.count()
+  ]);
+
+  return paginate(items, totalCount, page, perPage);
 }
 
 export async function getAdminGroup(id: string) {
@@ -525,15 +540,30 @@ export async function updateAdminSong(
   });
 }
 
-export async function listAdminArtists() {
+export async function listAdminArtists(page = 1, perPage = 50) {
+  const [items, totalCount] = await Promise.all([
+    db.artist.findMany({
+      include: {
+        _count: {
+          select: { songs: true }
+        }
+      },
+      orderBy: { createdAt: "desc" },
+      skip: pageSkip(page, perPage),
+      take: perPage
+    }),
+    db.artist.count()
+  ]);
+
+  return paginate(items, totalCount, page, perPage);
+}
+
+// 楽曲追加・編集フォームのアーティスト選択肢用（全件・軽量）。
+// 一覧表示のページネーションに影響されず全アーティストを返す。
+export async function listArtistOptions() {
   return db.artist.findMany({
-    include: {
-      _count: {
-        select: { songs: true }
-      }
-    },
-    orderBy: { createdAt: "desc" },
-    take: 100
+    select: { id: true, name: true },
+    orderBy: { name: "asc" }
   });
 }
 

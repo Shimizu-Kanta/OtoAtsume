@@ -11,6 +11,6 @@ export async function GET() {
     return auth.response;
   }
 
-  const reports = await listReports();
-  return NextResponse.json({ reports });
+  const { items: reports, totalCount, page, totalPages } = await listReports();
+  return NextResponse.json({ reports, totalCount, page, totalPages });
 }

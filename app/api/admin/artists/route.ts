@@ -13,8 +13,8 @@ export async function GET() {
     return auth.response;
   }
 
-  const artists = await listAdminArtists();
-  return NextResponse.json({ artists });
+  const { items: artists, totalCount, page, totalPages } = await listAdminArtists();
+  return NextResponse.json({ artists, totalCount, page, totalPages });
 }
 
 export async function POST(request: Request) {

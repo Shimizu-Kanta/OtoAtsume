@@ -2,13 +2,14 @@ import Link from "next/link";
 
 import { AdminNav } from "@/components/admin/admin-nav";
 import { PageHeading } from "@/components/page-heading";
+import { Pagination } from "@/components/pagination";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DeleteSubmitButton } from "@/components/admin/delete-submit-button";
 import { requireAdminPage } from "@/lib/auth/admin";
 import { listAdminTags } from "@/lib/data/tags";
-import { getSearchParam } from "@/lib/utils";
+import { getSearchParam, parsePageParam } from "@/lib/utils";
 import { createTagAction, deleteTagAction, updateTagAction } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +20,9 @@ export default async function AdminTagsPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   await requireAdminPage();
-  const [tags, params] = await Promise.all([listAdminTags(), searchParams]);
+  const params = await searchParams;
+  const page = parsePageParam(getSearchParam(params, "page"));
+  const { items: tags, totalCount, totalPages } = await listAdminTags(page);
   const error = getSearchParam(params, "error");
   const updated = getSearchParam(params, "updated") === "1";
   const deleted = getSearchParam(params, "deleted") === "1";
@@ -58,6 +61,10 @@ export default async function AdminTagsPage({
         </div>
       </form>
 
+      <p className="text-sm text-muted-foreground">
+        全 {totalCount.toLocaleString("ja-JP")} 件 / {page}ページ目（表示中 {tags.length} 件）
+      </p>
+
       <div className="overflow-hidden rounded-md border bg-card">
         <div className="divide-y">
           {tags.map((tag) => {
@@ -88,6 +95,8 @@ export default async function AdminTagsPage({
           })}
         </div>
       </div>
+
+      <Pagination page={page} totalPages={totalPages} basePath="/admin/tags" params={params} />
     </div>
   );
 }

@@ -1,5 +1,7 @@
 import { Prisma, type PrismaClient } from "@prisma/client";
 
+import { pageSkip, paginate } from "@/lib/pagination";
+
 type DbClient = PrismaClient | Prisma.TransactionClient;
 
 export async function listTags() {
@@ -9,16 +11,24 @@ export async function listTags() {
   });
 }
 
-export async function listAdminTags() {
+export async function listAdminTags(page = 1, perPage = 50) {
   const { db } = await import("@/lib/db");
-  return db.tag.findMany({
-    include: {
-      _count: {
-        select: { performers: true }
-      }
-    },
-    orderBy: { name: "asc" }
-  });
+
+  const [items, totalCount] = await Promise.all([
+    db.tag.findMany({
+      include: {
+        _count: {
+          select: { performers: true }
+        }
+      },
+      orderBy: { name: "asc" },
+      skip: pageSkip(page, perPage),
+      take: perPage
+    }),
+    db.tag.count()
+  ]);
+
+  return paginate(items, totalCount, page, perPage);
 }
 
 export async function createAdminTag(name: string) {

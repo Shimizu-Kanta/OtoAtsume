@@ -2,18 +2,26 @@ import Link from "next/link";
 
 import { AdminNav } from "@/components/admin/admin-nav";
 import { PageHeading } from "@/components/page-heading";
+import { Pagination } from "@/components/pagination";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { requireAdminPage } from "@/lib/auth/admin";
 import { listAdminGroups } from "@/lib/data/admin";
+import { getSearchParam, parsePageParam } from "@/lib/utils";
 import { createGroupAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminGroupsPage() {
+export default async function AdminGroupsPage({
+  searchParams
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   await requireAdminPage();
-  const groups = await listAdminGroups();
+  const params = await searchParams;
+  const page = parsePageParam(getSearchParam(params, "page"));
+  const { items: groups, totalCount, totalPages } = await listAdminGroups(page);
 
   return (
     <div className="space-y-6">
@@ -27,6 +35,10 @@ export default async function AdminGroupsPage() {
         </div>
         <Button type="submit">追加</Button>
       </form>
+
+      <p className="text-sm text-muted-foreground">
+        全 {totalCount.toLocaleString("ja-JP")} 件 / {page}ページ目（表示中 {groups.length} 件）
+      </p>
 
       <div className="overflow-hidden rounded-md border bg-card">
         <div className="divide-y">
@@ -47,6 +59,8 @@ export default async function AdminGroupsPage() {
           ))}
         </div>
       </div>
+
+      <Pagination page={page} totalPages={totalPages} basePath="/admin/groups" params={params} />
     </div>
   );
 }

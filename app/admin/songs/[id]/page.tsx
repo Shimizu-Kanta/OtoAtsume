@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { requireAdminPage } from "@/lib/auth/admin";
-import { getAdminSong, listAdminArtists } from "@/lib/data/admin";
+import { getAdminSong, listArtistOptions } from "@/lib/data/admin";
 import { getSearchParam } from "@/lib/utils";
 import { updateSongAction } from "./actions";
 
@@ -24,7 +24,7 @@ export default async function AdminSongEditPage({
 }) {
   await requireAdminPage();
   const [{ id }, query] = await Promise.all([params, searchParams]);
-  const [song, artists] = await Promise.all([getAdminSong(id), listAdminArtists()]);
+  const [song, artists] = await Promise.all([getAdminSong(id), listArtistOptions()]);
 
   if (!song) {
     notFound();

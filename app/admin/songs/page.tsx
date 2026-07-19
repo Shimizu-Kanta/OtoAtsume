@@ -9,7 +9,7 @@ import { Select } from "@/components/ui/select";
 import { DeleteSubmitButton } from "@/components/admin/delete-submit-button";
 import { getSearchParam, parsePageParam } from "@/lib/utils";
 import { requireAdminPage } from "@/lib/auth/admin";
-import { listAdminArtists, listAdminSongs } from "@/lib/data/admin";
+import { listAdminSongs, listArtistOptions } from "@/lib/data/admin";
 import { createSongAction, deleteSongAction } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -25,7 +25,7 @@ export default async function AdminSongsPage({
   const page = parsePageParam(getSearchParam(params, "page"));
   const [{ items: songs, totalCount, totalPages }, artists] = await Promise.all([
     listAdminSongs({ missingOriginalUrl }, page),
-    listAdminArtists()
+    listArtistOptions()
   ]);
   const error = getSearchParam(params, "error");
   const deleted = getSearchParam(params, "deleted") === "1";

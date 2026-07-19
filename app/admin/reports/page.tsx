@@ -2,12 +2,13 @@ import Link from "next/link";
 
 import { AdminNav } from "@/components/admin/admin-nav";
 import { PageHeading } from "@/components/page-heading";
+import { Pagination } from "@/components/pagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { reportReasonLabel, reportStatusLabel, reportStatusOptions } from "@/lib/constants";
 import { listReports } from "@/lib/data/admin";
-import { formatDateTime, getSearchParam } from "@/lib/utils";
+import { formatDateTime, getSearchParam, parsePageParam } from "@/lib/utils";
 import { requireAdminPage } from "@/lib/auth/admin";
 import { ReportStatus } from "@prisma/client";
 
@@ -22,11 +23,12 @@ export default async function AdminReportsPage({
   const params = await searchParams;
   const rawStatus = getSearchParam(params, "status");
   const status = rawStatus === undefined ? "PENDING" : rawStatus;
-  const reports = await listReports(
+  const page = parsePageParam(getSearchParam(params, "page"));
+  const statusFilter =
     status && Object.values(ReportStatus).includes(status as ReportStatus)
       ? (status as ReportStatus)
-      : undefined
-  );
+      : undefined;
+  const { items: reports, totalCount, totalPages } = await listReports(statusFilter, page);
 
   return (
     <div className="space-y-6">
@@ -44,6 +46,10 @@ export default async function AdminReportsPage({
         </Select>
         <Button type="submit">絞り込み</Button>
       </form>
+
+      <p className="text-sm text-muted-foreground">
+        全 {totalCount.toLocaleString("ja-JP")} 件 / {page}ページ目（表示中 {reports.length} 件）
+      </p>
 
       <div className="overflow-hidden rounded-md border bg-card">
         <div className="divide-y">
@@ -64,6 +70,8 @@ export default async function AdminReportsPage({
           ))}
         </div>
       </div>
+
+      <Pagination page={page} totalPages={totalPages} basePath="/admin/reports" params={params} />
     </div>
   );
 }
