@@ -11,7 +11,11 @@ import { ShareButton } from "@/components/share-button";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { coverTypeLabel } from "@/lib/constants";
-import { getGroupPerformers, getPerformerByIdAnyStatus } from "@/lib/data/performers";
+import {
+  getGroupPerformers,
+  getPerformerByIdAnyStatus,
+  getPerformersWithSharedTags
+} from "@/lib/data/performers";
 import { cn, formatDate, formatDateInput } from "@/lib/utils";
 import type { Metadata } from "next";
 
@@ -79,8 +83,18 @@ export default async function PerformerDetailPage({ params }: { params: Promise<
     return <PendingPerformerNotice name={performer.name} />;
   }
 
+  const sharedTagIds = performer.tags.map(({ tagId }) => tagId);
+  const taggedMates =
+    sharedTagIds.length > 0
+      ? await getPerformersWithSharedTags(performer.id, sharedTagIds, 6)
+      : [];
+  const sharedTagLabel = performer.tags.length === 1 ? performer.tags[0].tag.name : null;
   const groupMates = performer.group
-    ? await getGroupPerformers(performer.group.id, { excludePerformerId: performer.id, take: 6 })
+    ? await getGroupPerformers(performer.group.id, {
+        excludePerformerId: performer.id,
+        excludePerformerIds: taggedMates.map((mate) => mate.id),
+        take: 6
+      })
     : [];
 
   return (
@@ -278,6 +292,30 @@ export default async function PerformerDetailPage({ params }: { params: Promise<
           )}
         </div>
       </section>
+
+      {taggedMates.length > 0 ? (
+        <section className="space-y-4">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <Tag className="size-4" aria-hidden="true" />
+            </span>
+            <div>
+              <h2 className="text-xl font-bold tracking-tight">
+                同じタグの活動者{sharedTagLabel ? `（${sharedTagLabel}）` : ""}
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                このタグを共有する活動者です。同期・同ユニットなど近い活動者を優先して表示しています。
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {taggedMates.map((mate) => (
+              <PerformerCard key={mate.id} performer={mate} />
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {performer.group && groupMates.length > 0 ? (
         <section className="space-y-4">

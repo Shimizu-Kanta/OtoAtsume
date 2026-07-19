@@ -199,20 +199,66 @@ export async function getPerformerByIdAnyStatus(id: string) {
 
 export type GroupPerformersOptions = {
   excludePerformerId?: string;
+  excludePerformerIds?: string[];
   take?: number;
 };
 
 export async function getGroupPerformers(groupId: string, options: GroupPerformersOptions = {}) {
+  const excludeIds = Array.from(
+    new Set([
+      ...(options.excludePerformerId ? [options.excludePerformerId] : []),
+      ...(options.excludePerformerIds ?? [])
+    ])
+  );
+
   return db.performer.findMany({
     where: {
       groupId,
       status: MasterDataStatus.APPROVED,
-      ...(options.excludePerformerId ? { id: { not: options.excludePerformerId } } : {})
+      ...(excludeIds.length > 0 ? { id: { notIn: excludeIds } } : {})
     },
     include: performerListInclude,
     orderBy: { name: "asc" },
     ...(options.take ? { take: options.take } : {})
   });
+}
+
+// 同じタグを共有する他の活動者を、共有タグ数の多い順に返す（同期・同ユニット向け）。
+// _count.covers の where 句は performerListInclude と同じ（APPROVED のみ）に揃えている。
+export async function getPerformersWithSharedTags(
+  performerId: string,
+  tagIds: string[],
+  limit = 6
+) {
+  if (tagIds.length === 0) {
+    return [];
+  }
+
+  // 共有タグ数で並べたいため、候補を多めに取得してメモリ上でソートする。
+  const candidates = await db.performer.findMany({
+    where: {
+      status: MasterDataStatus.APPROVED,
+      id: { not: performerId },
+      tags: { some: { tagId: { in: tagIds } } }
+    },
+    include: performerListInclude,
+    take: limit * 4
+  });
+
+  const tagIdSet = new Set(tagIds);
+
+  return candidates
+    .map((performer) => ({
+      performer,
+      sharedTagCount: performer.tags.filter(({ tagId }) => tagIdSet.has(tagId)).length
+    }))
+    .sort(
+      (a, b) =>
+        b.sharedTagCount - a.sharedTagCount ||
+        a.performer.name.localeCompare(b.performer.name, "ja")
+    )
+    .slice(0, limit)
+    .map(({ performer }) => performer);
 }
 
 export async function getGroupPerformerCount(groupId: string) {

@@ -3,6 +3,7 @@ import { Search } from "lucide-react";
 
 import { PageHeading } from "@/components/page-heading";
 import { Pagination } from "@/components/pagination";
+import { TagFilterChips } from "@/components/performers/tag-filter-chips";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,7 +46,6 @@ export default async function PerformersPage({
     getPerformers({ query: q, tagNames: selectedTags, sort }, page),
     listTags()
   ]);
-  const selectedTagSet = new Set(selectedTags);
 
   return (
     <div className="space-y-6">
@@ -87,32 +87,7 @@ export default async function PerformersPage({
         {tags.length > 0 ? (
           <div className="mt-5 border-t pt-4">
             <p className="mb-3 text-sm font-medium text-muted-foreground">タグで絞り込み</p>
-            <div className="flex flex-wrap gap-2">
-              {tags.map((tag) => {
-                const selected = selectedTagSet.has(tag.name);
-
-                return (
-                  <label
-                    key={tag.id}
-                    className={cn(
-                      "inline-flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
-                      selected
-                        ? "border-primary/40 bg-primary/15 text-primary shadow-sm"
-                        : "border-border bg-background/80 text-muted-foreground hover:border-primary/30 hover:bg-primary/10 hover:text-primary"
-                    )}
-                  >
-                    <input
-                      type="checkbox"
-                      name="tag"
-                      value={tag.name}
-                      defaultChecked={selected}
-                      className="size-4 accent-primary"
-                    />
-                    {tag.name}
-                  </label>
-                );
-              })}
-            </div>
+            <TagFilterChips tags={tags} selectedTagNames={selectedTags} />
           </div>
         ) : null}
       </form>
