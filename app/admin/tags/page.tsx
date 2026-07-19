@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { AdminNav } from "@/components/admin/admin-nav";
 import { PageHeading } from "@/components/page-heading";
 import { Button } from "@/components/ui/button";
@@ -64,9 +66,12 @@ export default async function AdminTagsPage({
             return (
               <form key={tag.id} action={action} className="grid gap-3 p-4 md:grid-cols-[1fr_auto_auto_auto] md:items-center">
                 <Input name="name" defaultValue={tag.name} required maxLength={80} />
-                <span className="text-sm text-muted-foreground">
+                <Link
+                  href={`/admin/tags/${tag.id}`}
+                  className="text-sm text-primary underline underline-offset-4"
+                >
                   活動者 {tag._count.performers} 件
-                </span>
+                </Link>
                 <Button type="submit" variant="outline" size="sm">
                   更新
                 </Button>

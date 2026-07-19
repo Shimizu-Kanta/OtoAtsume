@@ -93,6 +93,60 @@ export async function replacePerformerTags(
   });
 }
 
+export async function getAdminTagWithPerformers(id: string) {
+  const { db } = await import("@/lib/db");
+  return db.tag.findUnique({
+    where: { id },
+    include: {
+      performers: {
+        include: {
+          performer: {
+            include: { group: true }
+          }
+        },
+        orderBy: { performer: { name: "asc" } }
+      }
+    }
+  });
+}
+
+// このタグがまだ付いていない活動者を、名前で検索する（追加候補として使う）
+export async function searchAddablePerformersForTag(tagId: string, query: string, limit = 10) {
+  const { db } = await import("@/lib/db");
+  const trimmed = query.trim();
+
+  if (!trimmed) {
+    return [];
+  }
+
+  return db.performer.findMany({
+    where: {
+      name: { contains: trimmed, mode: Prisma.QueryMode.insensitive },
+      tags: { none: { tagId } }
+    },
+    include: { group: true },
+    orderBy: { name: "asc" },
+    take: limit
+  });
+}
+
+export async function addTagToPerformer(tagId: string, performerId: string) {
+  const { db } = await import("@/lib/db");
+  await db.performerTag.upsert({
+    where: { performerId_tagId: { performerId, tagId } },
+    create: { performerId, tagId },
+    update: {}
+  });
+}
+
+export async function removeTagFromPerformer(tagId: string, performerId: string) {
+  const { db } = await import("@/lib/db");
+  // 既に外れている場合でもエラーにしない（別画面からの操作と競合しても冪等）
+  await db.performerTag.deleteMany({
+    where: { performerId, tagId }
+  });
+}
+
 export async function deleteAdminTagIfUnused(id: string) {
   const { db } = await import("@/lib/db");
 
