@@ -210,9 +210,14 @@ export default async function PerformerDetailPage({ params }: { params: Promise<
                 performer.tags.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {performer.tags.map(({ tag }) => (
-                      <Badge key={tag.id} variant="outline">
-                        {tag.name}
-                      </Badge>
+                      <Link key={tag.id} href={`/performers?tags=${tag.id}`}>
+                        <Badge
+                          variant="outline"
+                          className="transition-colors hover:border-primary/40 hover:text-primary"
+                        >
+                          {tag.name}
+                        </Badge>
+                      </Link>
                     ))}
                   </div>
                 ) : (

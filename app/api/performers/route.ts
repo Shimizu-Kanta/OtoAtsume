@@ -11,7 +11,7 @@ export async function GET(request: Request) {
   const { items: performers, totalCount, totalPages } = await getPerformers(
     {
       query: searchParams.get("q") ?? undefined,
-      tagNames: getSelectedTags(searchParams),
+      tagIds: getSelectedTagIds(searchParams),
       sort: normalizePerformerSort(searchParams.get("sort"))
     },
     page
@@ -23,13 +23,12 @@ function normalizePerformerSort(value: string | null): PerformerSort {
   return value === "debutDateAsc" || value === "debutDateDesc" ? value : "nameAsc";
 }
 
-function getSelectedTags(searchParams: URLSearchParams) {
+function getSelectedTagIds(searchParams: URLSearchParams) {
   return Array.from(
     new Set(
-      [
-        ...searchParams.getAll("tag"),
-        ...searchParams.getAll("tags").flatMap((value) => value.split(","))
-      ]
+      searchParams
+        .getAll("tags")
+        .flatMap((value) => value.split(","))
         .map((value) => value.trim())
         .filter(Boolean)
     )

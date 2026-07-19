@@ -12,6 +12,15 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const page = parsePageParam(searchParams.get("page") ?? undefined);
+  const tagIds = Array.from(
+    new Set(
+      searchParams
+        .getAll("tags")
+        .flatMap((value) => value.split(","))
+        .map((value) => value.trim())
+        .filter(Boolean)
+    )
+  );
   const { items: covers, totalCount, totalPages } = await getApprovedCovers(
     {
       performer: searchParams.get("performer") ?? undefined,
@@ -19,7 +28,8 @@ export async function GET(request: Request) {
       artist: searchParams.get("artist") ?? undefined,
       dateFrom: searchParams.get("dateFrom") ?? undefined,
       dateTo: searchParams.get("dateTo") ?? undefined,
-      coverType: searchParams.get("coverType") ?? undefined
+      coverType: searchParams.get("coverType") ?? undefined,
+      tagIds
     },
     page
   );

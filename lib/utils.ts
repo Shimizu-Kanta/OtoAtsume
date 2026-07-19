@@ -119,3 +119,18 @@ export function parsePageParam(value: string | undefined) {
   const page = Number(value);
   return Number.isInteger(page) && page > 0 ? page : 1;
 }
+
+// `?tags=id1&tags=id2` と `?tags=id1,id2` の両形式からタグIDの配列を取り出す。
+export function getSelectedTagIds(searchParams: Record<string, string | string[] | undefined>) {
+  const raw = searchParams.tags;
+  const values = Array.isArray(raw) ? raw : raw ? [raw] : [];
+
+  return Array.from(
+    new Set(
+      values
+        .flatMap((value) => value.split(","))
+        .map((value) => value.trim())
+        .filter(Boolean)
+    )
+  );
+}

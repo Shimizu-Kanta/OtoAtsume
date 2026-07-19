@@ -64,6 +64,7 @@ export type CoverSearch = {
   dateTo?: string;
   coverType?: string;
   status?: string;
+  tagIds?: string[];
   sort?: CoverSort;
 };
 
@@ -142,6 +143,19 @@ function buildCoverWhere(search: CoverSearch = {}, onlyApproved = true): Prisma.
 
   if (search.coverType) {
     and.push({ coverType: search.coverType as CoverType });
+  }
+
+  // 指定タグのいずれかを持つ活動者が歌っているカバー記録（活動者一覧側と同じ OR 挙動）。
+  if (search.tagIds && search.tagIds.length > 0) {
+    and.push({
+      performers: {
+        some: {
+          performer: {
+            tags: { some: { tagId: { in: search.tagIds } } }
+          }
+        }
+      }
+    });
   }
 
   return and.length > 0 ? { AND: and } : {};

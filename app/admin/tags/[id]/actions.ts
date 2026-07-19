@@ -4,13 +4,28 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { requireAdminPage } from "@/lib/auth/admin";
-import { addTagToPerformer, removeTagFromPerformer } from "@/lib/data/tags";
+import { addTagToPerformer, removeTagFromPerformer, setTagGroups } from "@/lib/data/tags";
 
 function revalidateTagPages(tagId: string) {
   revalidatePath(`/admin/tags/${tagId}`);
   revalidatePath("/admin/tags");
   revalidatePath("/admin/performers");
   revalidatePath("/performers");
+}
+
+export async function setTagGroupsAction(tagId: string, formData: FormData) {
+  await requireAdminPage();
+
+  const groupIds = formData
+    .getAll("groupIds")
+    .map((value) => value.toString())
+    .filter(Boolean);
+
+  await setTagGroups(tagId, groupIds);
+  revalidateTagPages(tagId);
+  revalidatePath("/admin/tag-groups");
+  revalidatePath("/covers");
+  redirect(`/admin/tags/${tagId}?groupsSaved=1`);
 }
 
 export async function addPerformerToTagAction(tagId: string, formData: FormData) {

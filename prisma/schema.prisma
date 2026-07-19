@@ -65,11 +65,35 @@ model Tag {
   id         String         @id @default(uuid())
   name       String         @unique
   performers PerformerTag[]
+  groups     TagGroupTag[]
   createdAt  DateTime       @default(now())
   updatedAt  DateTime       @updatedAt
 
   @@index([name])
   @@map("tags")
+}
+
+model TagGroup {
+  id        String        @id @default(uuid())
+  name      String        @unique
+  sortOrder Int           @default(0)
+  tags      TagGroupTag[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@map("tag_groups")
+}
+
+model TagGroupTag {
+  tagGroupId String
+  tagId      String
+
+  tagGroup TagGroup @relation(fields: [tagGroupId], references: [id], onDelete: Cascade)
+  tag      Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([tagGroupId, tagId])
+  @@index([tagId])
+  @@map("tag_group_tags")
 }
 
 model PerformerTag {

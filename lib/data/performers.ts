@@ -59,7 +59,7 @@ export type PerformerSort = "nameAsc" | "debutDateAsc" | "debutDateDesc";
 
 export type PerformerSearch = {
   query?: string;
-  tagNames?: string[];
+  tagIds?: string[];
   sort?: PerformerSort;
 };
 
@@ -77,7 +77,7 @@ function performerOrderBy(sort: PerformerSort | undefined): Prisma.PerformerOrde
 
 export async function getPerformers(search: PerformerSearch = {}, page = 1, perPage = 20) {
   const query = search.query?.trim();
-  const tagNames = search.tagNames?.map((tag) => tag.trim()).filter(Boolean) ?? [];
+  const tagIds = search.tagIds?.map((tag) => tag.trim()).filter(Boolean) ?? [];
 
   const where: Prisma.PerformerWhereInput = {
     status: MasterDataStatus.APPROVED,
@@ -94,11 +94,11 @@ export async function getPerformers(search: PerformerSearch = {}, page = 1, perP
           ]
         }
       : {}),
-    ...(tagNames.length > 0
+    ...(tagIds.length > 0
       ? {
           tags: {
             some: {
-              tag: { name: { in: tagNames } }
+              tagId: { in: tagIds }
             }
           }
         }
@@ -120,7 +120,7 @@ export async function getPerformers(search: PerformerSearch = {}, page = 1, perP
     return paginate(items, totalCount, page, perPage);
   }
 
-  const similar = await findPerformersBySimilarity(query, tagNames);
+  const similar = await findPerformersBySimilarity(query, tagIds);
   return paginate(
     similar.slice(pageSkip(page, perPage), pageSkip(page, perPage) + perPage),
     similar.length,
@@ -132,7 +132,7 @@ export async function getPerformers(search: PerformerSearch = {}, page = 1, perP
 // contains検索（名前・別名・グループ名）が0件のときのみ実行する
 // pg_trgm ベースの類似検索フォールバック。
 // pg_trgm 未適用のDBでも検索ページ全体が落ちないよう、失敗時は空配列を返す。
-async function findPerformersBySimilarity(query: string, tagNames: string[]) {
+async function findPerformersBySimilarity(query: string, tagIds: string[]) {
   try {
     const rows = await db.$queryRaw<Array<{ id: string }>>`
       SELECT id
@@ -151,11 +151,11 @@ async function findPerformersBySimilarity(query: string, tagNames: string[]) {
       where: {
         id: { in: ids },
         status: MasterDataStatus.APPROVED,
-        ...(tagNames.length > 0
+        ...(tagIds.length > 0
           ? {
               tags: {
                 some: {
-                  tag: { name: { in: tagNames } }
+                  tagId: { in: tagIds }
                 }
               }
             }

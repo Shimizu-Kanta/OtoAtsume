@@ -3,15 +3,15 @@ import { Search } from "lucide-react";
 
 import { PageHeading } from "@/components/page-heading";
 import { Pagination } from "@/components/pagination";
-import { TagFilterChips } from "@/components/performers/tag-filter-chips";
+import { TagGroupFilter } from "@/components/tag-group-filter";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { getPerformers, type PerformerSort } from "@/lib/data/performers";
-import { listTags } from "@/lib/data/tags";
-import { cn, formatDateInput, getSearchParam, parsePageParam } from "@/lib/utils";
+import { listTagsGroupedForFilter } from "@/lib/data/tags";
+import { cn, formatDateInput, getSearchParam, getSelectedTagIds, parsePageParam } from "@/lib/utils";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -41,11 +41,12 @@ export default async function PerformersPage({
   const q = getSearchParam(params, "q");
   const sort = normalizePerformerSort(getSearchParam(params, "sort"));
   const page = parsePageParam(getSearchParam(params, "page"));
-  const selectedTags = getSelectedTags(params);
-  const [{ items: performers, totalCount, totalPages }, tags] = await Promise.all([
-    getPerformers({ query: q, tagNames: selectedTags, sort }, page),
-    listTags()
+  const selectedTagIds = getSelectedTagIds(params);
+  const [{ items: performers, totalCount, totalPages }, tagFilter] = await Promise.all([
+    getPerformers({ query: q, tagIds: selectedTagIds, sort }, page),
+    listTagsGroupedForFilter()
   ]);
+  const hasTags = tagFilter.grouped.some((group) => group.tags.length > 0) || tagFilter.ungrouped.length > 0;
 
   return (
     <div className="space-y-6">
@@ -84,10 +85,14 @@ export default async function PerformersPage({
           </button>
         </div>
 
-        {tags.length > 0 ? (
+        {hasTags ? (
           <div className="mt-5 border-t pt-4">
             <p className="mb-3 text-sm font-medium text-muted-foreground">タグで絞り込み</p>
-            <TagFilterChips tags={tags} selectedTagNames={selectedTags} />
+            <TagGroupFilter
+              grouped={tagFilter.grouped}
+              ungrouped={tagFilter.ungrouped}
+              selectedTagIds={selectedTagIds}
+            />
           </div>
         ) : null}
       </form>
@@ -133,9 +138,14 @@ export default async function PerformersPage({
                     <Badge variant="muted">デビュー日 {formatDateInput(performer.debutDate)}</Badge>
                   ) : null}
                   {performer.tags.map(({ tag }) => (
-                    <Badge key={tag.id} variant="outline">
-                      {tag.name}
-                    </Badge>
+                    <Link key={tag.id} href={`/performers?tags=${tag.id}`}>
+                      <Badge
+                        variant="outline"
+                        className="transition-colors hover:border-primary/40 hover:text-primary"
+                      >
+                        {tag.name}
+                      </Badge>
+                    </Link>
                   ))}
                 </div>
 
@@ -175,21 +185,4 @@ export default async function PerformersPage({
 
 function normalizePerformerSort(value: string | undefined): PerformerSort {
   return value === "debutDateAsc" || value === "debutDateDesc" ? value : "nameAsc";
-}
-
-function getSelectedTags(params: Record<string, string | string[] | undefined>) {
-  const values = [
-    ...toArray(params.tag),
-    ...toArray(params.tags).flatMap((value) => value.split(","))
-  ];
-
-  return Array.from(new Set(values.map((value) => value.trim()).filter(Boolean)));
-}
-
-function toArray(value: string | string[] | undefined) {
-  if (Array.isArray(value)) {
-    return value;
-  }
-
-  return value ? [value] : [];
 }

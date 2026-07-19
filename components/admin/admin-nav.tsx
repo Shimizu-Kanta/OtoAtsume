@@ -11,6 +11,7 @@ import {
   Folder,
   Home,
   Import,
+  Layers,
   ListMusic,
   LogOut,
   Menu,
@@ -45,6 +46,7 @@ const adminNavSections = [
       { href: "/admin/groups", label: "所属グループ", icon: Folder },
       { href: "/admin/performers", label: "活動者", icon: Users },
       { href: "/admin/tags", label: "タグ", icon: Tags },
+      { href: "/admin/tag-groups", label: "タググループ", icon: Layers },
       { href: "/admin/songs", label: "楽曲", icon: Music },
       { href: "/admin/artists", label: "アーティスト", icon: Database },
       { href: "/admin/imports", label: "一括インポート", icon: Import }

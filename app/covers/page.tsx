@@ -4,13 +4,15 @@ import { FilePlus2, Search } from "lucide-react";
 import { CoverResults } from "@/components/covers/cover-results";
 import { PageHeading } from "@/components/page-heading";
 import { Pagination } from "@/components/pagination";
+import { TagGroupFilter } from "@/components/tag-group-filter";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { coverTypeOptions } from "@/lib/constants";
 import { getApprovedCovers, type CoverSort } from "@/lib/data/covers";
-import { cn, getSearchParam, parsePageParam } from "@/lib/utils";
+import { listTagsGroupedForFilter } from "@/lib/data/tags";
+import { cn, getSearchParam, getSelectedTagIds, parsePageParam } from "@/lib/utils";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -42,6 +44,7 @@ export default async function CoversPage({
 }) {
   const params = await searchParams;
   const sort = normalizeCoverSort(getSearchParam(params, "sort"));
+  const selectedTagIds = getSelectedTagIds(params);
   const search = {
     performer: getSearchParam(params, "performer"),
     song: getSearchParam(params, "song"),
@@ -49,12 +52,17 @@ export default async function CoversPage({
     dateFrom: getSearchParam(params, "dateFrom"),
     dateTo: getSearchParam(params, "dateTo"),
     coverType: getSearchParam(params, "coverType"),
+    tagIds: selectedTagIds,
     sort
   };
   const page = parsePageParam(getSearchParam(params, "page"));
   const view = getSearchParam(params, "view");
   const safeView = view === "card" || view === "list" ? view : undefined;
-  const { items: covers, totalCount, totalPages } = await getApprovedCovers(search, page);
+  const [{ items: covers, totalCount, totalPages }, tagFilter] = await Promise.all([
+    getApprovedCovers(search, page),
+    listTagsGroupedForFilter()
+  ]);
+  const hasTags = tagFilter.grouped.some((group) => group.tags.length > 0) || tagFilter.ungrouped.length > 0;
 
   return (
     <div className="space-y-6">
@@ -125,6 +133,25 @@ export default async function CoversPage({
             </Select>
           </div>
         </div>
+
+        {hasTags ? (
+          <details className="mt-5 border-t pt-4" open={selectedTagIds.length > 0}>
+            <summary className="cursor-pointer select-none text-sm font-medium text-muted-foreground">
+              タグで絞り込む
+              {selectedTagIds.length > 0 ? (
+                <span className="ml-1 text-primary">（{selectedTagIds.length}件選択中）</span>
+              ) : null}
+            </summary>
+            <div className="mt-3">
+              <TagGroupFilter
+                grouped={tagFilter.grouped}
+                ungrouped={tagFilter.ungrouped}
+                selectedTagIds={selectedTagIds}
+              />
+            </div>
+          </details>
+        ) : null}
+
         <div className="mt-5 flex flex-wrap gap-2">
           <button type="submit" className={cn(buttonVariants())}>
             <Search className="size-4" />

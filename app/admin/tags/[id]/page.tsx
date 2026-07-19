@@ -7,9 +7,17 @@ import { PageHeading } from "@/components/page-heading";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { requireAdminPage } from "@/lib/auth/admin";
-import { getAdminTagWithPerformers, searchAddablePerformersForTag } from "@/lib/data/tags";
+import {
+  getAdminTagWithPerformers,
+  listAllTagGroups,
+  searchAddablePerformersForTag
+} from "@/lib/data/tags";
 import { getSearchParam } from "@/lib/utils";
-import { addPerformerToTagAction, removePerformerFromTagAction } from "./actions";
+import {
+  addPerformerToTagAction,
+  removePerformerFromTagAction,
+  setTagGroupsAction
+} from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +30,7 @@ export default async function AdminTagDetailPage({
 }) {
   await requireAdminPage();
   const [{ id }, query] = await Promise.all([params, searchParams]);
-  const tag = await getAdminTagWithPerformers(id);
+  const [tag, tagGroups] = await Promise.all([getAdminTagWithPerformers(id), listAllTagGroups()]);
 
   if (!tag) {
     notFound();
@@ -30,9 +38,11 @@ export default async function AdminTagDetailPage({
 
   const searchQuery = getSearchParam(query, "q") ?? "";
   const candidates = searchQuery ? await searchAddablePerformersForTag(id, searchQuery) : [];
+  const selectedGroupIds = new Set(tag.groups.map((group) => group.tagGroupId));
   const error = getSearchParam(query, "error");
   const added = getSearchParam(query, "added") === "1";
   const removed = getSearchParam(query, "removed") === "1";
+  const groupsSaved = getSearchParam(query, "groupsSaved") === "1";
 
   return (
     <div className="space-y-6">
@@ -62,6 +72,47 @@ export default async function AdminTagDetailPage({
           活動者からタグを外しました。
         </div>
       ) : null}
+      {groupsSaved ? (
+        <div className="rounded-md border border-secondary/40 bg-secondary/10 p-4 text-sm">
+          所属グループを保存しました。
+        </div>
+      ) : null}
+
+      <section className="rounded-md border bg-card p-5">
+        <h2 className="text-lg font-semibold">所属グループ</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          このタグが属するグループを選択します。複数のグループに所属できます。
+        </p>
+        {tagGroups.length === 0 ? (
+          <p className="mt-3 text-sm text-muted-foreground">
+            タググループがまだありません。
+            <Link href="/admin/tag-groups" className="ml-1 text-primary underline">
+              タググループ管理
+            </Link>
+            で作成してください。
+          </p>
+        ) : (
+          <form action={setTagGroupsAction.bind(null, tag.id)} className="mt-3 space-y-4">
+            <div className="flex flex-wrap gap-x-4 gap-y-2">
+              {tagGroups.map((tagGroup) => (
+                <label key={tagGroup.id} className="inline-flex cursor-pointer items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    name="groupIds"
+                    value={tagGroup.id}
+                    defaultChecked={selectedGroupIds.has(tagGroup.id)}
+                    className="size-4 accent-primary"
+                  />
+                  {tagGroup.name}
+                </label>
+              ))}
+            </div>
+            <Button type="submit" variant="outline" size="sm">
+              グループを保存
+            </Button>
+          </form>
+        )}
+      </section>
 
       <section className="overflow-hidden rounded-md border bg-card">
         <div className="divide-y">
