@@ -120,6 +120,30 @@ export function parsePageParam(value: string | undefined) {
   return Number.isInteger(page) && page > 0 ? page : 1;
 }
 
+// 一覧ページで noindex にすべきか（検索条件つき・2ページ目以降）を判定する。
+// view（表示形式トグル）は同一コンテンツのため無視する。0件結果の大半は
+// 検索条件つきアクセスなのでこの判定に含まれる。
+export function isFilteredListing(
+  params: Record<string, string | string[] | undefined>,
+  ignore: string[] = ["view"]
+) {
+  if (parsePageParam(getSearchParam(params, "page")) > 1) {
+    return true;
+  }
+
+  return Object.entries(params).some(([key, value]) => {
+    if (key === "page" || ignore.includes(key)) {
+      return false;
+    }
+
+    if (Array.isArray(value)) {
+      return value.length > 0;
+    }
+
+    return value !== undefined && value !== "";
+  });
+}
+
 // `?tags=id1&tags=id2` と `?tags=id1,id2` の両形式からタグIDの配列を取り出す。
 export function getSelectedTagIds(searchParams: Record<string, string | string[] | undefined>) {
   const raw = searchParams.tags;

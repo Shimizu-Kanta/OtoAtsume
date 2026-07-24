@@ -16,6 +16,7 @@ import {
   getGroupRandomCovers
 } from "@/lib/data/groups";
 import { getGroupPerformerCount, getGroupPerformers } from "@/lib/data/performers";
+import { evaluateGroupQuality } from "@/lib/content-quality";
 import { cn } from "@/lib/utils";
 import type { Metadata } from "next";
 
@@ -43,10 +44,12 @@ export async function generateMetadata({
   ]);
   const title = group.name;
   const description = `${group.name}所属の活動者${performerCount}名の歌唱記録${coverCount}件を掲載。歌ってみた・歌枠・ライブでの歌唱記録をまとめています。`;
+  const { isIndexable } = evaluateGroupQuality(coverCount);
 
   return {
     title,
     description,
+    robots: isIndexable ? undefined : { index: false, follow: true },
     alternates: {
       canonical: `/groups/${group.id}`
     },

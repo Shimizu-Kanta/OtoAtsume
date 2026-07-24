@@ -193,9 +193,14 @@ export default async function CoverDetailPage({ params, searchParams }: CoverDet
               <p className="mt-3 text-sm leading-6 text-muted-foreground">{artists}</p>
 
               {sourceTitle ? (
-                <p className="mt-4 rounded-2xl border bg-background/70 p-3 text-sm text-muted-foreground">
+                <a
+                  href={sourceUrlWithTimestamp}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-4 block rounded-2xl border bg-background/70 p-3 text-sm text-primary underline-offset-4 hover:underline"
+                >
                   {sourceTitle}
-                </p>
+                </a>
               ) : null}
             </div>
 

@@ -20,7 +20,9 @@ export async function GET(request: Request) {
 }
 
 function normalizePerformerSort(value: string | null): PerformerSort {
-  return value === "debutDateAsc" || value === "debutDateDesc" ? value : "nameAsc";
+  return value === "debutDateAsc" || value === "debutDateDesc" || value === "coverCountDesc"
+    ? value
+    : "nameAsc";
 }
 
 function getSelectedTagIds(searchParams: URLSearchParams) {

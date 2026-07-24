@@ -7,7 +7,15 @@ import { ShareButton } from "@/components/share-button";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { coverTypeLabel } from "@/lib/constants";
-import { getRelatedSongsByArtist, getSongById, type SongListItem } from "@/lib/data/songs";
+import { evaluateSongQuality } from "@/lib/content-quality";
+import { formatCoverTypeBreakdown, formatDateJp } from "@/lib/content-summary";
+import {
+  getCoOccurringSongs,
+  getRelatedSongsByArtist,
+  getSongById,
+  getSongStats,
+  type SongListItem
+} from "@/lib/data/songs";
 import { cn, formatDate } from "@/lib/utils";
 import type { Metadata } from "next";
 
@@ -34,10 +42,12 @@ export async function generateMetadata({
   const description = artists
     ? `${song.title}（${artists}）のカバー記録${song.covers.length}件を掲載。歌ってみた・歌枠・ライブでの歌唱記録をまとめています。`
     : `${song.title} のカバー記録${song.covers.length}件を掲載。歌ってみた・歌枠・ライブでの歌唱記録をまとめています。`;
+  const { isIndexable } = evaluateSongQuality(song.covers.length);
 
   return {
     title,
     description,
+    robots: isIndexable ? undefined : { index: false, follow: true },
     alternates: {
       canonical: `/songs/${song.id}`
     },
@@ -65,10 +75,15 @@ export default async function SongDetailPage({ params }: { params: Promise<{ id:
   }
 
   const artists = song.artists.map(({ artist }) => artist.name).join(", ") || "アーティスト未設定";
-  const relatedSongs = await getRelatedSongsByArtist(
-    song.artists.map(({ artist }) => artist.id),
-    song.id
-  );
+  const [relatedSongs, stats, coOccurringSongs] = await Promise.all([
+    getRelatedSongsByArtist(
+      song.artists.map(({ artist }) => artist.id),
+      song.id
+    ),
+    getSongStats(song.id),
+    getCoOccurringSongs(song.id, 6)
+  ]);
+  const summary = buildSongSummary(song.title, artists, stats);
 
   return (
     <div className="space-y-6">
@@ -130,6 +145,22 @@ export default async function SongDetailPage({ params }: { params: Promise<{ id:
           value={`${song.covers.length.toLocaleString("ja-JP")} 件`}
         />
       </section>
+
+      {stats.totalCoverCount > 0 ? (
+        <section className="rounded-3xl border border-primary/10 bg-card/90 p-5 shadow-sm">
+          <h2 className="text-lg font-bold tracking-tight">この楽曲の歌唱データ</h2>
+          <p className="mt-3 text-sm leading-7 text-foreground">{summary}</p>
+          {stats.yearlyBreakdown.length > 0 ? (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {stats.yearlyBreakdown.map((item) => (
+                <Badge key={item.year} variant="muted">
+                  {item.year}年 {item.count}件
+                </Badge>
+              ))}
+            </div>
+          ) : null}
+        </section>
+      ) : null}
 
       <section className="rounded-3xl border border-primary/10 bg-card/90 p-5 shadow-sm">
         <h2 className="text-lg font-bold tracking-tight">原曲リンク</h2>
@@ -241,8 +272,77 @@ export default async function SongDetailPage({ params }: { params: Promise<{ id:
           </div>
         </section>
       ) : null}
+
+      {coOccurringSongs.length > 0 ? (
+        <section className="space-y-4">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <Music2 className="size-4" aria-hidden="true" />
+            </span>
+            <div>
+              <h2 className="text-xl font-bold tracking-tight">よく一緒に歌われている楽曲</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                この楽曲と同じ配信・ライブで歌われることが多い楽曲です。
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {coOccurringSongs.map((coSong) => (
+              <article
+                key={coSong.id}
+                className="overflow-hidden rounded-3xl border border-primary/10 bg-card/90 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
+              >
+                <div className="flex h-full flex-col gap-3 p-5">
+                  <div className="min-w-0">
+                    <Link
+                      href={`/songs/${coSong.id}`}
+                      className="font-bold text-foreground underline-offset-4 hover:text-primary hover:underline"
+                    >
+                      {coSong.title}
+                    </Link>
+                    <p className="mt-1 truncate text-sm text-muted-foreground">
+                      {coSong.artistNames || "アーティスト未設定"}
+                    </p>
+                  </div>
+                  <div className="mt-auto">
+                    <Badge variant="default">同じ配信で {coSong.count} 回共演</Badge>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : null}
     </div>
   );
+}
+
+function buildSongSummary(
+  title: string,
+  artists: string,
+  stats: Awaited<ReturnType<typeof getSongStats>>
+) {
+  const parts: string[] = [];
+  parts.push(
+    `「${title}」は、おとあつめに登録されている中で${stats.performerCount}人の活動者が計${stats.totalCoverCount}回歌唱している楽曲です。`
+  );
+
+  if (stats.firstPerformedAt && stats.latestPerformedAt) {
+    const first = formatDateJp(stats.firstPerformedAt);
+    const latest = formatDateJp(stats.latestPerformedAt);
+    parts.push(first === latest ? `記録された歌唱日は${first}です。` : `最初の記録は${first}、最新の記録は${latest}です。`);
+  }
+
+  if (stats.coverTypeBreakdown.length > 0) {
+    parts.push(`歌唱種別の内訳は、${formatCoverTypeBreakdown(stats.coverTypeBreakdown)}となっています。`);
+  }
+
+  if (artists && artists !== "アーティスト未設定") {
+    parts.push(`原曲は${artists}です。`);
+  }
+
+  return parts.join("");
 }
 
 function RelatedSongCard({ song }: { song: SongListItem }) {

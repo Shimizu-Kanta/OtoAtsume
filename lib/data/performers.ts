@@ -1,5 +1,6 @@
 import { ContentStatus, MasterDataStatus, Prisma } from "@prisma/client";
 
+import { summarizeCoverTypeCounts, summarizeYearlyCounts } from "@/lib/content-summary";
 import { db } from "@/lib/db";
 import { pageSkip, paginate } from "@/lib/pagination";
 
@@ -55,7 +56,7 @@ export type PerformerListItem = Prisma.PerformerGetPayload<{
   include: typeof performerListInclude;
 }>;
 
-export type PerformerSort = "nameAsc" | "debutDateAsc" | "debutDateDesc";
+export type PerformerSort = "nameAsc" | "debutDateAsc" | "debutDateDesc" | "coverCountDesc";
 
 export type PerformerSearch = {
   query?: string;
@@ -70,6 +71,16 @@ function performerOrderBy(sort: PerformerSort | undefined): Prisma.PerformerOrde
 
   if (sort === "debutDateDesc") {
     return [{ debutDate: { sort: "desc", nulls: "last" } }, { name: "asc" }];
+  }
+
+  // 注意: Prisma の orderBy はリレーション件数に where を適用できないため、
+  // ここで並び替えに使われる件数は CoverPerformer の全行（HIDDEN / REJECTED を含む）で、
+  // 一覧に表示される _count（APPROVED のみ）とは集計範囲が一致しない。
+  // 現状ほぼ全てのカバー記録が APPROVED のため実害は出ない見込み。
+  // 非公開記録が増えて順序の食い違いが目立つ場合は、CoverPerformer を
+  // status=APPROVED で groupBy して performerId 順を先に確定させる方式へ差し替える。
+  if (sort === "coverCountDesc") {
+    return [{ covers: { _count: "desc" } }, { name: "asc" }];
   }
 
   return [{ name: "asc" }];
@@ -265,4 +276,103 @@ export async function getGroupPerformerCount(groupId: string) {
   return db.performer.count({
     where: { groupId, status: MasterDataStatus.APPROVED }
   });
+}
+
+export async function getPerformerStats(performerId: string) {
+  const links = await db.coverPerformer.findMany({
+    where: { performerId, cover: { status: ContentStatus.APPROVED } },
+    select: {
+      cover: {
+        select: {
+          songId: true,
+          performedAt: true,
+          coverType: true,
+          song: {
+            select: {
+              artists: { select: { artist: { select: { id: true, name: true } } } }
+            }
+          }
+        }
+      }
+    }
+  });
+
+  const covers = links.map((link) => link.cover);
+  const songIds = new Set(covers.map((cover) => cover.songId));
+  const artistCounts = new Map<string, { name: string; count: number }>();
+
+  for (const cover of covers) {
+    for (const { artist } of cover.song.artists) {
+      const existing = artistCounts.get(artist.id);
+      if (existing) {
+        existing.count += 1;
+      } else {
+        artistCounts.set(artist.id, { name: artist.name, count: 1 });
+      }
+    }
+  }
+
+  const byDate = [...covers].sort((a, b) => a.performedAt.getTime() - b.performedAt.getTime());
+
+  return {
+    totalCoverCount: covers.length,
+    songCount: songIds.size,
+    firstPerformedAt: byDate.length > 0 ? byDate[0].performedAt : null,
+    latestPerformedAt: byDate.length > 0 ? byDate[byDate.length - 1].performedAt : null,
+    coverTypeBreakdown: summarizeCoverTypeCounts(covers.map((cover) => cover.coverType)),
+    topArtists: Array.from(artistCounts.entries())
+      .map(([artistId, value]) => ({ artistId, name: value.name, count: value.count }))
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "ja"))
+      .slice(0, 5),
+    yearlyBreakdown: summarizeYearlyCounts(covers.map((cover) => cover.performedAt))
+  };
+}
+
+// 同一 Cover に紐づく他の活動者（CoverPerformer 経由）を共演回数の多い順に返す。
+export async function getCoPerformers(performerId: string, limit = 6) {
+  const coverLinks = await db.coverPerformer.findMany({
+    where: { performerId, cover: { status: ContentStatus.APPROVED } },
+    select: { coverId: true }
+  });
+  const coverIds = coverLinks.map((link) => link.coverId);
+
+  if (coverIds.length === 0) {
+    return [];
+  }
+
+  const coLinks = await db.coverPerformer.findMany({
+    where: {
+      coverId: { in: coverIds },
+      performerId: { not: performerId },
+      performer: { status: MasterDataStatus.APPROVED }
+    },
+    select: {
+      performer: {
+        select: { id: true, name: true, colorCode: true, group: { select: { name: true } } }
+      }
+    }
+  });
+
+  const counts = new Map<
+    string,
+    { name: string; colorCode: string | null; groupName: string | null; count: number }
+  >();
+  for (const { performer } of coLinks) {
+    const existing = counts.get(performer.id);
+    if (existing) {
+      existing.count += 1;
+    } else {
+      counts.set(performer.id, {
+        name: performer.name,
+        colorCode: performer.colorCode,
+        groupName: performer.group?.name ?? null,
+        count: 1
+      });
+    }
+  }
+
+  return Array.from(counts.entries())
+    .map(([id, value]) => ({ id, ...value }))
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "ja"))
+    .slice(0, limit);
 }

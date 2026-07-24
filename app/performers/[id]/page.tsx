@@ -12,10 +12,14 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { coverTypeLabel } from "@/lib/constants";
 import {
+  getCoPerformers,
   getGroupPerformers,
   getPerformerByIdAnyStatus,
+  getPerformerStats,
   getPerformersWithSharedTags
 } from "@/lib/data/performers";
+import { evaluatePerformerQuality } from "@/lib/content-quality";
+import { formatCoverTypeBreakdown, formatDateJp } from "@/lib/content-summary";
 import { cn, formatDate, formatDateInput } from "@/lib/utils";
 import type { Metadata } from "next";
 
@@ -40,7 +44,8 @@ export async function generateMetadata({
   if (performer.status === MasterDataStatus.PENDING) {
     return {
       title: `${performer.name}（確認中）`,
-      robots: { index: false, follow: false }
+      // 内部リンクのクロールは維持したいため follow: true にする。
+      robots: { index: false, follow: true }
     };
   }
 
@@ -49,10 +54,12 @@ export async function generateMetadata({
   const description = groupName
     ? `${performer.name}（${groupName}）の歌唱記録${performer.covers.length}件を掲載。歌ってみた・歌枠・ライブでの歌唱記録をまとめています。`
     : `${performer.name} の歌唱記録${performer.covers.length}件を掲載。歌ってみた・歌枠・ライブでの歌唱記録をまとめています。`;
+  const { isIndexable } = evaluatePerformerQuality(performer.covers.length, performer.status);
 
   return {
     title,
     description,
+    robots: isIndexable ? undefined : { index: false, follow: true },
     alternates: {
       canonical: `/performers/${performer.id}`
     },
@@ -96,6 +103,11 @@ export default async function PerformerDetailPage({ params }: { params: Promise<
         take: 6
       })
     : [];
+  const [stats, coPerformers] = await Promise.all([
+    getPerformerStats(performer.id),
+    getCoPerformers(performer.id, 6)
+  ]);
+  const summary = buildPerformerSummary(performer.name, stats);
 
   return (
     <div className="space-y-6">
@@ -237,6 +249,20 @@ export default async function PerformerDetailPage({ params }: { params: Promise<
         </div>
       </section>
 
+      {stats.totalCoverCount > 0 ? (
+        <section className="rounded-3xl border border-primary/10 bg-card/90 p-5 shadow-sm">
+          <h2 className="text-lg font-bold tracking-tight">歌唱傾向</h2>
+          <p className="mt-3 text-sm leading-7 text-foreground">{summary}</p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {stats.topArtists.map((artist) => (
+              <Badge key={artist.artistId} variant="muted">
+                {artist.name} {artist.count}件
+              </Badge>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
       <section className="space-y-4">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div className="flex items-center gap-2">
@@ -298,6 +324,50 @@ export default async function PerformerDetailPage({ params }: { params: Promise<
         </div>
       </section>
 
+      {coPerformers.length > 0 ? (
+        <section className="space-y-4">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <Users className="size-4" aria-hidden="true" />
+            </span>
+            <div>
+              <h2 className="text-xl font-bold tracking-tight">共演のある活動者</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                同じカバー記録に一緒に登録されている活動者を、共演回数の多い順に表示しています。
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {coPerformers.map((mate) => (
+              <article
+                key={mate.id}
+                className="overflow-hidden rounded-3xl border border-primary/10 bg-card/90 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
+                style={{
+                  borderTopColor: mate.colorCode ?? undefined,
+                  borderTopWidth: mate.colorCode ? 4 : undefined
+                }}
+              >
+                <div className="flex h-full flex-col gap-3 p-5">
+                  <div className="min-w-0">
+                    <Link
+                      href={`/performers/${mate.id}`}
+                      className="text-lg font-bold text-foreground underline-offset-4 hover:text-primary hover:underline"
+                    >
+                      {mate.name}
+                    </Link>
+                    <p className="mt-1 text-sm text-muted-foreground">{mate.groupName ?? "所属なし"}</p>
+                  </div>
+                  <div className="mt-auto">
+                    <Badge variant="default">{mate.count}回共演</Badge>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
       {taggedMates.length > 0 ? (
         <section className="space-y-4">
           <div className="flex items-center gap-2">
@@ -353,6 +423,33 @@ export default async function PerformerDetailPage({ params }: { params: Promise<
       ) : null}
     </div>
   );
+}
+
+function buildPerformerSummary(name: string, stats: Awaited<ReturnType<typeof getPerformerStats>>) {
+  const parts: string[] = [];
+  parts.push(
+    `${name}の歌唱記録は現在${stats.totalCoverCount}件登録されています（${stats.songCount}曲）。`
+  );
+
+  if (stats.topArtists.length > 0) {
+    const artistText = stats.topArtists
+      .slice(0, 3)
+      .map((artist) => `${artist.name}（${artist.count}件）`)
+      .join("、");
+    parts.push(`よく歌う原曲アーティストは${artistText}です。`);
+  }
+
+  if (stats.coverTypeBreakdown.length > 0) {
+    parts.push(
+      `歌唱種別では${coverTypeLabel(stats.coverTypeBreakdown[0].type)}が最も多く、内訳は${formatCoverTypeBreakdown(stats.coverTypeBreakdown)}となっています。`
+    );
+  }
+
+  if (stats.firstPerformedAt) {
+    parts.push(`最初の記録は${formatDateJp(stats.firstPerformedAt)}です。`);
+  }
+
+  return parts.join("");
 }
 
 function InfoItem({ icon, label, value }: { icon: React.ReactNode; label: string; value: React.ReactNode }) {

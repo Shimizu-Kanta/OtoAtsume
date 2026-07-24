@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { getSongs, type SongListItem, type SongSort } from "@/lib/data/songs";
-import { cn, getSearchParam, parsePageParam } from "@/lib/utils";
+import { cn, getSearchParam, isFilteredListing, parsePageParam } from "@/lib/utils";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -24,6 +24,7 @@ export async function generateMetadata({
 
   return {
     title: "楽曲",
+    robots: isFilteredListing(params) ? { index: false, follow: true } : undefined,
     alternates: {
       canonical: page > 1 ? `/songs?page=${page}` : "/songs"
     }

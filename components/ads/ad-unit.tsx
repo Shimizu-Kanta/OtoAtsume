@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 
+import { isAdEnabledPath } from "@/lib/ads/placement";
 import { cn } from "@/lib/utils";
 
 declare global {
@@ -16,33 +17,29 @@ declare global {
 const adsenseClientId = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID;
 const isProduction = process.env.NODE_ENV === "production";
 
-// 広告を表示してはいけないページ（管理画面・投稿・通報・申請フォーム）
-const EXCLUDED_EXACT_PATHS = ["/covers/new", "/performer-applications/new"];
-
-function isAdExcludedPath(pathname: string) {
-  return (
-    pathname.startsWith("/admin") ||
-    EXCLUDED_EXACT_PATHS.includes(pathname) ||
-    pathname.endsWith("/report")
-  );
-}
-
 export function AdUnit({
   adSlot,
   adFormat = "auto",
-  className
+  className,
+  // 呼び出し側から明示的に無効化するためのフラグ（false の場合は必ず null を返す）。
+  enabled = true,
+  // 検索結果0件などコンテンツが乏しい場合は false を渡す。
+  hasResults = true
 }: {
   adSlot: string;
   adFormat?: string;
   className?: string;
+  enabled?: boolean;
+  hasResults?: boolean;
 }) {
   const pathname = usePathname();
-  const enabled = Boolean(adsenseClientId) && !isAdExcludedPath(pathname);
+  const allowed =
+    enabled && Boolean(adsenseClientId) && isAdEnabledPath(pathname, hasResults);
 
   // App Router の SPA 遷移では <ins> を置いただけでは 2 ページ目以降に
   // 広告が表示されないため、パスが変わるたびに再初期化する。
   useEffect(() => {
-    if (!enabled || !isProduction) {
+    if (!allowed || !isProduction) {
       return;
     }
 
@@ -51,9 +48,9 @@ export function AdUnit({
     } catch (error) {
       console.error("AdSense initialization failed", error);
     }
-  }, [enabled, pathname]);
+  }, [allowed, pathname]);
 
-  if (!enabled) {
+  if (!allowed) {
     return null;
   }
 

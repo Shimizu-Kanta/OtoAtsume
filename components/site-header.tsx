@@ -5,6 +5,7 @@ const navItems = [
   { href: "/performers", label: "活動者" },
   { href: "/groups", label: "グループ" },
   { href: "/songs", label: "楽曲" },
+  { href: "/rankings", label: "ランキング" },
   { href: "/covers/new", label: "登録" }
 ];
 

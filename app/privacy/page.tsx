@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   description: "おとあつめのプライバシーポリシー"
 };
 
-const updatedAt = "2026年7月16日";
+const updatedAt = "2026年7月20日";
 
 export default function PrivacyPage() {
   return (
@@ -54,10 +54,16 @@ export default function PrivacyPage() {
         <h2 className="text-lg font-semibold">3. アクセスログとレート制限</h2>
         <div className="space-y-3 text-sm leading-7 text-muted-foreground">
           <p>
-            本サービスでは、利用状況の把握のため、アクセスされた公開ページのパスを保存します。管理画面、API、Next.js 内部パスなどはアクセスログの対象外です。
+            本サービスでは、利用状況の把握とアクセス解析のため、アクセスされた公開ページのパスを
+            <code className="mx-1 rounded bg-muted px-1">SiteAccessLog</code>
+            として保存します。管理画面、API、Next.js 内部パスなどはアクセスログの対象外です。この解析は、どのページがよく閲覧されているかといったサービス改善のためにのみ利用します。
           </p>
           <p>
-            投稿・通報・活動者申請・重複チェックなどでは、過度な利用を防ぐためにレート制限を行います。アクセス元の IP アドレスや User-Agent は、そのまま保存せず、ハッシュ化したキーとして保存します。
+            投稿・通報・活動者申請・重複チェックなどでは、過度な利用を防ぐためにレート制限を行います。この際、アクセス元の IP アドレスおよび User-Agent は、そのままの値では保存せず、ハッシュ化した値（
+            <code className="mx-1 rounded bg-muted px-1">ipHash</code>
+            /
+            <code className="mx-1 rounded bg-muted px-1">userAgentHash</code>
+            ）としてのみ記録します。ハッシュ化された値から元の IP アドレスや User-Agent を復元することはできません。
           </p>
         </div>
       </section>
@@ -74,25 +80,34 @@ export default function PrivacyPage() {
       </section>
 
       <section className="space-y-3 rounded-md border bg-card p-5">
-        <h2 className="text-lg font-semibold">5. 広告配信について</h2>
+        <h2 className="text-lg font-semibold">5. 広告配信と Cookie について</h2>
         <div className="space-y-3 text-sm leading-7 text-muted-foreground">
           <p>
-            本サービスは、第三者配信の広告サービス「Google AdSense」を利用しています。
+            本サービスは、第三者配信の広告サービス「Google AdSense」を利用しています。広告配信に関連して、本サービスおよび第三者配信事業者は Cookie（クッキー）やウェブビーコンを使用することがあります。Cookie は、ブラウザに保存される小さなデータであり、ウェブビーコンとあわせて、ユーザーの利用状況の把握や広告の最適化のために用いられます。
           </p>
           <p>
-            Google などの第三者配信事業者は Cookie を使用し、ユーザーの本サービスや他のウェブサイトへの過去のアクセス情報に基づいて、パーソナライズされた広告を配信することがあります。
-          </p>
-          <p>
-            ユーザーは
+            Google を含む第三者配信事業者は、Cookie を使用して、ユーザーの本サービスや他のウェブサイトへの過去のアクセス情報に基づいたパーソナライズ広告を配信することがあります。第三者による広告 Cookie の使用については、
             <a
-              href="https://adssettings.google.com/"
+              href="https://policies.google.com/technologies/partner-sites"
               target="_blank"
               rel="noreferrer"
               className="mx-1 text-primary underline"
             >
-              Google の広告設定
+              Google のパートナーサイトでのデータ使用について
             </a>
-            から、パーソナライズ広告を無効にできます。Google による広告 Cookie の利用の詳細は
+            のページで詳しく説明されています。
+          </p>
+          <p>
+            ユーザーは
+            <a
+              href="https://www.google.com/settings/ads"
+              target="_blank"
+              rel="noreferrer"
+              className="mx-1 text-primary underline"
+            >
+              広告設定
+            </a>
+            にアクセスすることで、パーソナライズ広告を無効にできます。また、多くのブラウザでは設定により Cookie の受け入れを拒否することもできますが、その場合、一部の機能が正しく動作しないことがあります。Google による広告 Cookie の利用の詳細は
             <a
               href="https://policies.google.com/technologies/ads?hl=ja"
               target="_blank"

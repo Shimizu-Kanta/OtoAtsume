@@ -1,5 +1,6 @@
 import { ContentStatus, Prisma } from "@prisma/client";
 
+import { summarizeCoverTypeCounts, summarizeYearlyCounts } from "@/lib/content-summary";
 import { db } from "@/lib/db";
 import { pageSkip, paginate } from "@/lib/pagination";
 
@@ -159,4 +160,79 @@ export async function getRelatedSongsByArtist(artistIds: string[], excludeSongId
     orderBy: [{ covers: { _count: "desc" } }, { title: "asc" }],
     take: limit
   });
+}
+
+export async function getSongStats(songId: string) {
+  const covers = await db.cover.findMany({
+    where: { songId, status: ContentStatus.APPROVED },
+    select: {
+      performedAt: true,
+      coverType: true,
+      performers: { select: { performerId: true } }
+    },
+    orderBy: { performedAt: "asc" }
+  });
+
+  const performerIds = new Set<string>();
+  for (const cover of covers) {
+    for (const performer of cover.performers) {
+      performerIds.add(performer.performerId);
+    }
+  }
+
+  return {
+    totalCoverCount: covers.length,
+    performerCount: performerIds.size,
+    firstPerformedAt: covers.length > 0 ? covers[0].performedAt : null,
+    latestPerformedAt: covers.length > 0 ? covers[covers.length - 1].performedAt : null,
+    coverTypeBreakdown: summarizeCoverTypeCounts(covers.map((cover) => cover.coverType)),
+    yearlyBreakdown: summarizeYearlyCounts(covers.map((cover) => cover.performedAt))
+  };
+}
+
+// 同一 sourceUrl（同じ配信・ライブ）に紐づく別楽曲を共起数の多い順に返す。
+// 歌枠は1配信に複数曲が含まれるため、この共起データはこのサイト固有の付加価値になる。
+export async function getCoOccurringSongs(songId: string, limit = 6) {
+  const sourceRows = await db.cover.findMany({
+    where: { songId, status: ContentStatus.APPROVED },
+    select: { sourceUrl: true }
+  });
+  const sourceUrls = Array.from(new Set(sourceRows.map((row) => row.sourceUrl)));
+
+  if (sourceUrls.length === 0) {
+    return [];
+  }
+
+  const coOccurring = await db.cover.findMany({
+    where: {
+      status: ContentStatus.APPROVED,
+      sourceUrl: { in: sourceUrls },
+      songId: { not: songId }
+    },
+    select: {
+      songId: true,
+      song: {
+        include: { artists: { include: { artist: true } } }
+      }
+    }
+  });
+
+  const counts = new Map<string, { title: string; artistNames: string; count: number }>();
+  for (const cover of coOccurring) {
+    const existing = counts.get(cover.songId);
+    if (existing) {
+      existing.count += 1;
+    } else {
+      counts.set(cover.songId, {
+        title: cover.song.title,
+        artistNames: cover.song.artists.map(({ artist }) => artist.name).join(", "),
+        count: 1
+      });
+    }
+  }
+
+  return Array.from(counts.entries())
+    .map(([id, value]) => ({ id, ...value }))
+    .sort((a, b) => b.count - a.count || a.title.localeCompare(b.title, "ja"))
+    .slice(0, limit);
 }

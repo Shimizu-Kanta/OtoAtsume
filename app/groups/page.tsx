@@ -7,7 +7,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { getGroups, type GroupSort } from "@/lib/data/groups";
-import { cn, getSearchParam, parsePageParam } from "@/lib/utils";
+import { cn, getSearchParam, isFilteredListing, parsePageParam } from "@/lib/utils";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -24,6 +24,7 @@ export async function generateMetadata({
     title: "グループ",
     description:
       "VTuber・歌い手グループの一覧です。グループごとに所属活動者と歌ってみた・歌枠・ライブの歌唱記録をまとめています。",
+    robots: isFilteredListing(params) ? { index: false, follow: true } : undefined,
     alternates: {
       canonical: page > 1 ? `/groups?page=${page}` : "/groups"
     },

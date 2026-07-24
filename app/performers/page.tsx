@@ -11,7 +11,14 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { getPerformers, type PerformerSort } from "@/lib/data/performers";
 import { listTagsGroupedForFilter } from "@/lib/data/tags";
-import { cn, formatDateInput, getSearchParam, getSelectedTagIds, parsePageParam } from "@/lib/utils";
+import {
+  cn,
+  formatDateInput,
+  getSearchParam,
+  getSelectedTagIds,
+  isFilteredListing,
+  parsePageParam
+} from "@/lib/utils";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -26,6 +33,7 @@ export async function generateMetadata({
 
   return {
     title: "活動者",
+    robots: isFilteredListing(params) ? { index: false, follow: true } : undefined,
     alternates: {
       canonical: page > 1 ? `/performers?page=${page}` : "/performers"
     }
@@ -75,6 +83,7 @@ export default async function PerformersPage({
             <Label htmlFor="performer-sort">並び替え</Label>
             <Select id="performer-sort" name="sort" defaultValue={sort}>
               <option value="nameAsc">名前順</option>
+              <option value="coverCountDesc">歌唱記録が多い順</option>
               <option value="debutDateAsc">デビュー日 昇順</option>
               <option value="debutDateDesc">デビュー日 降順</option>
             </Select>
@@ -184,5 +193,7 @@ export default async function PerformersPage({
 }
 
 function normalizePerformerSort(value: string | undefined): PerformerSort {
-  return value === "debutDateAsc" || value === "debutDateDesc" ? value : "nameAsc";
+  return value === "debutDateAsc" || value === "debutDateDesc" || value === "coverCountDesc"
+    ? value
+    : "nameAsc";
 }

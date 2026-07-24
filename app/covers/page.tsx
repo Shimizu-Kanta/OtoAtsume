@@ -12,7 +12,7 @@ import { Select } from "@/components/ui/select";
 import { coverTypeOptions } from "@/lib/constants";
 import { getApprovedCovers, type CoverSort } from "@/lib/data/covers";
 import { listTagsGroupedForFilter } from "@/lib/data/tags";
-import { cn, getSearchParam, getSelectedTagIds, parsePageParam } from "@/lib/utils";
+import { cn, getSearchParam, getSelectedTagIds, isFilteredListing, parsePageParam } from "@/lib/utils";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -27,6 +27,7 @@ export async function generateMetadata({
 
   return {
     title: "カバー記録",
+    robots: isFilteredListing(params) ? { index: false, follow: true } : undefined,
     alternates: {
       canonical: page > 1 ? `/covers?page=${page}` : "/covers"
     }
