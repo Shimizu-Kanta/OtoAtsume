@@ -122,6 +122,8 @@ model Song {
   id          String       @id @default(uuid())
   title       String
   originalUrl String?
+  originalUrlCandidates          Json?
+  originalUrlCandidatesFetchedAt DateTime?
   artists     SongArtist[]
   covers      Cover[]
   createdAt   DateTime     @default(now())
