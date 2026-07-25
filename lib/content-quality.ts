@@ -17,6 +17,7 @@ export type ContentQualityReason =
   | "sufficient"
   | "too-few-covers"
   | "too-few-performers"
+  | "isolated"
   | "pending"
   | "hidden";
 
@@ -78,4 +79,22 @@ export function evaluateTagQuality(performerCount: number): ContentQualityResult
   }
 
   return { isIndexable: false, reason: "too-few-performers" };
+}
+
+export type CoverQualityInput = {
+  sameSongCount: number; // 同じ楽曲の他のカバー記録数（自身を除く）
+  samePerformerCount: number; // 同じ活動者の他のカバー記録数（自身を除く）
+  sameSourceCount: number; // 同じ sourceUrl の他のカバー記録数（自身を除く）
+};
+
+// 3種の関連セクションがすべて空になる「孤立した」カバー記録は情報量が乏しいため index 対象外。
+// 関連記録が増えれば自動的に index 対象へ復帰する（手動フラグは設けない）。
+export function evaluateCoverQuality(input: CoverQualityInput): ContentQualityResult {
+  const related = input.sameSongCount + input.samePerformerCount + input.sameSourceCount;
+
+  if (related === 0) {
+    return { isIndexable: false, reason: "isolated" };
+  }
+
+  return SUFFICIENT;
 }

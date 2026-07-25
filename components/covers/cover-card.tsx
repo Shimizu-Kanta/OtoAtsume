@@ -16,7 +16,6 @@ function artistNames(cover: CoverListItem) {
 export function CoverCard({ cover }: { cover: CoverListItem }) {
   const thumbnailUrl = cover.sourceImageUrl ?? getYouTubeThumbnailUrl(cover.sourceUrl);
   const title = cover.song.title;
-  const sourceLabel = cover.sourceTitle ?? cover.sourceUrl;
   const accentColor = cover.performers.find(({ performer }) => performer.colorCode)?.performer.colorCode;
 
   return (
@@ -77,8 +76,6 @@ export function CoverCard({ cover }: { cover: CoverListItem }) {
           <span className="text-xs text-muted-foreground">{formatDate(cover.performedAt)}</span>
           <span className="ml-auto text-sm font-semibold text-primary">詳細</span>
         </div>
-
-        <p className="truncate text-xs text-muted-foreground/80">{sourceLabel}</p>
       </div>
     </Link>
   );

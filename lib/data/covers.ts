@@ -7,6 +7,7 @@ import {
   ReportReason
 } from "@prisma/client";
 
+import { evaluateCoverQuality } from "@/lib/content-quality";
 import { db } from "@/lib/db";
 import { pageSkip, paginate } from "@/lib/pagination";
 import { normalizeNames } from "@/lib/utils";
@@ -262,6 +263,89 @@ export async function getOtherCoversBySong(songId: string, excludeCoverId: strin
     orderBy: [{ performedAt: "desc" }, { createdAt: "desc" }],
     take
   });
+}
+
+// 単一カバーの関連件数（同楽曲 / 同活動者 / 同 sourceUrl の他記録数）。
+// generateMetadata の noindex 判定に使う。すべて自身を除いた APPROVED 件数。
+export async function getCoverRelationCounts(cover: {
+  id: string;
+  songId: string;
+  sourceUrl: string;
+  performers: { performerId: string }[];
+}) {
+  const performerIds = cover.performers.map((performer) => performer.performerId);
+
+  const [sameSongCount, samePerformerCount, sameSourceCount] = await Promise.all([
+    db.cover.count({
+      where: { status: ContentStatus.APPROVED, id: { not: cover.id }, songId: cover.songId }
+    }),
+    performerIds.length > 0
+      ? db.cover.count({
+          where: {
+            status: ContentStatus.APPROVED,
+            id: { not: cover.id },
+            performers: { some: { performerId: { in: performerIds } } }
+          }
+        })
+      : Promise.resolve(0),
+    db.cover.count({
+      where: { status: ContentStatus.APPROVED, id: { not: cover.id }, sourceUrl: cover.sourceUrl }
+    })
+  ]);
+
+  return { sameSongCount, samePerformerCount, sameSourceCount };
+}
+
+// sitemap 用に、index 対象（孤立していない）の APPROVED カバーだけを一括判定して返す。
+// 全カバーを1度だけ取得し、songId / sourceUrl / performerId ごとの件数を Map 化して
+// 各カバーを O(1) で判定する（N+1 を避ける）。generateMetadata と同じ evaluateCoverQuality を使う。
+export async function getIndexableCoverSitemapEntries() {
+  const covers = await db.cover.findMany({
+    where: { status: ContentStatus.APPROVED },
+    select: {
+      id: true,
+      updatedAt: true,
+      songId: true,
+      sourceUrl: true,
+      performers: { select: { performerId: true } }
+    }
+  });
+
+  const songCounts = new Map<string, number>();
+  const sourceCounts = new Map<string, number>();
+  const performerToCoverIds = new Map<string, string[]>();
+
+  for (const cover of covers) {
+    songCounts.set(cover.songId, (songCounts.get(cover.songId) ?? 0) + 1);
+    sourceCounts.set(cover.sourceUrl, (sourceCounts.get(cover.sourceUrl) ?? 0) + 1);
+    for (const { performerId } of cover.performers) {
+      const list = performerToCoverIds.get(performerId) ?? [];
+      list.push(cover.id);
+      performerToCoverIds.set(performerId, list);
+    }
+  }
+
+  return covers
+    .filter((cover) => {
+      const sameSongCount = (songCounts.get(cover.songId) ?? 1) - 1;
+      const sameSourceCount = (sourceCounts.get(cover.sourceUrl) ?? 1) - 1;
+
+      const relatedCoverIds = new Set<string>();
+      for (const { performerId } of cover.performers) {
+        for (const coverId of performerToCoverIds.get(performerId) ?? []) {
+          if (coverId !== cover.id) {
+            relatedCoverIds.add(coverId);
+          }
+        }
+      }
+
+      return evaluateCoverQuality({
+        sameSongCount,
+        samePerformerCount: relatedCoverIds.size,
+        sameSourceCount
+      }).isIndexable;
+    })
+    .map((cover) => ({ id: cover.id, updatedAt: cover.updatedAt }));
 }
 
 export type AnniversaryType = "debut" | "birthday";

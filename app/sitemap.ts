@@ -6,6 +6,7 @@ import {
   evaluatePerformerQuality,
   evaluateSongQuality
 } from "@/lib/content-quality";
+import { getIndexableCoverSitemapEntries } from "@/lib/data/covers";
 import { db } from "@/lib/db";
 
 const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://oto-atsume.com").trim();
@@ -20,10 +21,7 @@ const approvedCoverCount = {
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [covers, performers, songs, groups] = await Promise.all([
-    db.cover.findMany({
-      where: { status: ContentStatus.APPROVED },
-      select: { id: true, updatedAt: true }
-    }),
+    getIndexableCoverSitemapEntries(),
     db.performer.findMany({
       where: { status: MasterDataStatus.APPROVED },
       select: {

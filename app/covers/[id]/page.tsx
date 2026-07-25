@@ -13,11 +13,13 @@ import { buttonVariants } from "@/components/ui/button";
 import { coverTypeLabel } from "@/lib/constants";
 import {
   getCoverById,
+  getCoverRelationCounts,
   getOtherCoversByPerformers,
   getOtherCoversBySong,
   getOtherCoversBySourceUrl,
   type CoverListItem
 } from "@/lib/data/covers";
+import { evaluateCoverQuality } from "@/lib/content-quality";
 import { cn, formatDate, formatSeconds, withTimestamp } from "@/lib/utils";
 import { getYouTubeThumbnailUrl } from "@/lib/youtube";
 import type { Metadata } from "next";
@@ -52,9 +54,13 @@ export async function generateMetadata({
     ? `${cover.song.title} - ${artists} の歌唱記録です。`
     : `${cover.song.title} の歌唱記録です。`;
 
+  const relationCounts = await getCoverRelationCounts(cover);
+  const { isIndexable } = evaluateCoverQuality(relationCounts);
+
   return {
     title,
     description,
+    robots: isIndexable ? undefined : { index: false, follow: true },
     alternates: {
       canonical: `/covers/${cover.id}`
     },
@@ -278,36 +284,40 @@ export default async function CoverDetailPage({ params, searchParams }: CoverDet
             <div>
               <h2 className="text-lg font-bold tracking-tight">この配信・ライブの他の歌唱記録</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                同じ情報元URLから登録されている歌唱記録です。
+                上部に表示している配信・ライブから登録されている他の歌唱記録を、タイムスタンプ順のセットリストとして並べています。
               </p>
             </div>
           </div>
 
           <div className="mt-4 divide-y overflow-hidden rounded-2xl border bg-background/70">
-            {sameSourceCovers.map((sourceCover) => (
-              <div
-                key={sourceCover.id}
-                className="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div className="min-w-0">
-                  <Link
-                    href={`/covers/${sourceCover.id}`}
-                    className="font-semibold text-foreground underline-offset-4 hover:text-primary hover:underline"
-                  >
-                    {sourceCover.song.title}
-                  </Link>
-                  <p className="mt-0.5 text-sm text-muted-foreground">
-                    {sourceCover.performers.map(({ performer }) => performer.name).join(", ")}
-                  </p>
-                </div>
-                {sourceCover.timestampSeconds != null ? (
-                  <Badge variant="outline" className="shrink-0">
+            {sameSourceCovers.map((sourceCover) => {
+              const sourceArtists = sourceCover.song.artists
+                .map(({ artist }) => artist.name)
+                .join(", ");
+
+              return (
+                <div key={sourceCover.id} className="flex items-start gap-3 p-3">
+                  <Badge variant={sourceCover.timestampSeconds != null ? "outline" : "muted"} className="mt-0.5 shrink-0">
                     <Timer className="mr-1 size-3" aria-hidden="true" />
-                    {formatSeconds(sourceCover.timestampSeconds)}
+                    {sourceCover.timestampSeconds != null
+                      ? formatSeconds(sourceCover.timestampSeconds)
+                      : "-"}
                   </Badge>
-                ) : null}
-              </div>
-            ))}
+                  <div className="min-w-0">
+                    <Link
+                      href={`/covers/${sourceCover.id}`}
+                      className="font-semibold text-foreground underline-offset-4 hover:text-primary hover:underline"
+                    >
+                      {sourceCover.song.title}
+                    </Link>
+                    <p className="mt-0.5 text-sm text-muted-foreground">
+                      {sourceArtists ? `${sourceArtists} ／ ` : ""}
+                      {sourceCover.performers.map(({ performer }) => performer.name).join(", ")}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </section>
       ) : null}
