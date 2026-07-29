@@ -787,9 +787,29 @@ Webhook URL はコードや Public repo には置かず、Cloud Run の環境変
 
 **注意**: ゲーム配信・切り抜き中心のチャンネル（例: 葛葉）は歌唱動画がそもそも少ないため、動作確認には向かない。「候補0件」＝不具合ではない。巡回結果メッセージに走査数・スキップ理由の内訳が出るので、そこで正常か異常かを判断する。
 
+### 巡回モード
+
+巡回は「歌ってみた取得」「歌枠・ライブ取得」の2モードに分かれ、判定条件が異なる。
+
+| モード | 対象キーワード | 動画長 |
+|---|---|---|
+| `COVER_VIDEO`（歌ってみた） | 歌ってみた判定キーワード | 15分以内。60秒未満は `SHORT`、15分超は候補にしない |
+| `KARAOKE_STREAM`（歌枠・ライブ） | 歌枠判定キーワード | 制限なし |
+
+除外キーワードは両モード共通（タイトルのみ対象）。動画長は `videos.list` で取得し `YouTubeVideoMetadataCache.durationSeconds` にキャッシュする（キーワード判定を通過した動画のみ取得）。
+
+巡回日時は `Performer.lastCrawledCoverAt` / `lastCrawledKaraokeAt` とモード別に持つため、一方のモードの巡回が他方の対象期間を狭めることはない。
+
 ### 自動実行（Cloud Scheduler）
 
-`POST /api/admin/cover-candidates/crawl`（`Authorization: Bearer <CRAWL_API_TOKEN ?? DAILY_REPORT_API_TOKEN>`）を定期実行する。`?dryRun=1` で保存せず件数だけ確認できる。1日1回程度を想定。
+`POST /api/admin/cover-candidates/crawl?mode=cover`（または `?mode=karaoke`）を、`Authorization: Bearer <CRAWL_API_TOKEN ?? DAILY_REPORT_API_TOKEN>` で定期実行する。`?dryRun=1` で保存せず件数だけ確認できる。
+
+歌枠は1配信に複数曲が含まれ確認コストが高いため、頻度に差をつける。
+
+- 歌ってみた（`mode=cover`）: 毎日
+- 歌枠・ライブ（`mode=karaoke`）: 週1回
+
+Cloud Scheduler では2つのジョブを登録する。
 
 ---
 

@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import { CoverCandidateStatus } from "@prisma/client";
+import { CoverCandidateStatus, CoverCandidateType } from "@prisma/client";
 import { AdminNav } from "@/components/admin/admin-nav";
 import { PageHeading } from "@/components/page-heading";
 import { Pagination } from "@/components/pagination";
@@ -31,6 +31,23 @@ function normalizeStatus(value: string | undefined): CoverCandidateStatus {
   return value === "ADOPTED" || value === "REJECTED" ? value : "PENDING";
 }
 
+const TYPE_TABS: { value: CoverCandidateType | "ALL"; label: string }[] = [
+  { value: "ALL", label: "すべて" },
+  { value: "COVER_VIDEO", label: "歌ってみた" },
+  { value: "KARAOKE_STREAM", label: "歌枠" },
+  { value: "SHORT", label: "ショート" }
+];
+
+function normalizeType(value: string | undefined): CoverCandidateType | undefined {
+  return value === "COVER_VIDEO" || value === "KARAOKE_STREAM" || value === "SHORT" ? value : undefined;
+}
+
+function typeLabel(type: CoverCandidateType) {
+  if (type === "KARAOKE_STREAM") return "歌枠";
+  if (type === "SHORT") return "ショート";
+  return "歌ってみた";
+}
+
 export default async function AdminCoverCandidatesPage({
   searchParams
 }: {
@@ -39,10 +56,11 @@ export default async function AdminCoverCandidatesPage({
   await requireAdminPage();
   const params = await searchParams;
   const status = normalizeStatus(getSearchParam(params, "status"));
+  const detectedType = normalizeType(getSearchParam(params, "type"));
   const page = parsePageParam(getSearchParam(params, "page"));
 
   const [{ items, totalCount, totalPages }, counts, performers] = await Promise.all([
-    listCoverCandidates(status, page),
+    listCoverCandidates(status, detectedType, page),
     getCoverCandidateStatusCounts(),
     getPerformerOptions()
   ]);
@@ -92,7 +110,7 @@ export default async function AdminCoverCandidatesPage({
         {STATUS_TABS.map((tab) => (
           <Link
             key={tab.value}
-            href={`/admin/cover-candidates?status=${tab.value}`}
+            href={`/admin/cover-candidates?status=${tab.value}${detectedType ? `&type=${detectedType}` : ""}`}
             className={cn(
               "rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
               status === tab.value
@@ -103,6 +121,28 @@ export default async function AdminCoverCandidatesPage({
             {tab.label}（{counts[tab.value]}）
           </Link>
         ))}
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs text-muted-foreground">種別:</span>
+        {TYPE_TABS.map((tab) => {
+          const active = (tab.value === "ALL" && !detectedType) || tab.value === detectedType;
+          const typeQuery = tab.value === "ALL" ? "" : `&type=${tab.value}`;
+          return (
+            <Link
+              key={tab.value}
+              href={`/admin/cover-candidates?status=${status}${typeQuery}`}
+              className={cn(
+                "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                active
+                  ? "border-primary/40 bg-primary/10 text-primary"
+                  : "border-border text-muted-foreground hover:bg-muted"
+              )}
+            >
+              {tab.label}
+            </Link>
+          );
+        })}
       </div>
 
       <p className="text-sm text-muted-foreground">
@@ -128,7 +168,7 @@ export default async function AdminCoverCandidatesPage({
               <div className="space-y-3 p-4">
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant={candidate.detectedType === "KARAOKE_STREAM" ? "accent" : "default"}>
-                    {candidate.detectedType === "KARAOKE_STREAM" ? "歌枠" : "歌ってみた"}
+                    {typeLabel(candidate.detectedType)}
                   </Badge>
                   <span className="text-xs text-muted-foreground">{formatDate(candidate.publishedAt)}</span>
                 </div>

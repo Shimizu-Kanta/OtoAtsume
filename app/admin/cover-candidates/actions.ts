@@ -7,7 +7,7 @@ import { redirect } from "next/navigation";
 import { requireAdminPage } from "@/lib/auth/admin";
 import { getCoverCandidate, markCoverCandidateAdopted, setCoverCandidateStatus } from "@/lib/data/cover-candidates";
 import { createCover } from "@/lib/data/covers";
-import { runCoverCandidateCrawl, type CrawlResult } from "@/lib/crawl/cover-candidates";
+import { runCoverCandidateCrawl, type CrawlMode, type CrawlResult } from "@/lib/crawl/cover-candidates";
 import { coverCreateSchema } from "@/lib/validations/cover";
 
 function revalidateCandidatePages() {
@@ -68,14 +68,18 @@ export async function adoptCoverVideoCandidateAction(candidateId: string, formDa
   redirect("/admin/cover-candidates?adopted=1");
 }
 
-export async function runFullCrawlAction(): Promise<CrawlResult> {
+function normalizeMode(value: unknown): CrawlMode {
+  return value === "KARAOKE_STREAM" ? "KARAOKE_STREAM" : "COVER_VIDEO";
+}
+
+export async function runFullCrawlAction(mode: CrawlMode): Promise<CrawlResult> {
   await requireAdminPage();
-  const result = await runCoverCandidateCrawl();
+  const result = await runCoverCandidateCrawl({ mode: normalizeMode(mode) });
   revalidateCandidatePages();
   return result;
 }
 
-export async function runScopedCrawlAction(formData: FormData): Promise<CrawlResult> {
+export async function runScopedCrawlAction(mode: CrawlMode, formData: FormData): Promise<CrawlResult> {
   await requireAdminPage();
 
   const performerIds = formData.getAll("performerIds").map(String).filter(Boolean);
@@ -86,6 +90,7 @@ export async function runScopedCrawlAction(formData: FormData): Promise<CrawlRes
       : undefined;
 
   const result = await runCoverCandidateCrawl({
+    mode: normalizeMode(mode),
     performerIds: performerIds.length > 0 ? performerIds : undefined,
     publishedAfter: publishedAfter && !Number.isNaN(publishedAfter.getTime()) ? publishedAfter : undefined
   });

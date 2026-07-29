@@ -1,10 +1,11 @@
-import { CoverCandidateType, MasterDataStatus } from "@prisma/client";
+import { CoverCandidateType, MasterDataStatus, Prisma } from "@prisma/client";
 
 import { getCrawlKeywordsByKind, type CrawlKeywordsByKind } from "@/lib/data/crawl-keywords";
 import { db } from "@/lib/db";
 import { extractYouTubeChannelRef } from "@/lib/youtube";
 import {
   fetchPlaylistItems,
+  fetchVideoDurations,
   resolveChannelById,
   resolveChannelByHandle,
   type PlaylistVideoItem
@@ -23,97 +24,194 @@ const DEFAULT_MAX_PAGES = 1;
 // 初回バックフィル / 期間を明示指定した手動実行: 多めに遡る（最大500件）
 const BACKFILL_MAX_PAGES = 10;
 
+// 動画長の判定閾値。管理画面から変更できるのが理想だが、まずは定数で運用する。
+// coverMaxSeconds は10分ではなく15分（900秒）。10分だとメドレーやMV+トーク込みが弾かれるため。
+const DEFAULT_SETTINGS = {
+  shortMaxSeconds: 60, // これ未満は SHORT 扱い
+  coverMaxSeconds: 900 // 15分。これを超えるものは歌ってみたではないと判断する
+};
+
+export type CrawlMode = "COVER_VIDEO" | "KARAOKE_STREAM";
+
 export type CrawlOptions = {
+  mode?: CrawlMode; // 既定は歌ってみた取得
   performerIds?: string[]; // 未指定なら全活動者（crawlEnabled = true）
-  publishedAfter?: Date; // 未指定なら performer.lastCrawledAt を使う
+  publishedAfter?: Date; // 未指定なら該当モードの前回巡回日を使う
   maxPendingCandidates?: number;
   dryRun?: boolean; // true なら DB に書き込まず、作成される候補数だけ数える
 };
 
 export type CrawlResult = {
+  mode: CrawlMode;
   performerCount: number;
   scanned: number; // 走査した動画数
   created: number; // 追加した候補数
   skippedAlreadyKnown: number; // 既に Cover/CoverCandidate に存在していた数
-  skippedNotSinging: number; // 判定でヒットしなかった数（除外・キーワード不一致）
+  skippedNotMatched: number; // 除外・キーワード不一致
+  skippedTooLong: number; // 動画長超過（COVER_VIDEO モードのみ）
   currentPending: number;
   stoppedReason: "completed" | "pendingLimitReached" | "performerLimitReached";
-  effectivePeriod: { from: Date | null; to: Date }; // from: 明示指定した開始日（未指定なら null）
-  lastCrawledAt: Date | null; // 単一活動者巡回時の前回巡回日時（メッセージ表示用）
+  effectivePeriod: { from: Date | null; to: Date };
+  lastCrawledAt: Date | null; // 単一活動者巡回時の当該モードの前回巡回日時（メッセージ表示用）
   dryRun: boolean;
 };
 
-// 判定順は 除外 → 歌枠 → 歌ってみた。
-// 歌枠キーワードを先に見るのは「歌枠」タイトルに「歌ってみた」が混ざるケースがあるため。
-// 除外判定は「タイトルのみ」を対象にする。概要欄には「切り抜き許可」「ゲーム許諾」等の
-// 定型文がほぼ必ず含まれ、description まで見ると除外キーワードが常にヒットして全滅するため。
+type ClassifyResult =
+  | { result: "candidate"; detectedType: CoverCandidateType }
+  | { result: "excluded" }
+  | { result: "notMatched" }
+  | { result: "tooLong" };
+
+function getLastCrawledField(mode: CrawlMode): "lastCrawledCoverAt" | "lastCrawledKaraokeAt" {
+  return mode === "COVER_VIDEO" ? "lastCrawledCoverAt" : "lastCrawledKaraokeAt";
+}
+
+// 除外判定はタイトルのみを対象にする（概要欄の定型文で全滅するのを防ぐ）。
+// COVER_VIDEO モードは動画長も見る（短すぎ=SHORT、長すぎ=候補にしない）。
+// KARAOKE_STREAM モードは長さを見ない（ライブ/配信は長さがまちまちのため）。
 export function classifyVideo(
+  mode: CrawlMode,
   title: string,
   description: string,
-  keywords: CrawlKeywordsByKind
-): CoverCandidateType | null {
+  durationSeconds: number | null,
+  keywords: CrawlKeywordsByKind,
+  settings = DEFAULT_SETTINGS
+): ClassifyResult {
   const titleLower = title.toLowerCase();
-
   if (keywords.EXCLUDE.some((keyword) => titleLower.includes(keyword.toLowerCase()))) {
-    return null;
+    return { result: "excluded" };
   }
 
   const haystack = `${title} ${description}`.toLowerCase();
 
-  if (keywords.KARAOKE_STREAM.some((keyword) => haystack.includes(keyword.toLowerCase()))) {
-    return CoverCandidateType.KARAOKE_STREAM;
+  if (mode === "COVER_VIDEO") {
+    if (!keywords.COVER_VIDEO.some((keyword) => haystack.includes(keyword.toLowerCase()))) {
+      return { result: "notMatched" };
+    }
+
+    // 長さが取れなかった場合は候補に含める（取りこぼすより人間が確認する方が良い）
+    if (durationSeconds == null) {
+      return { result: "candidate", detectedType: CoverCandidateType.COVER_VIDEO };
+    }
+
+    if (durationSeconds < settings.shortMaxSeconds) {
+      return { result: "candidate", detectedType: CoverCandidateType.SHORT };
+    }
+
+    if (durationSeconds > settings.coverMaxSeconds) {
+      return { result: "tooLong" };
+    }
+
+    return { result: "candidate", detectedType: CoverCandidateType.COVER_VIDEO };
   }
 
-  if (keywords.COVER_VIDEO.some((keyword) => haystack.includes(keyword.toLowerCase()))) {
-    return CoverCandidateType.COVER_VIDEO;
+  // KARAOKE_STREAM モード: 歌枠キーワードのみ、長さは見ない
+  if (!keywords.KARAOKE_STREAM.some((keyword) => haystack.includes(keyword.toLowerCase()))) {
+    return { result: "notMatched" };
   }
 
-  return null;
+  return { result: "candidate", detectedType: CoverCandidateType.KARAOKE_STREAM };
 }
 
 async function alreadyKnown(videoId: string): Promise<boolean> {
   const [existingCover, existingCandidate] = await Promise.all([
-    // 既に Cover に同じ動画が登録済みか（sourceUrl の形式差を吸収するため videoId 部分一致で判定）
     db.cover.findFirst({ where: { sourceUrl: { contains: videoId } }, select: { id: true } }),
-    // 既に候補化済みか（REJECTED を含む全ステータス）
     db.coverCandidate.findUnique({ where: { videoId }, select: { id: true } })
   ]);
 
   return Boolean(existingCover || existingCandidate);
 }
 
+// キーワード判定を通過した動画の長さを、キャッシュ優先で解決する。
+// 未取得のIDのみ videos.list（50件ずつ）で取得し、YouTubeVideoMetadataCache に保存する。
+async function resolveDurations(
+  videos: PlaylistVideoItem[],
+  dryRun: boolean
+): Promise<Map<string, number>> {
+  const result = new Map<string, number>();
+  if (videos.length === 0) {
+    return result;
+  }
+
+  const cached = await db.youTubeVideoMetadataCache.findMany({
+    where: { videoId: { in: videos.map((video) => video.videoId) }, durationSeconds: { not: null } },
+    select: { videoId: true, durationSeconds: true }
+  });
+  for (const row of cached) {
+    if (row.durationSeconds != null) {
+      result.set(row.videoId, row.durationSeconds);
+    }
+  }
+
+  const missing = videos.filter((video) => !result.has(video.videoId));
+  if (missing.length === 0) {
+    return result;
+  }
+
+  const fetched = await fetchVideoDurations(missing.map((video) => video.videoId));
+  const videoById = new Map(missing.map((video) => [video.videoId, video]));
+
+  for (const [videoId, seconds] of fetched) {
+    result.set(videoId, seconds);
+
+    const video = videoById.get(videoId);
+    if (!dryRun && video) {
+      await db.youTubeVideoMetadataCache.upsert({
+        where: { videoId },
+        create: {
+          videoId,
+          canonicalUrl: `https://www.youtube.com/watch?v=${videoId}`,
+          sourceTitle: video.title,
+          description: video.description,
+          publishedAt: new Date(video.publishedAt),
+          channelId: video.channelId,
+          channelTitle: video.channelTitle,
+          thumbnailUrl: video.thumbnailUrl,
+          tags: [],
+          durationSeconds: seconds
+        },
+        update: { durationSeconds: seconds }
+      });
+    }
+  }
+
+  return result;
+}
+
 export async function runCoverCandidateCrawl(options: CrawlOptions = {}): Promise<CrawlResult> {
+  const mode: CrawlMode = options.mode ?? "COVER_VIDEO";
   const dryRun = options.dryRun ?? false;
   const maxPending = options.maxPendingCandidates ?? MAX_PENDING_CANDIDATES;
   const startedAt = new Date();
+  const lastCrawledField = getLastCrawledField(mode);
 
   const baseResult: Omit<CrawlResult, "stoppedReason"> = {
+    mode,
     performerCount: 0,
     scanned: 0,
     created: 0,
     skippedAlreadyKnown: 0,
-    skippedNotSinging: 0,
+    skippedNotMatched: 0,
+    skippedTooLong: 0,
     currentPending: 0,
     effectivePeriod: { from: options.publishedAfter ?? null, to: startedAt },
     lastCrawledAt: null,
     dryRun
   };
 
-  // 1. 現在のPENDING件数を確認。すでに上限なら即終了する
   const currentPending = await db.coverCandidate.count({ where: { status: "PENDING" } });
   if (currentPending >= maxPending) {
     return { ...baseResult, currentPending, stoppedReason: "pendingLimitReached" };
   }
 
-  // 2. 対象活動者を取得（crawlEnabled = true、status = APPROVED、lastCrawledAt が古い順）
-  const eligibleWhere = {
+  const eligibleWhere: Prisma.PerformerWhereInput = {
     status: MasterDataStatus.APPROVED,
     crawlEnabled: true,
     youtubeUrl: { not: null },
     ...(options.performerIds && options.performerIds.length > 0
       ? { id: { in: options.performerIds } }
       : {})
-  } as const;
+  };
 
   const [performers, eligibleCount] = await Promise.all([
     db.performer.findMany({
@@ -123,9 +221,10 @@ export async function runCoverCandidateCrawl(options: CrawlOptions = {}): Promis
         youtubeUrl: true,
         youtubeChannelId: true,
         youtubeUploadsPlaylistId: true,
-        lastCrawledAt: true
+        lastCrawledCoverAt: true,
+        lastCrawledKaraokeAt: true
       },
-      orderBy: { lastCrawledAt: { sort: "asc", nulls: "first" } },
+      orderBy: { [lastCrawledField]: { sort: "asc", nulls: "first" } },
       take: MAX_PERFORMERS_PER_RUN
     }),
     db.performer.count({ where: eligibleWhere })
@@ -137,14 +236,12 @@ export async function runCoverCandidateCrawl(options: CrawlOptions = {}): Promis
   let created = 0;
   let scanned = 0;
   let skippedAlreadyKnown = 0;
-  let skippedNotSinging = 0;
+  let skippedNotMatched = 0;
+  let skippedTooLong = 0;
   let performerCount = 0;
   let stoppedReason: CrawlResult["stoppedReason"] = "completed";
 
-  // 単一活動者を対象にした巡回のときだけ、その前回巡回日時をメッセージ用に残す。
-  // effectivePeriod.from は「明示的に開始日を指定した場合」のみ入れる。
-  // 日付未指定時の対象期間（前回巡回日以降）は lastCrawledAt 側で表現する。
-  const singleLastCrawledAt = performers.length === 1 ? performers[0].lastCrawledAt : null;
+  const singleLastCrawledAt = performers.length === 1 ? performers[0][lastCrawledField] : null;
   const effectiveFrom = options.publishedAfter ?? null;
 
   for (const performer of performers) {
@@ -153,7 +250,6 @@ export async function runCoverCandidateCrawl(options: CrawlOptions = {}): Promis
       break;
     }
 
-    // a. チャンネルID / アップロードプレイリストIDの解決（未解決なら）
     let uploadsPlaylistId = performer.youtubeUploadsPlaylistId;
 
     if (!uploadsPlaylistId) {
@@ -184,11 +280,9 @@ export async function runCoverCandidateCrawl(options: CrawlOptions = {}): Promis
       }
     }
 
-    // b. 新着動画取得
-    // 期間を明示指定した手動実行、または初回（lastCrawledAt が null）はページを多めに遡る。
-    const since = options.publishedAfter ?? performer.lastCrawledAt ?? null;
+    const since = options.publishedAfter ?? performer[lastCrawledField] ?? null;
     const maxPages =
-      options.publishedAfter || performer.lastCrawledAt == null
+      options.publishedAfter || performer[lastCrawledField] == null
         ? BACKFILL_MAX_PAGES
         : DEFAULT_MAX_PAGES;
 
@@ -203,24 +297,44 @@ export async function runCoverCandidateCrawl(options: CrawlOptions = {}): Promis
       continue;
     }
 
-    // c. publishedAfter（または lastCrawledAt）より新しい動画のみに絞る
     const newVideos = since
       ? videos.filter((video) => new Date(video.publishedAt) > since)
       : videos;
 
-    // d. 各動画を判定・候補化
-    let cutOff = false;
+    // 1. キーワード判定（長さ未取得の状態）で候補になり得る動画を抽出する。
+    const matched: PlaylistVideoItem[] = [];
     for (const video of newVideos) {
+      scanned += 1;
+      const pre = classifyVideo(mode, video.title, video.description, null, keywords);
+      if (pre.result === "candidate") {
+        matched.push(video);
+      } else {
+        skippedNotMatched += 1;
+      }
+    }
+
+    // 2. キーワード判定を通過した動画のみ、長さを取得する（COVER_VIDEO モードのみ）。
+    const durations =
+      mode === "COVER_VIDEO" ? await resolveDurations(matched, dryRun) : new Map<string, number>();
+
+    // 3. 長さも考慮して確定判定・候補化する。
+    let cutOff = false;
+    for (const video of matched) {
       if (pendingCount >= maxPending) {
         cutOff = true;
         break;
       }
 
-      scanned += 1;
+      const durationSeconds = mode === "COVER_VIDEO" ? durations.get(video.videoId) ?? null : null;
+      const classified = classifyVideo(mode, video.title, video.description, durationSeconds, keywords);
 
-      const detectedType = classifyVideo(video.title, video.description, keywords);
-      if (!detectedType) {
-        skippedNotSinging += 1;
+      if (classified.result === "tooLong") {
+        skippedTooLong += 1;
+        continue;
+      }
+
+      if (classified.result !== "candidate") {
+        skippedNotMatched += 1;
         continue;
       }
 
@@ -244,7 +358,7 @@ export async function runCoverCandidateCrawl(options: CrawlOptions = {}): Promis
             channelTitle: video.channelTitle,
             thumbnailUrl: video.thumbnailUrl,
             publishedAt: new Date(video.publishedAt),
-            detectedType,
+            detectedType: classified.detectedType,
             sourcePerformerId: performer.id
           }
         });
@@ -253,7 +367,6 @@ export async function runCoverCandidateCrawl(options: CrawlOptions = {}): Promis
 
     performerCount += 1;
 
-    // e. 打ち切りで途中終了した場合、lastCrawledAt は更新しない（新着の取りこぼし防止）
     if (cutOff) {
       stoppedReason = "pendingLimitReached";
       break;
@@ -262,22 +375,23 @@ export async function runCoverCandidateCrawl(options: CrawlOptions = {}): Promis
     if (!dryRun) {
       await db.performer.update({
         where: { id: performer.id },
-        data: { lastCrawledAt: new Date() }
+        data: { [lastCrawledField]: new Date() } as Prisma.PerformerUpdateInput
       });
     }
   }
 
-  // まだ処理していない対象活動者が残っている場合（上限で分割された場合）
   if (stoppedReason === "completed" && eligibleCount > performers.length) {
     stoppedReason = "performerLimitReached";
   }
 
   return {
+    mode,
     performerCount,
     scanned,
     created,
     skippedAlreadyKnown,
-    skippedNotSinging,
+    skippedNotMatched,
+    skippedTooLong,
     currentPending: pendingCount,
     stoppedReason,
     effectivePeriod: { from: effectiveFrom, to: startedAt },

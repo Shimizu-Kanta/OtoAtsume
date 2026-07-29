@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { runCoverCandidateCrawl } from "@/lib/crawl/cover-candidates";
+import { runCoverCandidateCrawl, type CrawlMode } from "@/lib/crawl/cover-candidates";
 
 export const dynamic = "force-dynamic";
 
@@ -24,8 +24,10 @@ export async function POST(request: Request) {
 
     const url = new URL(request.url);
     const dryRun = url.searchParams.get("dryRun") === "1";
+    // ?mode=cover（既定）/ ?mode=karaoke
+    const mode: CrawlMode = url.searchParams.get("mode") === "karaoke" ? "KARAOKE_STREAM" : "COVER_VIDEO";
 
-    const result = await runCoverCandidateCrawl({ dryRun });
+    const result = await runCoverCandidateCrawl({ mode, dryRun });
 
     return NextResponse.json({ ok: true, result });
   } catch (error) {

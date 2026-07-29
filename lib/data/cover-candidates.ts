@@ -1,4 +1,4 @@
-import { CoverCandidateStatus, Prisma } from "@prisma/client";
+import { CoverCandidateStatus, CoverCandidateType, Prisma } from "@prisma/client";
 
 import { db } from "@/lib/db";
 import { pageSkip, paginate } from "@/lib/pagination";
@@ -15,10 +15,14 @@ export type CoverCandidateItem = Prisma.CoverCandidateGetPayload<{
 
 export async function listCoverCandidates(
   status: CoverCandidateStatus,
+  detectedType: CoverCandidateType | undefined,
   page = 1,
   perPage = 20
 ) {
-  const where: Prisma.CoverCandidateWhereInput = { status };
+  const where: Prisma.CoverCandidateWhereInput = {
+    status,
+    ...(detectedType ? { detectedType } : {})
+  };
 
   const [items, totalCount] = await Promise.all([
     db.coverCandidate.findMany({

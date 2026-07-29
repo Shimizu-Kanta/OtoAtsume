@@ -87,7 +87,7 @@ export default async function AdminCoverCandidateConfirmPage({
       ) : null}
 
       <section className="rounded-md border bg-card p-4">
-        <Badge variant="default">歌ってみた</Badge>
+        <Badge variant="default">{candidate.detectedType === "SHORT" ? "ショート" : "歌ってみた"}</Badge>
         <a
           href={candidate.videoUrl}
           target="_blank"
@@ -115,7 +115,12 @@ export default async function AdminCoverCandidateConfirmPage({
             </div>
             <div className="space-y-2">
               <Label htmlFor="coverType">歌唱種別</Label>
-              <Select id="coverType" name="coverType" required defaultValue="COVER_VIDEO">
+              <Select
+                id="coverType"
+                name="coverType"
+                required
+                defaultValue={candidate.detectedType === "SHORT" ? "SHORT" : "COVER_VIDEO"}
+              >
                 {coverTypeOptions.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}

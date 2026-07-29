@@ -5,7 +5,7 @@ import { useState, useTransition } from "react";
 import { PerformerPicker } from "@/components/covers/performer-picker";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import type { CrawlResult } from "@/lib/crawl/cover-candidates";
+import type { CrawlMode, CrawlResult } from "@/lib/crawl/cover-candidates";
 import { runFullCrawlAction, runScopedCrawlAction } from "./actions";
 
 type PerformerOption = { id: string; name: string; group: { name: string } | null };
@@ -26,17 +26,28 @@ function formatDateTime(value: Date | string) {
   }).format(new Date(value));
 }
 
+function modeLabel(mode: CrawlMode) {
+  return mode === "COVER_VIDEO" ? "歌ってみた取得" : "歌枠・ライブ取得";
+}
+
 function describeResult(result: CrawlResult): string {
   const lines: string[] = [];
   const dryRun = result.dryRun ? "【ドライラン】" : "";
   const period = result.effectivePeriod.from ? `（${formatDate(result.effectivePeriod.from)}以降）` : "";
 
-  lines.push(`${dryRun}${result.performerCount}人巡回・${result.scanned}件走査${period}`);
-  lines.push(
-    `→ 候補追加 ${result.created}件 / 既知でスキップ ${result.skippedAlreadyKnown}件 / 歌唱動画と判定されず ${result.skippedNotSinging}件`
-  );
+  lines.push(`${dryRun}${modeLabel(result.mode)}: ${result.performerCount}人巡回・${result.scanned}件走査${period}`);
 
-  if (result.scanned > 0 && result.skippedNotSinging === result.scanned) {
+  const breakdown = [
+    `候補追加 ${result.created}件`,
+    `既知 ${result.skippedAlreadyKnown}件`,
+    `キーワード不一致 ${result.skippedNotMatched}件`
+  ];
+  if (result.mode === "COVER_VIDEO") {
+    breakdown.push(`長すぎ ${result.skippedTooLong}件`);
+  }
+  lines.push(`→ ${breakdown.join(" / ")}`);
+
+  if (result.scanned > 0 && result.skippedNotMatched === result.scanned) {
     lines.push("キーワードにヒットする動画がありませんでした。巡回キーワードの設定を確認してください。");
   }
 
@@ -61,39 +72,42 @@ export function CrawlControls({ performers }: { performers: PerformerOption[] })
   const [message, setMessage] = useState<string | null>(null);
   const [showScoped, setShowScoped] = useState(false);
 
+  function runFull(mode: CrawlMode) {
+    startTransition(async () => {
+      setMessage(null);
+      setMessage(describeResult(await runFullCrawlAction(mode)));
+    });
+  }
+
+  function runScoped(mode: CrawlMode, form: HTMLFormElement) {
+    const formData = new FormData(form);
+    startTransition(async () => {
+      setMessage(null);
+      setMessage(describeResult(await runScopedCrawlAction(mode, formData)));
+    });
+  }
+
   return (
     <div className="space-y-3 rounded-md border bg-card p-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          disabled={isPending}
-          onClick={() =>
-            startTransition(async () => {
-              setMessage(null);
-              setMessage(describeResult(await runFullCrawlAction()));
-            })
-          }
-        >
-          {isPending ? "巡回中..." : "全体巡回を実行"}
-        </Button>
-        <Button type="button" variant="ghost" onClick={() => setShowScoped((value) => !value)}>
-          {showScoped ? "条件指定を閉じる" : "条件を指定して実行"}
-        </Button>
+      <div className="space-y-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <Button type="button" variant="outline" disabled={isPending} onClick={() => runFull("COVER_VIDEO")}>
+            {isPending ? "処理中..." : "歌ってみたを取得"}
+          </Button>
+          <Button type="button" variant="outline" disabled={isPending} onClick={() => runFull("KARAOKE_STREAM")}>
+            {isPending ? "処理中..." : "歌枠・ライブを取得"}
+          </Button>
+          <Button type="button" variant="ghost" onClick={() => setShowScoped((value) => !value)}>
+            {showScoped ? "条件指定を閉じる" : "条件を指定して実行"}
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          歌ってみた: 15分以内の歌唱動画を候補にします / 歌枠・ライブ: 長さを問わず、歌枠・ライブ配信を候補にします
+        </p>
       </div>
 
       {showScoped ? (
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            const formData = new FormData(event.currentTarget);
-            startTransition(async () => {
-              setMessage(null);
-              setMessage(describeResult(await runScopedCrawlAction(formData)));
-            });
-          }}
-          className="space-y-3 rounded-md border bg-background p-3"
-        >
+        <form className="space-y-3 rounded-md border bg-background p-3">
           <div className="space-y-2">
             <Label>巡回する活動者（未選択なら全活動者）</Label>
             <PerformerPicker performers={performers} />
@@ -107,9 +121,29 @@ export function CrawlControls({ performers }: { performers: PerformerOption[] })
               className="rounded-md border px-3 py-2 text-sm"
             />
           </div>
-          <Button type="submit" disabled={isPending}>
-            {isPending ? "巡回中..." : "選択した条件で巡回"}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="submit"
+              disabled={isPending}
+              onClick={(event) => {
+                event.preventDefault();
+                runScoped("COVER_VIDEO", event.currentTarget.form!);
+              }}
+            >
+              歌ってみたを取得
+            </Button>
+            <Button
+              type="submit"
+              variant="outline"
+              disabled={isPending}
+              onClick={(event) => {
+                event.preventDefault();
+                runScoped("KARAOKE_STREAM", event.currentTarget.form!);
+              }}
+            >
+              歌枠・ライブを取得
+            </Button>
+          </div>
         </form>
       ) : null}
 

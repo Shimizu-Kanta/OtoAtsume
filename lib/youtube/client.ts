@@ -385,3 +385,57 @@ export async function fetchPlaylistItems(
 
   return items;
 }
+
+// ISO 8601 duration (PT1H2M3S) を秒に変換する
+export function parseIsoDurationToSeconds(value: string): number | null {
+  const match = /^P(?:(\d+)D)?T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/.exec(value);
+  if (!match) {
+    return null;
+  }
+  const [, d, h, m, s] = match;
+  return Number(d ?? 0) * 86400 + Number(h ?? 0) * 3600 + Number(m ?? 0) * 60 + Number(s ?? 0);
+}
+
+type YouTubeVideoDurationsResponse = {
+  items?: Array<{ id?: string; contentDetails?: { duration?: string } }>;
+  error?: { message?: string };
+};
+
+// 動画IDから長さ（秒）を取得する。IDは最大50件ずつまとめて指定する。 quota: 1 unit / 50件
+export async function fetchVideoDurations(videoIds: string[]): Promise<Map<string, number>> {
+  const result = new Map<string, number>();
+
+  if (videoIds.length === 0) {
+    return result;
+  }
+
+  const apiKey = process.env.YOUTUBE_DATA_API_KEY;
+  if (!apiKey) {
+    throw new YouTubeMetadataError("YouTube Data APIキーが設定されていません。");
+  }
+
+  for (let i = 0; i < videoIds.length; i += 50) {
+    const chunk = videoIds.slice(i, i + 50);
+
+    const endpoint = new URL("https://www.googleapis.com/youtube/v3/videos");
+    endpoint.searchParams.set("part", "contentDetails");
+    endpoint.searchParams.set("id", chunk.join(","));
+    endpoint.searchParams.set("key", apiKey);
+
+    const response = await fetch(endpoint.toString(), { cache: "no-store" });
+    const data = (await response.json()) as YouTubeVideoDurationsResponse;
+
+    if (!response.ok) {
+      throw new YouTubeMetadataError(data.error?.message ?? "動画長の取得に失敗しました。");
+    }
+
+    for (const item of data.items ?? []) {
+      const seconds = parseIsoDurationToSeconds(item.contentDetails?.duration ?? "");
+      if (item.id && seconds != null) {
+        result.set(item.id, seconds);
+      }
+    }
+  }
+
+  return result;
+}
