@@ -10,13 +10,50 @@ import { runFullCrawlAction, runScopedCrawlAction } from "./actions";
 
 type PerformerOption = { id: string; name: string; group: { name: string } | null };
 
-function describeResult(result: CrawlResult) {
-  const reason =
-    result.stoppedReason === "pendingLimitReached"
-      ? "（打ち切り理由: 未処理上限に到達）"
-      : "";
+function formatDate(value: Date | string) {
+  return new Intl.DateTimeFormat("ja-JP", { year: "numeric", month: "2-digit", day: "2-digit" }).format(
+    new Date(value)
+  );
+}
+
+function formatDateTime(value: Date | string) {
+  return new Intl.DateTimeFormat("ja-JP", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(new Date(value));
+}
+
+function describeResult(result: CrawlResult): string {
+  const lines: string[] = [];
   const dryRun = result.dryRun ? "【ドライラン】" : "";
-  return `${dryRun}${result.performersProcessed}人巡回・${result.scanned}件走査、${result.created}件の候補を追加しました${reason}`;
+  const period = result.effectivePeriod.from ? `（${formatDate(result.effectivePeriod.from)}以降）` : "";
+
+  lines.push(`${dryRun}${result.performerCount}人巡回・${result.scanned}件走査${period}`);
+  lines.push(
+    `→ 候補追加 ${result.created}件 / 既知でスキップ ${result.skippedAlreadyKnown}件 / 歌唱動画と判定されず ${result.skippedNotSinging}件`
+  );
+
+  if (result.scanned > 0 && result.skippedNotSinging === result.scanned) {
+    lines.push("キーワードにヒットする動画がありませんでした。巡回キーワードの設定を確認してください。");
+  }
+
+  if (result.scanned === 0 && result.performerCount > 0 && !result.effectivePeriod.from) {
+    const dt = result.lastCrawledAt ? `（${formatDateTime(result.lastCrawledAt)}）` : "";
+    lines.push(
+      `前回巡回日${dt}以降に新しい動画はありませんでした。過去分を対象にする場合は公開日の開始日を指定してください。`
+    );
+  }
+
+  if (result.stoppedReason === "pendingLimitReached") {
+    lines.push("未処理候補が上限に達したため打ち切りました。確認・確定を進めてから再実行してください。");
+  } else if (result.stoppedReason === "performerLimitReached") {
+    lines.push("対象活動者が多いため一部のみ巡回しました。続けて実行すると残りを巡回します。");
+  }
+
+  return lines.join("\n");
 }
 
 export function CrawlControls({ performers }: { performers: PerformerOption[] }) {
@@ -77,7 +114,9 @@ export function CrawlControls({ performers }: { performers: PerformerOption[] })
       ) : null}
 
       {message ? (
-        <p className="rounded-md border border-secondary/40 bg-secondary/10 p-2 text-sm">{message}</p>
+        <p className="whitespace-pre-line rounded-md border border-secondary/40 bg-secondary/10 p-2 text-sm leading-6">
+          {message}
+        </p>
       ) : null}
     </div>
   );

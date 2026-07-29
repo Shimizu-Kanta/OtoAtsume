@@ -289,6 +289,7 @@ type YouTubePlaylistItemsResponse = {
     };
     contentDetails?: { videoPublishedAt?: string };
   }>;
+  nextPageToken?: string;
   error?: { message?: string };
 };
 
@@ -302,50 +303,85 @@ export type PlaylistVideoItem = {
   thumbnailUrl?: string;
 };
 
-// アップロードプレイリストから新着動画を取得する。ページングは行わない（1ページ最大50件）。
-// quota: 1 unit / page
+export type FetchPlaylistItemsOptions = {
+  maxPages?: number; // 取得するページ数の上限（1ページ50件）。デフォルト1。
+  publishedAfter?: Date; // この日時より古い動画に到達したら以降のページ取得を打ち切る
+};
+
+function mapPlaylistItem(
+  item: NonNullable<YouTubePlaylistItemsResponse["items"]>[number]
+): PlaylistVideoItem | null {
+  const snippet = item.snippet;
+  const videoId = snippet?.resourceId?.videoId;
+  // contentDetails.videoPublishedAt はプレイリスト追加日ではなく動画公開日。優先して使う。
+  const publishedAt = item.contentDetails?.videoPublishedAt ?? snippet?.publishedAt;
+
+  if (!videoId || !snippet?.title || !publishedAt) {
+    return null;
+  }
+
+  return {
+    videoId,
+    title: snippet.title,
+    description: snippet.description ?? "",
+    publishedAt,
+    channelId: snippet.videoOwnerChannelId ?? snippet.channelId ?? "",
+    channelTitle: snippet.videoOwnerChannelTitle ?? snippet.channelTitle ?? "",
+    thumbnailUrl: pickBestThumbnailUrl(snippet.thumbnails)
+  };
+}
+
+// アップロードプレイリストから動画を取得する。maxPages 分だけ pageToken で遡る。
+// アップロードプレイリストは新しい順のため、publishedAfter より古い動画に到達したら
+// それ以降のページは不要として打ち切る。 quota: 1 unit / page
 export async function fetchPlaylistItems(
   playlistId: string,
-  maxResults = 50
+  options: FetchPlaylistItemsOptions = {}
 ): Promise<PlaylistVideoItem[]> {
   const apiKey = process.env.YOUTUBE_DATA_API_KEY;
   if (!apiKey) {
     throw new YouTubeMetadataError("YouTube Data APIキーが設定されていません。");
   }
 
-  const endpoint = new URL("https://www.googleapis.com/youtube/v3/playlistItems");
-  endpoint.searchParams.set("part", "snippet,contentDetails");
-  endpoint.searchParams.set("playlistId", playlistId);
-  endpoint.searchParams.set("maxResults", String(Math.min(Math.max(maxResults, 1), 50)));
-  endpoint.searchParams.set("key", apiKey);
+  const maxPages = Math.max(options.maxPages ?? 1, 1);
+  const items: PlaylistVideoItem[] = [];
+  let pageToken: string | undefined;
 
-  const response = await fetch(endpoint.toString(), { cache: "no-store" });
-  const data = (await response.json()) as YouTubePlaylistItemsResponse;
+  for (let page = 0; page < maxPages; page += 1) {
+    const endpoint = new URL("https://www.googleapis.com/youtube/v3/playlistItems");
+    endpoint.searchParams.set("part", "snippet,contentDetails");
+    endpoint.searchParams.set("playlistId", playlistId);
+    endpoint.searchParams.set("maxResults", "50");
+    endpoint.searchParams.set("key", apiKey);
+    if (pageToken) {
+      endpoint.searchParams.set("pageToken", pageToken);
+    }
 
-  if (!response.ok) {
-    throw new YouTubeMetadataError(data.error?.message ?? "プレイリストの取得に失敗しました。");
+    const response = await fetch(endpoint.toString(), { cache: "no-store" });
+    const data = (await response.json()) as YouTubePlaylistItemsResponse;
+
+    if (!response.ok) {
+      throw new YouTubeMetadataError(data.error?.message ?? "プレイリストの取得に失敗しました。");
+    }
+
+    const pageItems = (data.items ?? [])
+      .map(mapPlaylistItem)
+      .filter((item): item is PlaylistVideoItem => item !== null);
+    items.push(...pageItems);
+
+    // publishedAfter を過ぎた動画に到達したら、それ以降のページは不要なので打ち切る。
+    if (
+      options.publishedAfter &&
+      pageItems.some((item) => new Date(item.publishedAt) < options.publishedAfter!)
+    ) {
+      break;
+    }
+
+    pageToken = data.nextPageToken;
+    if (!pageToken) {
+      break;
+    }
   }
 
-  return (data.items ?? [])
-    .map((item): PlaylistVideoItem | null => {
-      const snippet = item.snippet;
-      const videoId = snippet?.resourceId?.videoId;
-      // contentDetails.videoPublishedAt はプレイリスト追加日ではなく動画公開日。優先して使う。
-      const publishedAt = item.contentDetails?.videoPublishedAt ?? snippet?.publishedAt;
-
-      if (!videoId || !snippet?.title || !publishedAt) {
-        return null;
-      }
-
-      return {
-        videoId,
-        title: snippet.title,
-        description: snippet.description ?? "",
-        publishedAt,
-        channelId: snippet.videoOwnerChannelId ?? snippet.channelId ?? "",
-        channelTitle: snippet.videoOwnerChannelTitle ?? snippet.channelTitle ?? "",
-        thumbnailUrl: pickBestThumbnailUrl(snippet.thumbnails)
-      };
-    })
-    .filter((item): item is PlaylistVideoItem => item !== null);
+  return items;
 }

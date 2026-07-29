@@ -12,15 +12,44 @@ const prisma = new PrismaClient();
 const CRAWL_KEYWORD_SEEDS: { kind: CrawlKeywordKind; keywords: string[] }[] = [
   {
     kind: CrawlKeywordKind.COVER_VIDEO,
-    keywords: ["歌ってみた", "歌って見た", "cover", "covered by", "Music Video", "MV", "【歌】", "feat."]
+    keywords: [
+      "歌ってみた",
+      "歌って見た",
+      "cover",
+      "covered",
+      "Music Video",
+      "MV",
+      "【歌】",
+      "歌わせて",
+      "Official Music Video",
+      "オリジナル曲",
+      "オリジナルMV"
+    ]
   },
   {
     kind: CrawlKeywordKind.KARAOKE_STREAM,
-    keywords: ["歌枠", "歌配信", "カラオケ", "ソング", "sing", "karaoke"]
+    // 「カラオケ」は歌ってみた（1動画1曲）ではなく歌枠に分類する。
+    keywords: ["歌枠", "歌配信", "カラオケ", "karaoke", "sing", "歌う", "弾き語り"]
   },
   {
     kind: CrawlKeywordKind.EXCLUDE,
-    keywords: ["雑談", "ゲーム", "実況", "参加型", "ASMR", "お知らせ", "告知", "切り抜き", "ショート"]
+    // 除外判定はタイトルのみが対象（lib/crawl/cover-candidates.ts の classifyVideo 参照）。
+    keywords: [
+      "切り抜き",
+      "雑談",
+      "ゲーム",
+      "実況",
+      "参加型",
+      "ASMR",
+      "お知らせ",
+      "告知",
+      "ショート",
+      "shorts",
+      "メン限",
+      "予告",
+      "ダイジェスト",
+      "まとめ"
+    ]
   }
 ];
 

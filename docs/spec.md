@@ -764,6 +764,33 @@ YOUTUBE_DATA_API_KEY
 
 Webhook URL はコードや Public repo には置かず、Cloud Run の環境変数または Secret Manager で管理する。
 
+## 10.5 歌唱記録候補の巡回
+
+活動者の YouTube チャンネルを巡回し、未登録の歌唱動画を「歌唱記録候補（`CoverCandidate`）」として収集する。候補は自動でカバー記録にはならず、管理者が `/admin/cover-candidates` で確認・確定して初めて登録される。
+
+使用する YouTube Data API は以下のみ（`search.list` の専用枠は使わない）。
+
+- `channels.list`（チャンネルID・アップロードプレイリストID解決。初回のみ / 1ユニット）
+- `playlistItems.list`（新着動画取得。1ページ50件 / 1ページ1ユニット）
+- `videos.list`（動画長取得。最大50件まとめて / 1ユニット）
+
+判定は巡回キーワード（`CrawlKeyword`、`/admin/crawl-keywords` で管理）で行う。除外判定は**タイトルのみ**を対象にする（概要欄の定型文で全滅するのを防ぐため）。判定順は 除外 → 歌枠 → 歌ってみた。
+
+### 初回バックフィルの運用手順
+
+1. 巡回キーワードを推奨セット（除外に「切り抜き」を含む）で登録する。
+2. `lib/crawl/cover-candidates.ts` の `MAX_PENDING_CANDIDATES` を一時的に 10〜20 に下げる。
+3. 歌ってみた投稿が定期的にある活動者を1〜2人指定し、公開日の開始日を1年前に設定して手動巡回する。
+4. 候補の内容を確認し、誤検出・取りこぼしを見てキーワードを調整する。
+5. 精度が安定したら上限を戻し、全体巡回を分割実行する（`MAX_PERFORMERS_PER_RUN` で分割される）。
+6. 以降は Cloud Scheduler の定期巡回に任せる。
+
+**注意**: ゲーム配信・切り抜き中心のチャンネル（例: 葛葉）は歌唱動画がそもそも少ないため、動作確認には向かない。「候補0件」＝不具合ではない。巡回結果メッセージに走査数・スキップ理由の内訳が出るので、そこで正常か異常かを判断する。
+
+### 自動実行（Cloud Scheduler）
+
+`POST /api/admin/cover-candidates/crawl`（`Authorization: Bearer <CRAWL_API_TOKEN ?? DAILY_REPORT_API_TOKEN>`）を定期実行する。`?dryRun=1` で保存せず件数だけ確認できる。1日1回程度を想定。
+
 ---
 
 ## 11. デプロイ・運用仕様
