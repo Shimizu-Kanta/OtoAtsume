@@ -37,9 +37,14 @@ model Performer {
   debutDate   DateTime?        @db.Date
   birthday    DateTime?        @db.Date
   status      MasterDataStatus @default(APPROVED)
+  youtubeChannelId         String?   @unique
+  youtubeUploadsPlaylistId String?
+  lastCrawledAt            DateTime?
+  crawlEnabled             Boolean   @default(true)
   aliases     PerformerAlias[]
   tags        PerformerTag[]
   covers      CoverPerformer[]
+  coverCandidates CoverCandidate[]
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
 
@@ -284,6 +289,55 @@ model DailySiteReport {
 
   @@index([date])
   @@map("daily_site_reports")
+}
+
+model CoverCandidate {
+  id                String               @id @default(uuid())
+  videoId           String               @unique
+  videoUrl          String
+  title             String
+  description       String               @default("")
+  channelId         String
+  channelTitle      String
+  thumbnailUrl      String?
+  publishedAt       DateTime
+  detectedType      CoverCandidateType   @default(COVER_VIDEO)
+  status            CoverCandidateStatus @default(PENDING)
+  sourcePerformerId String?
+  sourcePerformer   Performer?           @relation(fields: [sourcePerformerId], references: [id], onDelete: SetNull)
+  adoptedCoverId    String?
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+
+  @@index([status, publishedAt])
+  @@map("cover_candidates")
+}
+
+model CrawlKeyword {
+  id        String           @id @default(uuid())
+  keyword   String           @unique
+  kind      CrawlKeywordKind
+  enabled   Boolean          @default(true)
+  createdAt DateTime         @default(now())
+
+  @@map("crawl_keywords")
+}
+
+enum CoverCandidateStatus {
+  PENDING
+  ADOPTED
+  REJECTED
+}
+
+enum CoverCandidateType {
+  COVER_VIDEO
+  KARAOKE_STREAM
+}
+
+enum CrawlKeywordKind {
+  COVER_VIDEO
+  KARAOKE_STREAM
+  EXCLUDE
 }
 
 enum AdminRole {

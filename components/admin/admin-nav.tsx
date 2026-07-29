@@ -16,6 +16,8 @@ import {
   LogOut,
   Menu,
   Music,
+  Search,
+  Sparkles,
   Tags,
   UserCheck,
   Users,
@@ -36,6 +38,7 @@ const adminNavSections = [
     title: "確認",
     items: [
       { href: "/admin/covers", label: "カバー記録", icon: ListMusic },
+      { href: "/admin/cover-candidates", label: "歌唱記録候補", icon: Sparkles },
       { href: "/admin/reports", label: "通報", icon: Flag },
       { href: "/admin/performers?status=PENDING", label: "確認待ち活動者", icon: UserCheck }
     ]
@@ -49,6 +52,7 @@ const adminNavSections = [
       { href: "/admin/tag-groups", label: "タググループ", icon: Layers },
       { href: "/admin/songs", label: "楽曲", icon: Music },
       { href: "/admin/artists", label: "アーティスト", icon: Database },
+      { href: "/admin/crawl-keywords", label: "巡回キーワード", icon: Search },
       { href: "/admin/imports", label: "一括インポート", icon: Import }
     ]
   }

@@ -184,3 +184,168 @@ function pickBestThumbnailUrl(thumbnails: {
     thumbnails.default?.url
   );
 }
+
+type YouTubeChannelsResponse = {
+  items?: Array<{
+    id?: string;
+    snippet?: { title?: string };
+    contentDetails?: { relatedPlaylists?: { uploads?: string } };
+  }>;
+  error?: { message?: string };
+};
+
+export type ResolvedChannel = {
+  channelId: string;
+  uploadsPlaylistId: string;
+  channelTitle: string;
+};
+
+// ハンドル（@xxx）からチャンネルID + アップロードプレイリストIDを解決する。
+// quota: 1 unit（search.list の専用枠は消費しない）
+export async function resolveChannelByHandle(handle: string): Promise<ResolvedChannel> {
+  const apiKey = process.env.YOUTUBE_DATA_API_KEY;
+  if (!apiKey) {
+    throw new YouTubeMetadataError("YouTube Data APIキーが設定されていません。");
+  }
+
+  const endpoint = new URL("https://www.googleapis.com/youtube/v3/channels");
+  endpoint.searchParams.set("part", "contentDetails,snippet");
+  endpoint.searchParams.set("forHandle", handle.startsWith("@") ? handle : `@${handle}`);
+  endpoint.searchParams.set("key", apiKey);
+
+  const response = await fetch(endpoint.toString(), { cache: "no-store" });
+  const data = (await response.json()) as YouTubeChannelsResponse;
+
+  if (!response.ok) {
+    throw new YouTubeMetadataError(data.error?.message ?? "チャンネル情報の取得に失敗しました。");
+  }
+
+  const item = data.items?.[0];
+  const uploadsPlaylistId = item?.contentDetails?.relatedPlaylists?.uploads;
+
+  if (!item?.id || !uploadsPlaylistId) {
+    throw new YouTubeMetadataError("チャンネルが見つかりませんでした。");
+  }
+
+  return {
+    channelId: item.id,
+    uploadsPlaylistId,
+    channelTitle: item.snippet?.title ?? ""
+  };
+}
+
+// チャンネルID（UCxxx）から直接、アップロードプレイリストIDを解決する。
+// /channel/UCxxx 形式のURLを持つ活動者向けのフォールバック。quota: 1 unit
+export async function resolveChannelById(channelId: string): Promise<ResolvedChannel> {
+  const apiKey = process.env.YOUTUBE_DATA_API_KEY;
+  if (!apiKey) {
+    throw new YouTubeMetadataError("YouTube Data APIキーが設定されていません。");
+  }
+
+  const endpoint = new URL("https://www.googleapis.com/youtube/v3/channels");
+  endpoint.searchParams.set("part", "contentDetails,snippet");
+  endpoint.searchParams.set("id", channelId);
+  endpoint.searchParams.set("key", apiKey);
+
+  const response = await fetch(endpoint.toString(), { cache: "no-store" });
+  const data = (await response.json()) as YouTubeChannelsResponse;
+
+  if (!response.ok) {
+    throw new YouTubeMetadataError(data.error?.message ?? "チャンネル情報の取得に失敗しました。");
+  }
+
+  const item = data.items?.[0];
+  const uploadsPlaylistId = item?.contentDetails?.relatedPlaylists?.uploads;
+
+  if (!item?.id || !uploadsPlaylistId) {
+    throw new YouTubeMetadataError("チャンネルが見つかりませんでした。");
+  }
+
+  return {
+    channelId: item.id,
+    uploadsPlaylistId,
+    channelTitle: item.snippet?.title ?? ""
+  };
+}
+
+type YouTubePlaylistItemsResponse = {
+  items?: Array<{
+    snippet?: {
+      title?: string;
+      description?: string;
+      publishedAt?: string;
+      videoOwnerChannelId?: string;
+      channelId?: string;
+      videoOwnerChannelTitle?: string;
+      channelTitle?: string;
+      resourceId?: { videoId?: string };
+      thumbnails?: {
+        default?: YouTubeThumbnail;
+        medium?: YouTubeThumbnail;
+        high?: YouTubeThumbnail;
+        standard?: YouTubeThumbnail;
+        maxres?: YouTubeThumbnail;
+      };
+    };
+    contentDetails?: { videoPublishedAt?: string };
+  }>;
+  error?: { message?: string };
+};
+
+export type PlaylistVideoItem = {
+  videoId: string;
+  title: string;
+  description: string;
+  publishedAt: string;
+  channelId: string;
+  channelTitle: string;
+  thumbnailUrl?: string;
+};
+
+// アップロードプレイリストから新着動画を取得する。ページングは行わない（1ページ最大50件）。
+// quota: 1 unit / page
+export async function fetchPlaylistItems(
+  playlistId: string,
+  maxResults = 50
+): Promise<PlaylistVideoItem[]> {
+  const apiKey = process.env.YOUTUBE_DATA_API_KEY;
+  if (!apiKey) {
+    throw new YouTubeMetadataError("YouTube Data APIキーが設定されていません。");
+  }
+
+  const endpoint = new URL("https://www.googleapis.com/youtube/v3/playlistItems");
+  endpoint.searchParams.set("part", "snippet,contentDetails");
+  endpoint.searchParams.set("playlistId", playlistId);
+  endpoint.searchParams.set("maxResults", String(Math.min(Math.max(maxResults, 1), 50)));
+  endpoint.searchParams.set("key", apiKey);
+
+  const response = await fetch(endpoint.toString(), { cache: "no-store" });
+  const data = (await response.json()) as YouTubePlaylistItemsResponse;
+
+  if (!response.ok) {
+    throw new YouTubeMetadataError(data.error?.message ?? "プレイリストの取得に失敗しました。");
+  }
+
+  return (data.items ?? [])
+    .map((item): PlaylistVideoItem | null => {
+      const snippet = item.snippet;
+      const videoId = snippet?.resourceId?.videoId;
+      // contentDetails.videoPublishedAt はプレイリスト追加日ではなく動画公開日。優先して使う。
+      const publishedAt = item.contentDetails?.videoPublishedAt ?? snippet?.publishedAt;
+
+      if (!videoId || !snippet?.title || !publishedAt) {
+        return null;
+      }
+
+      return {
+        videoId,
+        title: snippet.title,
+        description: snippet.description ?? "",
+        publishedAt,
+        channelId: snippet.videoOwnerChannelId ?? snippet.channelId ?? "",
+        channelTitle: snippet.videoOwnerChannelTitle ?? snippet.channelTitle ?? "",
+        thumbnailUrl: pickBestThumbnailUrl(snippet.thumbnails)
+      };
+    })
+    .filter((item): item is PlaylistVideoItem => item !== null);
+}

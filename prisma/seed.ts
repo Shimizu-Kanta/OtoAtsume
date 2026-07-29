@@ -2,11 +2,27 @@ import {
   ApplicationStatus,
   ContentStatus,
   CoverType,
+  CrawlKeywordKind,
   MasterDataStatus,
   PrismaClient
 } from "@prisma/client";
 
 const prisma = new PrismaClient();
+
+const CRAWL_KEYWORD_SEEDS: { kind: CrawlKeywordKind; keywords: string[] }[] = [
+  {
+    kind: CrawlKeywordKind.COVER_VIDEO,
+    keywords: ["歌ってみた", "歌って見た", "cover", "covered by", "Music Video", "MV", "【歌】", "feat."]
+  },
+  {
+    kind: CrawlKeywordKind.KARAOKE_STREAM,
+    keywords: ["歌枠", "歌配信", "カラオケ", "ソング", "sing", "karaoke"]
+  },
+  {
+    kind: CrawlKeywordKind.EXCLUDE,
+    keywords: ["雑談", "ゲーム", "実況", "参加型", "ASMR", "お知らせ", "告知", "切り抜き", "ショート"]
+  }
+];
 
 function normalizeAdminEmails(value: string | undefined) {
   return (value ?? "")
@@ -192,6 +208,16 @@ async function main() {
       create: { email },
       update: {}
     });
+  }
+
+  for (const { kind, keywords } of CRAWL_KEYWORD_SEEDS) {
+    for (const keyword of keywords) {
+      await prisma.crawlKeyword.upsert({
+        where: { keyword },
+        create: { keyword, kind },
+        update: {}
+      });
+    }
   }
 }
 
