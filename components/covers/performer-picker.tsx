@@ -15,10 +15,12 @@ type PerformerOption = {
 
 export function PerformerPicker({
   performers,
-  defaultSelectedIds = []
+  defaultSelectedIds = [],
+  onSelectionChange
 }: {
   performers: PerformerOption[];
   defaultSelectedIds?: string[];
+  onSelectionChange?: (selected: PerformerOption[]) => void;
 }) {
   const [query, setQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState(() => new Set(defaultSelectedIds));
@@ -81,6 +83,12 @@ export function PerformerPicker({
   useEffect(() => {
     window.dispatchEvent(new CustomEvent("otoatsume:check-duplicates"));
   }, [selectedIds]);
+
+  useEffect(() => {
+    onSelectionChange?.(selectedPerformers);
+    // selectedPerformers は selectedIds に連動して再計算されるため依存は selectedPerformers のみでよい
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedPerformers]);
 
   return (
     <div className="space-y-3">

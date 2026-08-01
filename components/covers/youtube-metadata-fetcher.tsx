@@ -107,10 +107,16 @@ export function YouTubeMetadataFetcher({ autoFetch = false} : { autoFetch?: bool
       }
 
       applyMetadataToForm(form, data.metadata);
-      setState({ 
-        status: "success", 
-        metadata: data.metadata, 
-        suggestions: data.suggestions 
+      // 概要欄はセットリスト読み取り（複数曲フォーム）で使うため、別途通知する。
+      window.dispatchEvent(
+        new CustomEvent("otoatsume:metadata-loaded", {
+          detail: { description: data.metadata.description ?? "" }
+        })
+      );
+      setState({
+        status: "success",
+        metadata: data.metadata,
+        suggestions: data.suggestions
     });
     requestDuplicateCheck();
     } catch (error) {
@@ -339,9 +345,29 @@ function setFormValue(form: HTMLFormElement, name: string, value: string) {
     field instanceof HTMLTextAreaElement ||
     field instanceof HTMLSelectElement
   ) {
-    field.value = value;
+    // React が制御する入力欄にも反映されるよう、ネイティブの value セッター経由で設定する。
+    // 単純な field.value = ... だと React の value トラッカーが更新され、
+    // 続く input/change イベントで onChange が発火しない場合がある。
+    setNativeValue(field, value);
     field.dispatchEvent(new Event("input", { bubbles: true }));
     field.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+}
+
+function setNativeValue(
+  element: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement,
+  value: string
+) {
+  const prototype = Object.getPrototypeOf(element);
+  const prototypeSetter = Object.getOwnPropertyDescriptor(prototype, "value")?.set;
+  const instanceSetter = Object.getOwnPropertyDescriptor(element, "value")?.set;
+
+  if (prototypeSetter && instanceSetter && prototypeSetter !== instanceSetter) {
+    prototypeSetter.call(element, value);
+  } else if (prototypeSetter) {
+    prototypeSetter.call(element, value);
+  } else {
+    element.value = value;
   }
 }
 

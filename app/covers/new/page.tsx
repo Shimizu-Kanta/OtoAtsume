@@ -1,15 +1,14 @@
-import { AlertTriangle, ClipboardList, Info, LinkIcon, Music2, Send, Sparkles, Users } from "lucide-react";
+import { AlertTriangle, ClipboardList, Info, LinkIcon, Send } from "lucide-react";
 
 import { TurnstileCaptcha } from "@/components/captcha/turnstile";
 import { DuplicateCandidateChecker } from "@/components/covers/duplicate-candidate-checker";
-import { PerformerPicker } from "@/components/covers/performer-picker";
+import { FormSection } from "@/components/covers/form-section";
+import { PublicCoverFields } from "@/components/covers/public-cover-fields";
 import { YouTubeMetadataFetcher } from "@/components/covers/youtube-metadata-fetcher";
 import { PageHeading } from "@/components/page-heading";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { coverTypeOptions } from "@/lib/constants";
 import { getPerformerOptions } from "@/lib/data/performers";
 import { getCaptchaSiteKey, isCaptchaRequired } from "@/lib/security/captcha";
@@ -89,71 +88,17 @@ export default async function NewCoverPage({
           <YouTubeMetadataFetcher autoFetch={autoFetchMetadata} />
         </FormSection>
 
-        <FormSection
-          icon={<Users className="size-4" aria-hidden="true" />}
-          title="2. 活動者と楽曲"
-          description="既存の活動者を選ぶか、未登録の活動者名を直接入力してください。複数人の歌唱にも対応しています。"
-        >
-          <div className="grid gap-4 lg:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="performerIds">既存の活動者</Label>
-              <PerformerPicker performers={performers} defaultSelectedIds={initialPerformerIds} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="performerNames">活動者名を直接入力</Label>
-              <Textarea
-                id="performerNames"
-                name="performerNames"
-                placeholder="未登録の活動者や複数名を入力できます。改行・カンマ区切り対応。"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="songTitle">楽曲名</Label>
-              <Input id="songTitle" name="songTitle" required placeholder="楽曲名" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="artistNames">原曲アーティスト名</Label>
-              <Input id="artistNames" name="artistNames" required placeholder="複数はカンマ区切り" />
-            </div>
-          </div>
-        </FormSection>
-
-        <FormSection
-          icon={<Music2 className="size-4" aria-hidden="true" />}
-          title="3. 歌唱情報"
-          description="歌唱日、種別、動画タイトル、開始位置などを入力します。タイムスタンプは秒数で登録できます。"
-        >
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="performedAt">歌唱日</Label>
-              <Input
-                id="performedAt"
-                name="performedAt"
-                type="date"
-                required
-                defaultValue={initialPerformedAt ?? ""}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="coverType">歌唱種別</Label>
-              <Select id="coverType" name="coverType" required defaultValue={initialCoverType ?? "COVER_VIDEO"}>
-                {coverTypeOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="sourceTitle">配信・動画・ライブ名</Label>
-              <Input id="sourceTitle" name="sourceTitle" placeholder="任意" defaultValue={initialSourceTitle ?? ""} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="timestampSeconds">タイムスタンプ秒数</Label>
-              <Input id="timestampSeconds" name="timestampSeconds" type="number" min="0" placeholder="例: 1234" />
-            </div>
-          </div>
-        </FormSection>
+        <PublicCoverFields
+          performers={performers}
+          initial={{
+            coverType: initialCoverType ?? "COVER_VIDEO",
+            performerIds: initialPerformerIds,
+            songTitle: "",
+            artistNames: "",
+            performedAt: initialPerformedAt ?? "",
+            sourceTitle: initialSourceTitle ?? ""
+          }}
+        />
 
         <FormSection
           icon={<ClipboardList className="size-4" aria-hidden="true" />}
@@ -177,32 +122,5 @@ export default async function NewCoverPage({
         </FormSection>
       </form>
     </div>
-  );
-}
-
-function FormSection({
-  icon,
-  title,
-  description,
-  children
-}: {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="overflow-hidden rounded-3xl border border-primary/10 bg-card/90 p-5 shadow-sm">
-      <div className="mb-5 flex gap-3 border-b pb-4">
-        <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-          {icon}
-        </span>
-        <div>
-          <h2 className="text-lg font-bold tracking-tight">{title}</h2>
-          <p className="mt-1 text-sm leading-6 text-muted-foreground">{description}</p>
-        </div>
-      </div>
-      <div className="space-y-4">{children}</div>
-    </section>
   );
 }

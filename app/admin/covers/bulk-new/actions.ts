@@ -43,60 +43,68 @@ export async function createBulkCoversAction(formData: FormData): Promise<BulkCr
   const timestamps = formData.getAll("rowTimestamp").map(String);
   const songTitles = formData.getAll("rowSongTitle").map(String);
   const artistNamesList = formData.getAll("rowArtistNames").map(String);
-  const performerNamesList = formData.getAll("rowPerformerNames").map(String);
+  // 曲ごとの歌唱者はチップUIからカンマ区切りのIDで届く（行と1対1で対応）。
+  const performerIdsList = formData.getAll("rowPerformerIds").map(String);
 
   const rows: BulkCoverRow[] = [];
   const rowCount = Math.max(
     timestamps.length,
     songTitles.length,
     artistNamesList.length,
-    performerNamesList.length
+    performerIdsList.length
   );
 
   for (let i = 0; i < rowCount; i += 1) {
     const timestamp = (timestamps[i] ?? "").trim();
     const songTitle = (songTitles[i] ?? "").trim();
     const artistNames = (artistNamesList[i] ?? "").trim();
-    const performerNames = (performerNamesList[i] ?? "").trim();
+    const rowPerformerIds = (performerIdsList[i] ?? "")
+      .split(",")
+      .map((id) => id.trim())
+      .filter(Boolean);
 
-    // 完全に空の行はスキップ
-    if (!timestamp && !songTitle && !artistNames && !performerNames) {
+    // 楽曲名・アーティスト・タイムスタンプがすべて空の行はスキップ
+    // （歌唱者チップは共通の活動者を初期選択するため空行判定には含めない）。
+    if (!timestamp && !songTitle && !artistNames) {
       continue;
     }
 
     if (!songTitle) {
-      return { ok: false, error: `${i + 1}行目: 楽曲名を入力してください。` };
+      return { ok: false, error: `${i + 1}曲目: 楽曲名を入力してください。` };
     }
     if (!artistNames) {
-      return { ok: false, error: `${i + 1}行目: 原曲アーティスト名を入力してください。` };
+      return { ok: false, error: `${i + 1}曲目: 原曲アーティスト名を入力してください。` };
     }
 
     let timestampSeconds: number | undefined;
     if (timestamp) {
       const parsed = parseTimestampToSeconds(timestamp);
       if (parsed == null) {
-        return { ok: false, error: `${i + 1}行目: タイムスタンプの形式が正しくありません（例: 1:23:45）。` };
+        return { ok: false, error: `${i + 1}曲目: タイムスタンプの形式が正しくありません（例: 1:23:45）。` };
       }
       timestampSeconds = parsed;
+    }
+
+    // 行に歌唱者が選ばれていなければ共通の活動者を使う。
+    const effectivePerformerIds = rowPerformerIds.length > 0 ? rowPerformerIds : commonPerformerIds;
+    if (effectivePerformerIds.length === 0) {
+      return {
+        ok: false,
+        error: `${i + 1}曲目: 歌唱者が選ばれていません。共通の活動者を選ぶか、曲ごとに歌唱者を選んでください。`
+      };
     }
 
     rows.push({
       songTitle,
       artistNames,
       timestampSeconds,
-      performerIds: [],
-      performerNames
+      performerIds: effectivePerformerIds,
+      performerNames: ""
     });
   }
 
   if (rows.length === 0) {
-    return { ok: false, error: "登録する曲を1行以上入力してください。" };
-  }
-
-  const hasCommonPerformers = commonPerformerIds.length > 0;
-  const everyRowHasOwnPerformer = rows.every((row) => row.performerNames.length > 0);
-  if (!hasCommonPerformers && !everyRowHasOwnPerformer) {
-    return { ok: false, error: "共通の活動者を選ぶか、各行に個別の活動者を入力してください。" };
+    return { ok: false, error: "登録する曲を1曲以上入力してください。" };
   }
 
   try {

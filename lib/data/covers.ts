@@ -780,6 +780,8 @@ export type BulkCoverInput = {
   performedAt: Date;
   coverType: string;
   commonPerformerIds: string[];
+  // 公開フォームからの未登録活動者名（全曲共通で登録される）。
+  commonPerformerNames?: string;
   rows: BulkCoverRow[];
 };
 
@@ -792,27 +794,29 @@ export async function createBulkCovers(input: BulkCoverInput) {
 
   const sourceVideoId = extractYouTubeVideoId(input.sourceUrl);
 
+  const commonPerformerNames = normalizeNames(input.commonPerformerNames ?? "");
+
   return db.$transaction(async (client) => {
     const created = [];
 
     for (const [index, row] of input.rows.entries()) {
       const artistNames = normalizeNames(row.artistNames);
-      const performerNames = normalizeNames(row.performerNames);
+      const rowPerformerNames = normalizeNames(row.performerNames);
 
       if (artistNames.length === 0) {
-        throw new Error(`${index + 1}行目: 原曲アーティストを指定してください。`);
+        throw new Error(`${index + 1}曲目: 原曲アーティストを指定してください。`);
       }
 
       const song = await ensureSong(client, row.songTitle, artistNames);
 
-      // 行ごとの上書きがあればそれを、なければ共通の活動者を使う。
-      const overrideIds = row.performerIds.length > 0 || performerNames.length > 0;
-      const performers = overrideIds
-        ? await ensurePerformers(client, row.performerIds, performerNames)
-        : await ensurePerformers(client, input.commonPerformerIds, []);
+      // 行の歌唱者があればそれを、なければ共通の活動者IDを使う。
+      // 共通の未登録活動者名（フリー入力）はどちらの場合も全曲に付与する。
+      const rowPerformerIds = row.performerIds.length > 0 ? row.performerIds : input.commonPerformerIds;
+      const performerNames = [...rowPerformerNames, ...commonPerformerNames];
+      const performers = await ensurePerformers(client, rowPerformerIds, performerNames);
 
       if (performers.length === 0) {
-        throw new Error(`${index + 1}行目: 活動者を指定してください。`);
+        throw new Error(`${index + 1}曲目: 活動者を指定してください。`);
       }
 
       const cover = await client.cover.create({

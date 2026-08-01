@@ -2,38 +2,23 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Sparkles, Trash2, Wand2 } from "lucide-react";
+import { Wand2 } from "lucide-react";
 
 import { PerformerPicker } from "@/components/covers/performer-picker";
+import { SongRowsEditor } from "@/components/covers/song-rows-editor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
-import { parseSetlistFromDescription } from "@/lib/setlist-parser";
-import { formatSeconds } from "@/lib/utils";
 import { createBulkCoversAction } from "./actions";
 
 type PerformerOption = { id: string; name: string; group: { name: string } | null };
-
-type SongRow = {
-  key: number;
-  timestamp: string;
-  songTitle: string;
-  artistNames: string;
-  performerNames: string;
-};
 
 const BULK_COVER_TYPES = [
   { value: "KARAOKE_STREAM", label: "歌枠" },
   { value: "LIVE_EVENT", label: "ライブ・イベント" },
   { value: "MEDLEY", label: "メドレー" }
 ];
-
-let rowKeySeed = 0;
-function emptyRow(): SongRow {
-  rowKeySeed += 1;
-  return { key: rowKeySeed, timestamp: "", songTitle: "", artistNames: "", performerNames: "" };
-}
 
 export function BulkNewForm({
   performers,
@@ -60,11 +45,9 @@ export function BulkNewForm({
     BULK_COVER_TYPES.some((t) => t.value === initial.coverType) ? initial.coverType : "KARAOKE_STREAM"
   );
   const [description, setDescription] = useState("");
-  const [rows, setRows] = useState<SongRow[]>(() => [emptyRow()]);
-
-  function updateRow(key: number, patch: Partial<SongRow>) {
-    setRows((current) => current.map((row) => (row.key === key ? { ...row, ...patch } : row)));
-  }
+  const [selectedPerformers, setSelectedPerformers] = useState<PerformerOption[]>(() =>
+    performers.filter((performer) => initial.performerIds.includes(performer.id))
+  );
 
   async function fetchMetadata() {
     setError(null);
@@ -89,35 +72,10 @@ export function BulkNewForm({
       if (meta.publishedDate) setPerformedAt(meta.publishedDate);
       if (meta.thumbnailUrl) setSourceImageUrl(meta.thumbnailUrl);
       setDescription(meta.description ?? "");
-      setMessage("動画情報を取得しました。「概要欄からセットリストを読み取る」で曲リストを生成できます。");
+      setMessage("動画情報を取得しました。概要欄にセットリストがあれば「読み取る」で曲リストを生成できます。");
     } catch {
       setError("動画情報の取得に失敗しました。");
     }
-  }
-
-  function parseSetlist() {
-    setError(null);
-    if (!description) {
-      setError("先に「動画情報を取得」を実行してください。概要欄が読み込まれていません。");
-      return;
-    }
-    const parsed = parseSetlistFromDescription(description);
-    if (parsed.length === 0) {
-      setError("概要欄からタイムスタンプ付きの行を検出できませんでした。手入力してください。");
-      return;
-    }
-    setRows(
-      parsed.map((row) => ({
-        key: (rowKeySeed += 1),
-        timestamp: formatSeconds(row.timestampSeconds),
-        songTitle: row.songTitleGuess,
-        artistNames: "",
-        performerNames: ""
-      }))
-    );
-    setMessage(
-      `${parsed.length}行を読み込みました。曲でない行（オープニング・MC等）は削除し、内容を確認してから登録してください。`
-    );
   }
 
   function submit(form: HTMLFormElement) {
@@ -221,76 +179,17 @@ export function BulkNewForm({
 
         <div className="space-y-2">
           <Label>共通の活動者</Label>
-          <PerformerPicker performers={performers} defaultSelectedIds={initial.performerIds} />
+          <PerformerPicker
+            performers={performers}
+            defaultSelectedIds={initial.performerIds}
+            onSelectionChange={setSelectedPerformers}
+          />
         </div>
       </section>
 
       <section className="space-y-4 rounded-md border bg-card p-5">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-lg font-semibold">曲リスト</h2>
-          <Button type="button" variant="outline" size="sm" onClick={parseSetlist}>
-            <Sparkles className="size-4" aria-hidden="true" />
-            概要欄からセットリストを読み取る
-          </Button>
-        </div>
-
-        <div className="space-y-3">
-          {rows.map((row, index) => (
-            <div key={row.key} className="grid gap-2 rounded-md border p-3 md:grid-cols-[110px_1fr_1fr_1fr_auto]">
-              <div className="space-y-1">
-                <Label className="text-xs">タイムスタンプ</Label>
-                <Input
-                  name="rowTimestamp"
-                  value={row.timestamp}
-                  onChange={(event) => updateRow(row.key, { timestamp: event.target.value })}
-                  placeholder="1:23:45"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">楽曲名</Label>
-                <Input
-                  name="rowSongTitle"
-                  value={row.songTitle}
-                  onChange={(event) => updateRow(row.key, { songTitle: event.target.value })}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">原曲アーティスト</Label>
-                <Input
-                  name="rowArtistNames"
-                  value={row.artistNames}
-                  onChange={(event) => updateRow(row.key, { artistNames: event.target.value })}
-                  placeholder="複数はカンマ区切り"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">個別活動者（任意）</Label>
-                <Input
-                  name="rowPerformerNames"
-                  value={row.performerNames}
-                  onChange={(event) => updateRow(row.key, { performerNames: event.target.value })}
-                  placeholder="空なら共通"
-                />
-              </div>
-              <div className="flex items-end">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  aria-label={`${index + 1}行目を削除`}
-                  onClick={() => setRows((current) => current.filter((r) => r.key !== row.key))}
-                >
-                  <Trash2 className="size-4" aria-hidden="true" />
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <Button type="button" variant="outline" size="sm" onClick={() => setRows((current) => [...current, emptyRow()])}>
-          <Plus className="size-4" aria-hidden="true" />
-          行を追加
-        </Button>
+        <h2 className="text-lg font-semibold">曲リスト</h2>
+        <SongRowsEditor participants={selectedPerformers} description={description} />
       </section>
 
       <div className="flex justify-end">
