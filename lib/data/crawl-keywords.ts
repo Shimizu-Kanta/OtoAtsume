@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 export type CrawlKeywordsByKind = {
   COVER_VIDEO: string[];
   KARAOKE_STREAM: string[];
+  MEDLEY: string[];
   EXCLUDE: string[];
 };
 
@@ -18,6 +19,7 @@ export async function getCrawlKeywordsByKind(): Promise<CrawlKeywordsByKind> {
   const grouped: CrawlKeywordsByKind = {
     COVER_VIDEO: [],
     KARAOKE_STREAM: [],
+    MEDLEY: [],
     EXCLUDE: []
   };
 

@@ -73,6 +73,39 @@ export function formatSeconds(value: number | null | undefined) {
   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
 
+// "mm:ss" / "h:mm:ss" / "hh:mm:ss" を秒に変換する（formatSeconds の逆変換）。
+// 不正な形式は null を返す。
+export function parseTimestampToSeconds(value: string): number | null {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  const parts = trimmed.split(":");
+  if (parts.length < 2 || parts.length > 3) {
+    return null;
+  }
+
+  const nums = parts.map((part) => Number(part));
+  if (nums.some((num) => !Number.isInteger(num) || num < 0)) {
+    return null;
+  }
+
+  if (nums.length === 2) {
+    const [minutes, seconds] = nums;
+    if (seconds >= 60) {
+      return null;
+    }
+    return minutes * 60 + seconds;
+  }
+
+  const [hours, minutes, seconds] = nums;
+  if (minutes >= 60 || seconds >= 60) {
+    return null;
+  }
+  return hours * 3600 + minutes * 60 + seconds;
+}
+
 export function withTimestamp(sourceUrl: string, timestampSeconds: number | null | undefined) {
   if (timestampSeconds == null) {
     return sourceUrl;

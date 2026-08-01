@@ -25,7 +25,7 @@ type State =
   | { status: "idle" }
   | { status: "loading" }
   | { status: "empty" }
-  | { status: "found"; candidates: Candidate[] }
+  | { status: "found"; candidates: Candidate[]; sameSinging: Candidate[] }
   | { status: "error"; message: string };
 
 type DuplicatePayload = {
@@ -93,11 +93,12 @@ export function DuplicateCandidateChecker() {
         return;
       }
 
-      const data = (await response.json()) as { covers: Candidate[] };
+      const data = (await response.json()) as { covers: Candidate[]; sameSinging?: Candidate[] };
+      const sameSinging = data.sameSinging ?? [];
 
       setState(
-        data.covers.length > 0
-          ? { status: "found", candidates: data.covers }
+        data.covers.length > 0 || sameSinging.length > 0
+          ? { status: "found", candidates: data.covers, sameSinging }
           : { status: "empty" }
       );
     } catch (error) {
@@ -149,7 +150,7 @@ export function DuplicateCandidateChecker() {
         <p className="mt-3 text-sm text-destructive">{state.message}</p>
       ) : null}
 
-      {state.status === "found" ? (
+      {state.status === "found" && state.candidates.length > 0 ? (
         <div className="mt-4 rounded-md border border-accent/60 bg-accent/10 p-3">
           <div className="flex gap-2 text-sm font-medium">
             <AlertTriangle className="mt-0.5 size-4 shrink-0" />
@@ -157,6 +158,29 @@ export function DuplicateCandidateChecker() {
           </div>
           <div className="mt-3 space-y-2">
             {state.candidates.map((candidate) => (
+              <div key={candidate.id} className="text-sm">
+                <Link href={`/covers/${candidate.id}`} className="text-primary underline">
+                  {candidate.song.title}
+                </Link>
+                <span className="text-muted-foreground">
+                  {" "}
+                  / {candidate.performers.map(({ performer }) => performer.name).join(", ")} /{" "}
+                  {formatDate(candidate.performedAt)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {state.status === "found" && state.sameSinging.length > 0 ? (
+        <div className="mt-4 rounded-md border border-accent/60 bg-accent/10 p-3">
+          <div className="flex gap-2 text-sm font-medium">
+            <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+            同じ日に同じ曲の記録が別のURLで登録されています。同一の歌唱でないか確認してください。
+          </div>
+          <div className="mt-3 space-y-2">
+            {state.sameSinging.map((candidate) => (
               <div key={candidate.id} className="text-sm">
                 <Link href={`/covers/${candidate.id}`} className="text-primary underline">
                   {candidate.song.title}

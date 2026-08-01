@@ -8,9 +8,11 @@ import {
 } from "@prisma/client";
 
 import { evaluateCoverQuality } from "@/lib/content-quality";
+import { syncCandidateStatusForVideo } from "@/lib/crawl/candidate-status";
 import { db } from "@/lib/db";
 import { pageSkip, paginate } from "@/lib/pagination";
 import { normalizeNames } from "@/lib/utils";
+import { extractYouTubeVideoId } from "@/lib/youtube";
 import type {
   AdminCoverEditInput,
   CoverCreateInput,
@@ -661,6 +663,65 @@ export async function findPotentialDuplicateCoversForInput(input: DuplicateCandi
   });
 }
 
+// 既存の厳密な重複判定（sourceUrl 一致が条件）とは別の緩い警告。
+// 楽曲 + 活動者 + 歌唱日が一致し、sourceUrl だけが異なる記録を検出する
+// （アーカイブと切り抜きなど、同じ歌唱がURL違いで二重登録される事故の保険）。
+export async function findSameSingingCandidates(params: {
+  songId: string;
+  performerIds: string[];
+  performedAt: Date;
+  excludeSourceUrl: string;
+}) {
+  if (params.performerIds.length === 0) {
+    return [];
+  }
+
+  return db.cover.findMany({
+    where: {
+      songId: params.songId,
+      performedAt: params.performedAt,
+      performers: { some: { performerId: { in: params.performerIds } } },
+      sourceUrl: { not: params.excludeSourceUrl }
+    },
+    include: coverListInclude,
+    take: 3
+  });
+}
+
+// 単体/一括登録フォームからの入力（未登録の楽曲名・活動者名を含む）に対して緩い重複警告を返す。
+export async function findSameSingingCandidatesForInput(input: {
+  songTitle: string;
+  performerIds: string[];
+  performerNames: string;
+  performedAt: Date;
+  sourceUrl: string;
+}) {
+  const song = await db.song.findFirst({
+    where: { title: { equals: input.songTitle, mode: Prisma.QueryMode.insensitive } },
+    select: { id: true }
+  });
+
+  if (!song) {
+    return [];
+  }
+
+  const performerIds = await findExistingPerformerIds(
+    input.performerIds,
+    normalizeNames(input.performerNames)
+  );
+
+  if (performerIds.length === 0) {
+    return [];
+  }
+
+  return findSameSingingCandidates({
+    songId: song.id,
+    performerIds,
+    performedAt: input.performedAt,
+    excludeSourceUrl: input.sourceUrl
+  });
+}
+
 export async function createCover(input: CoverCreateInput) {
   const artistNames = normalizeNames(input.artistNames);
   const performerNames = normalizeNames(input.performerNames);
@@ -677,12 +738,13 @@ export async function createCover(input: CoverCreateInput) {
       throw new Error("活動者を指定してください。");
     }
 
-    return client.cover.create({
+    const cover = await client.cover.create({
       data: {
         songId: song.id,
         performedAt: input.performedAt,
         coverType: input.coverType as CoverType,
         sourceUrl: input.sourceUrl,
+        sourceVideoId: extractYouTubeVideoId(input.sourceUrl),
         sourceTitle: input.sourceTitle,
         sourceImageUrl: input.sourceImageUrl,
         timestampSeconds: input.timestampSeconds,
@@ -695,6 +757,87 @@ export async function createCover(input: CoverCreateInput) {
       },
       include: coverListInclude
     });
+
+    // 登録実績から歌唱記録候補を自動完了（PENDING → ADOPTED）にする。
+    await syncCandidateStatusForVideo(client, input.sourceUrl, cover.id);
+
+    return cover;
+  });
+}
+
+export type BulkCoverRow = {
+  songTitle: string;
+  artistNames: string;
+  timestampSeconds?: number;
+  performerIds: string[];
+  performerNames: string;
+};
+
+export type BulkCoverInput = {
+  sourceUrl: string;
+  sourceTitle?: string;
+  sourceImageUrl?: string;
+  performedAt: Date;
+  coverType: string;
+  commonPerformerIds: string[];
+  rows: BulkCoverRow[];
+};
+
+// 1つの動画URLから複数曲を1トランザクションでまとめて登録する。
+// 各行は共通の活動者を使うが、行ごとに上書き（performerIds/Names）もできる。
+export async function createBulkCovers(input: BulkCoverInput) {
+  if (input.rows.length === 0) {
+    throw new Error("登録する曲を1行以上入力してください。");
+  }
+
+  const sourceVideoId = extractYouTubeVideoId(input.sourceUrl);
+
+  return db.$transaction(async (client) => {
+    const created = [];
+
+    for (const [index, row] of input.rows.entries()) {
+      const artistNames = normalizeNames(row.artistNames);
+      const performerNames = normalizeNames(row.performerNames);
+
+      if (artistNames.length === 0) {
+        throw new Error(`${index + 1}行目: 原曲アーティストを指定してください。`);
+      }
+
+      const song = await ensureSong(client, row.songTitle, artistNames);
+
+      // 行ごとの上書きがあればそれを、なければ共通の活動者を使う。
+      const overrideIds = row.performerIds.length > 0 || performerNames.length > 0;
+      const performers = overrideIds
+        ? await ensurePerformers(client, row.performerIds, performerNames)
+        : await ensurePerformers(client, input.commonPerformerIds, []);
+
+      if (performers.length === 0) {
+        throw new Error(`${index + 1}行目: 活動者を指定してください。`);
+      }
+
+      const cover = await client.cover.create({
+        data: {
+          songId: song.id,
+          performedAt: input.performedAt,
+          coverType: input.coverType as CoverType,
+          sourceUrl: input.sourceUrl,
+          sourceVideoId,
+          sourceTitle: input.sourceTitle,
+          sourceImageUrl: input.sourceImageUrl,
+          timestampSeconds: row.timestampSeconds,
+          status: initialCoverStatus(),
+          performers: {
+            create: performers.map((performer) => ({ performerId: performer.id }))
+          }
+        }
+      });
+      created.push(cover);
+    }
+
+    // 一括登録は複数の Cover を作るが、候補の自動完了判定は1回でよい。
+    await syncCandidateStatusForVideo(client, input.sourceUrl, created[0]?.id);
+
+    return created;
   });
 }
 

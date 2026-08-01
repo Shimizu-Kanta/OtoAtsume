@@ -22,6 +22,7 @@ export const dynamic = "force-dynamic";
 const KIND_LABELS: Record<CrawlKeywordKind, string> = {
   COVER_VIDEO: "歌ってみた判定",
   KARAOKE_STREAM: "歌枠判定",
+  MEDLEY: "メドレー判定",
   EXCLUDE: "除外"
 };
 
@@ -57,6 +58,7 @@ export default async function AdminCrawlKeywordsPage({
             <Select id="kind" name="kind" defaultValue="COVER_VIDEO">
               <option value="COVER_VIDEO">歌ってみた判定</option>
               <option value="KARAOKE_STREAM">歌枠判定</option>
+              <option value="MEDLEY">メドレー判定</option>
               <option value="EXCLUDE">除外</option>
             </Select>
           </div>

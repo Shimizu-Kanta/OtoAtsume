@@ -36,9 +36,16 @@ export default async function AdminCoverCandidateConfirmPage({
     notFound();
   }
 
-  // 歌枠は手動登録フォームに誘導する（1配信=複数曲のため確定フォームの対象外）。
-  if (candidate.detectedType === "KARAOKE_STREAM") {
-    redirect(`/covers/new?sourceUrl=${encodeURIComponent(candidate.videoUrl)}&autoFetch=1`);
+  // 歌枠・メドレーは1URL複数曲のため確定フォームの対象外。一括登録画面へ誘導する。
+  if (candidate.detectedType === "KARAOKE_STREAM" || candidate.detectedType === "MEDLEY") {
+    const handoff = new URLSearchParams();
+    handoff.set("sourceUrl", candidate.videoUrl);
+    handoff.set("performedAt", candidate.publishedAt.toISOString().slice(0, 10));
+    handoff.set("coverType", candidate.detectedType === "MEDLEY" ? "MEDLEY" : "KARAOKE_STREAM");
+    if (candidate.sourcePerformerId) {
+      handoff.append("performerIds", candidate.sourcePerformerId);
+    }
+    redirect(`/admin/covers/bulk-new?${handoff.toString()}`);
   }
 
   const error = getSearchParam(query, "error");

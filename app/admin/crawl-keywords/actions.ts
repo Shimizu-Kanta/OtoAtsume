@@ -12,7 +12,12 @@ import {
 } from "@/lib/data/crawl-keywords";
 
 function isValidKind(value: string): value is CrawlKeywordKind {
-  return value === "COVER_VIDEO" || value === "KARAOKE_STREAM" || value === "EXCLUDE";
+  return (
+    value === "COVER_VIDEO" ||
+    value === "KARAOKE_STREAM" ||
+    value === "MEDLEY" ||
+    value === "EXCLUDE"
+  );
 }
 
 export async function createCrawlKeywordAction(formData: FormData) {

@@ -2,6 +2,7 @@ export const coverTypeOptions = [
   { value: "COVER_VIDEO", label: "歌ってみた動画" },
   { value: "KARAOKE_STREAM", label: "歌枠" },
   { value: "LIVE_EVENT", label: "ライブ・イベント" },
+  { value: "MEDLEY", label: "メドレー" },
   { value: "SHORT", label: "ショート" },
   { value: "OTHER", label: "その他" }
 ] as const;

@@ -84,6 +84,12 @@ export function classifyVideo(
 
   const haystack = `${title} ${description}`.toLowerCase();
 
+  // メドレー判定は動画長の判定より前に置く（両モード共通）。
+  // メドレーは20〜30分になることが多く、先に15分カットオフを適用すると取りこぼすため。
+  if (keywords.MEDLEY.some((keyword) => haystack.includes(keyword.toLowerCase()))) {
+    return { result: "candidate", detectedType: CoverCandidateType.MEDLEY };
+  }
+
   if (mode === "COVER_VIDEO") {
     if (!keywords.COVER_VIDEO.some((keyword) => haystack.includes(keyword.toLowerCase()))) {
       return { result: "notMatched" };

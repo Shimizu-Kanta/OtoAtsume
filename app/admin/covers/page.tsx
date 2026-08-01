@@ -45,7 +45,15 @@ export default async function AdminCoversPage({
   return (
     <div className="space-y-6">
       <AdminNav />
-      <PageHeading title="カバー記録管理" description="カバー記録を検索し、編集・非表示対応できます。" />
+      <PageHeading
+        title="カバー記録管理"
+        description="カバー記録を検索し、編集・非表示対応できます。"
+        actions={
+          <Link href="/admin/covers/bulk-new" className="rounded-md border px-4 py-2 text-sm">
+            一括登録
+          </Link>
+        }
+      />
 
       {error ? (
         <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm">

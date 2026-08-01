@@ -28,6 +28,14 @@ export async function restoreCoverCandidateAction(id: string, _formData?: FormDa
   redirect("/admin/cover-candidates?status=REJECTED&restored=1");
 }
 
+// 手動で「登録完了（ADOPTED）」にする（歌枠・メドレー候補用）。
+export async function completeCoverCandidateAction(id: string, _formData?: FormData) {
+  await requireAdminPage();
+  await setCoverCandidateStatus(id, CoverCandidateStatus.ADOPTED);
+  revalidateCandidatePages();
+  redirect("/admin/cover-candidates?completed=1");
+}
+
 // COVER_VIDEO の候補を確定してカバー記録（APPROVED）を作成する。
 export async function adoptCoverVideoCandidateAction(candidateId: string, formData: FormData) {
   await requireAdminPage();

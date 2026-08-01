@@ -15,9 +15,33 @@ import {
 } from "@/lib/data/cover-candidates";
 import { getPerformerOptions } from "@/lib/data/performers";
 import { MAX_PENDING_CANDIDATES } from "@/lib/crawl/cover-candidates";
+import { countCoversByVideoIds } from "@/lib/crawl/candidate-status";
+import { db } from "@/lib/db";
 import { cn, formatDate, getSearchParam, parsePageParam } from "@/lib/utils";
+import { CompleteCandidateButton } from "./complete-candidate-button";
 import { CrawlControls } from "./crawl-controls";
 import { rejectCoverCandidateAction, restoreCoverCandidateAction } from "./actions";
+
+// KARAOKE_STREAM / MEDLEY 候補から一括登録画面へ引き継ぐURL
+function bulkHandoffHref(candidate: {
+  videoUrl: string;
+  publishedAt: Date;
+  detectedType: string;
+  sourcePerformer: { id: string } | null;
+}) {
+  const params = new URLSearchParams();
+  params.set("sourceUrl", candidate.videoUrl);
+  params.set("performedAt", candidate.publishedAt.toISOString().slice(0, 10));
+  params.set("coverType", candidate.detectedType === "MEDLEY" ? "MEDLEY" : "KARAOKE_STREAM");
+  if (candidate.sourcePerformer) {
+    params.append("performerIds", candidate.sourcePerformer.id);
+  }
+  return `/admin/covers/bulk-new?${params.toString()}`;
+}
+
+function isMultiSongType(type: string) {
+  return type === "KARAOKE_STREAM" || type === "MEDLEY";
+}
 
 export const dynamic = "force-dynamic";
 
@@ -65,9 +89,16 @@ export default async function AdminCoverCandidatesPage({
     getPerformerOptions()
   ]);
 
+  // この動画から何件 Cover が登録されたかを一覧分まとめて集計（N+1回避）
+  const coverCounts = await countCoversByVideoIds(
+    db,
+    items.map((candidate) => candidate.videoId)
+  );
+
   const adopted = getSearchParam(params, "adopted") === "1";
   const rejected = getSearchParam(params, "rejected") === "1";
   const restored = getSearchParam(params, "restored") === "1";
+  const completed = getSearchParam(params, "completed") === "1";
   const error = getSearchParam(params, "error");
 
   return (
@@ -103,6 +134,11 @@ export default async function AdminCoverCandidatesPage({
       {restored ? (
         <div className="rounded-md border border-secondary/40 bg-secondary/10 p-4 text-sm">
           候補を未処理に戻しました。
+        </div>
+      ) : null}
+      {completed ? (
+        <div className="rounded-md border border-secondary/40 bg-secondary/10 p-4 text-sm">
+          候補を登録完了にしました。
         </div>
       ) : null}
 
@@ -186,15 +222,32 @@ export default async function AdminCoverCandidatesPage({
                   {candidate.sourcePerformer ? ` / 巡回元: ${candidate.sourcePerformer.name}` : ""}
                 </p>
 
+                <p className="text-sm font-medium">
+                  {(() => {
+                    const count = coverCounts.get(candidate.videoId) ?? 0;
+                    return count > 0 ? (
+                      <span className="text-primary">この動画から {count} 件登録済み</span>
+                    ) : (
+                      <span className="text-muted-foreground">未登録</span>
+                    );
+                  })()}
+                </p>
+
                 <div className="flex flex-wrap gap-2 border-t pt-3">
                   {candidate.status === "PENDING" ? (
-                    candidate.detectedType === "KARAOKE_STREAM" ? (
-                      <Link
-                        href={`/covers/new?sourceUrl=${encodeURIComponent(candidate.videoUrl)}&autoFetch=1`}
-                        className={cn(buttonVariants({ size: "sm" }))}
-                      >
-                        歌枠として手動登録する
-                      </Link>
+                    isMultiSongType(candidate.detectedType) ? (
+                      <>
+                        <Link
+                          href={bulkHandoffHref(candidate)}
+                          className={cn(buttonVariants({ size: "sm" }))}
+                        >
+                          一括登録する
+                        </Link>
+                        <CompleteCandidateButton
+                          candidateId={candidate.id}
+                          coverCount={coverCounts.get(candidate.videoId) ?? 0}
+                        />
+                      </>
                     ) : (
                       <Link
                         href={`/admin/cover-candidates/${candidate.id}`}

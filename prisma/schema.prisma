@@ -159,6 +159,7 @@ model Cover {
   performedAt      DateTime
   coverType        CoverType
   sourceUrl        String
+  sourceVideoId    String?
   sourceTitle      String?
   sourceImageUrl   String?
   timestampSeconds Int?
@@ -173,6 +174,7 @@ model Cover {
   @@index([songId])
   @@index([performedAt])
   @@index([sourceUrl])
+  @@index([sourceVideoId])
   @@index([coverType])
   @@index([status])
   @@map("covers")
@@ -335,11 +337,13 @@ enum CoverCandidateType {
   COVER_VIDEO
   KARAOKE_STREAM
   SHORT
+  MEDLEY
 }
 
 enum CrawlKeywordKind {
   COVER_VIDEO
   KARAOKE_STREAM
+  MEDLEY
   EXCLUDE
 }
 
@@ -364,6 +368,7 @@ enum CoverType {
   COVER_VIDEO
   KARAOKE_STREAM
   LIVE_EVENT
+  MEDLEY
   SHORT
   OTHER
 }

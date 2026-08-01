@@ -1,4 +1,4 @@
-import { FileQuestion, Mic, Video, Zap } from "lucide-react";
+import { FileQuestion, ListMusic, Mic, Video, Zap } from "lucide-react";
 
 import { LiveEventIcon } from "@/components/icons/live-event-icon";
 import type { CoverType } from "@prisma/client";
@@ -10,6 +10,7 @@ export const coverTypeFallbackIcons: Record<
   COVER_VIDEO: Video,
   KARAOKE_STREAM: Mic,
   LIVE_EVENT: LiveEventIcon,
+  MEDLEY: ListMusic,
   SHORT: Zap,
   OTHER: FileQuestion
 };

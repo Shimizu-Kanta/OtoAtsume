@@ -32,6 +32,10 @@ const CRAWL_KEYWORD_SEEDS: { kind: CrawlKeywordKind; keywords: string[] }[] = [
     keywords: ["歌枠", "歌配信", "カラオケ", "karaoke", "sing", "歌う", "弾き語り"]
   },
   {
+    kind: CrawlKeywordKind.MEDLEY,
+    keywords: ["メドレー", "medley", "MEDLEY", "ミックス", "MIX"]
+  },
+  {
     kind: CrawlKeywordKind.EXCLUDE,
     // 除外判定はタイトルのみが対象（lib/crawl/cover-candidates.ts の classifyVideo 参照）。
     keywords: [
