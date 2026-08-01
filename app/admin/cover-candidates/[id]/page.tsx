@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { StandaloneSongPicker } from "@/components/standalone-song-picker";
 import { Textarea } from "@/components/ui/textarea";
 import { coverTypeOptions } from "@/lib/constants";
 import { requireAdminPage } from "@/lib/auth/admin";
@@ -166,21 +167,13 @@ export default async function AdminCoverCandidateConfirmPage({
                 <SongSuggestionButtons suggestions={songSuggestions} />
               </div>
             ) : null}
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="songTitle">楽曲名</Label>
-                <Input id="songTitle" name="songTitle" required defaultValue={topSong?.title ?? ""} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="artistNames">原曲アーティスト名</Label>
-                <Input
-                  id="artistNames"
-                  name="artistNames"
-                  required
-                  placeholder="複数はカンマ区切り"
-                  defaultValue={topSong?.artistNames.join(", ") ?? ""}
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="songTitle">楽曲名・原曲アーティスト</Label>
+              <StandaloneSongPicker
+                titleId="songTitle"
+                defaultTitle={topSong?.title ?? ""}
+                defaultArtistNames={topSong?.artistNames.join(", ") ?? ""}
+              />
             </div>
           </div>
 

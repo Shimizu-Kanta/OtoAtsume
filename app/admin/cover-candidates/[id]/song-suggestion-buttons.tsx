@@ -10,14 +10,12 @@ export function SongSuggestionButtons({ suggestions }: { suggestions: SongSugges
   }
 
   function apply(suggestion: SongSuggestion) {
-    const titleInput = document.getElementById("songTitle");
-    const artistInput = document.getElementById("artistNames");
-    if (titleInput instanceof HTMLInputElement) {
-      titleInput.value = suggestion.title;
-    }
-    if (artistInput instanceof HTMLInputElement) {
-      artistInput.value = suggestion.artistNames.join(", ");
-    }
+    // 楽曲名入力は SongPicker（制御コンポーネント）なので、イベント経由で反映する。
+    window.dispatchEvent(
+      new CustomEvent("otoatsume:apply-song-suggestion", {
+        detail: { title: suggestion.title, artistNames: suggestion.artistNames.join(", ") }
+      })
+    );
   }
 
   return (
