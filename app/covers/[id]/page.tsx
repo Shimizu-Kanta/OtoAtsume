@@ -16,12 +16,12 @@ import {
   getCoverRelationCounts,
   getOtherCoversByPerformers,
   getOtherCoversBySong,
-  getOtherCoversBySourceUrl,
+  getOtherCoversBySourceVideoId,
   type CoverListItem
 } from "@/lib/data/covers";
 import { evaluateCoverQuality } from "@/lib/content-quality";
 import { cn, formatDate, formatDateInput, formatSeconds, withTimestamp } from "@/lib/utils";
-import { getYouTubeThumbnailUrl } from "@/lib/youtube";
+import { extractYouTubeVideoId, getYouTubeThumbnailUrl } from "@/lib/youtube";
 import type { Metadata } from "next";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://oto-atsume.com";
@@ -96,6 +96,9 @@ export default async function CoverDetailPage({ params, searchParams }: CoverDet
   const sourceTitle = cover.sourceTitle?.trim();
   const hasTimestamp = cover.timestampSeconds != null;
   const sourceUrlWithTimestamp = withTimestamp(cover.sourceUrl, cover.timestampSeconds);
+  // 同一動画のグルーピングは sourceVideoId で行う（URL 表記揺れに強い）。
+  // 保存済みの値を優先し、未設定の古いレコードは sourceUrl から導出する。
+  const sourceVideoId = cover.sourceVideoId ?? extractYouTubeVideoId(cover.sourceUrl);
 
   const [otherPerformerCovers, otherSongCovers, sameSourceCovers] = await Promise.all([
     getOtherCoversByPerformers(
@@ -103,7 +106,7 @@ export default async function CoverDetailPage({ params, searchParams }: CoverDet
       cover.id
     ),
     getOtherCoversBySong(cover.songId, cover.id),
-    getOtherCoversBySourceUrl(cover.sourceUrl, cover.id)
+    sourceVideoId ? getOtherCoversBySourceVideoId(sourceVideoId, cover.id) : Promise.resolve([])
   ]);
 
   const jsonLd = {

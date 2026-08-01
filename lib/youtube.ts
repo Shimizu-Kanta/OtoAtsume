@@ -54,6 +54,18 @@ export function getYouTubeThumbnailUrl(url: string | null | undefined): string |
   return videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : null;
 }
 
+// Cover 保存用に YouTube URL を正規化する。
+// t（タイムスタンプ）・si（共有トラッキング）・list（再生リスト）等の付随パラメータを落とし、
+// videoId のみのクリーンな watch URL にする。YouTube 以外の URL は trim のみ。
+// タイムスタンプは timestampSeconds フィールドで保持するため sourceUrl に埋め込まない。
+export function normalizeYouTubeSourceUrl(rawUrl: string): string {
+  const videoId = extractYouTubeVideoId(rawUrl);
+  if (!videoId) {
+    return rawUrl.trim();
+  }
+  return `https://www.youtube.com/watch?v=${videoId}`;
+}
+
 const CHANNEL_ID_PATTERN = /^UC[A-Za-z0-9_-]{20,}$/;
 
 export type YouTubeChannelRef =

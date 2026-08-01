@@ -106,13 +106,23 @@ export function parseTimestampToSeconds(value: string): number | null {
   return hours * 3600 + minutes * 60 + seconds;
 }
 
+// 表示・外部リンク用に sourceUrl へタイムスタンプ（t=秒数）を付与する。
+// 既に t= を含む URL でも二重に付かないよう、URL API で置き換える。
 export function withTimestamp(sourceUrl: string, timestampSeconds: number | null | undefined) {
   if (timestampSeconds == null) {
     return sourceUrl;
   }
 
-  const separator = sourceUrl.includes("?") ? "&" : "?";
-  return `${sourceUrl}${separator}t=${timestampSeconds}`;
+  try {
+    const url = new URL(sourceUrl);
+    url.searchParams.set("t", String(timestampSeconds));
+    return url.toString();
+  } catch {
+    // URL として解釈できない場合は、既存の t= を除去してから付与する。
+    const withoutTimestamp = sourceUrl.replace(/([?&])t=[^&]*/g, "$1").replace(/[?&]+$/, "");
+    const separator = withoutTimestamp.includes("?") ? "&" : "?";
+    return `${withoutTimestamp}${separator}t=${timestampSeconds}`;
+  }
 }
 
 const OPTIMIZABLE_IMAGE_HOSTS = new Set(["img.youtube.com", "i.ytimg.com"]);

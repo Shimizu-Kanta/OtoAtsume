@@ -12,7 +12,7 @@ import { syncCandidateStatusForVideo } from "@/lib/crawl/candidate-status";
 import { db } from "@/lib/db";
 import { pageSkip, paginate } from "@/lib/pagination";
 import { normalizeNames } from "@/lib/utils";
-import { extractYouTubeVideoId } from "@/lib/youtube";
+import { extractYouTubeVideoId, normalizeYouTubeSourceUrl } from "@/lib/youtube";
 import type {
   AdminCoverEditInput,
   CoverCreateInput,
@@ -221,10 +221,13 @@ export async function getLatestCovers(take = 8) {
   return items;
 }
 
-export async function getOtherCoversBySourceUrl(sourceUrl: string, excludeCoverId: string) {
+// 同じ配信・ライブ（同一動画）の他の歌唱記録を、タイムスタンプ順で返す。
+// sourceUrl の文字列一致ではなく sourceVideoId で突合するため、
+// t=・si=・list= などクエリパラメータのわずかな違いに影響されない。
+export async function getOtherCoversBySourceVideoId(sourceVideoId: string, excludeCoverId: string) {
   return db.cover.findMany({
     where: {
-      sourceUrl,
+      sourceVideoId,
       status: ContentStatus.APPROVED,
       id: { not: excludeCoverId }
     },
@@ -273,9 +276,14 @@ export async function getCoverRelationCounts(cover: {
   id: string;
   songId: string;
   sourceUrl: string;
+  sourceVideoId: string | null;
   performers: { performerId: string }[];
 }) {
   const performerIds = cover.performers.map((performer) => performer.performerId);
+  // 同一動画は sourceVideoId で数える（URL 表記揺れの影響を受けない）。
+  const sourceMatch = cover.sourceVideoId
+    ? { sourceVideoId: cover.sourceVideoId }
+    : { sourceUrl: cover.sourceUrl };
 
   const [sameSongCount, samePerformerCount, sameSourceCount] = await Promise.all([
     db.cover.count({
@@ -291,7 +299,7 @@ export async function getCoverRelationCounts(cover: {
         })
       : Promise.resolve(0),
     db.cover.count({
-      where: { status: ContentStatus.APPROVED, id: { not: cover.id }, sourceUrl: cover.sourceUrl }
+      where: { status: ContentStatus.APPROVED, id: { not: cover.id }, ...sourceMatch }
     })
   ]);
 
@@ -309,6 +317,7 @@ export async function getIndexableCoverSitemapEntries() {
       updatedAt: true,
       songId: true,
       sourceUrl: true,
+      sourceVideoId: true,
       performers: { select: { performerId: true } }
     }
   });
@@ -316,10 +325,14 @@ export async function getIndexableCoverSitemapEntries() {
   const songCounts = new Map<string, number>();
   const sourceCounts = new Map<string, number>();
   const performerToCoverIds = new Map<string, string[]>();
+  // 同一動画は sourceVideoId でまとめる（無ければ sourceUrl をキーにする）。
+  const sourceKeyOf = (cover: { sourceVideoId: string | null; sourceUrl: string }) =>
+    cover.sourceVideoId ?? cover.sourceUrl;
 
   for (const cover of covers) {
     songCounts.set(cover.songId, (songCounts.get(cover.songId) ?? 0) + 1);
-    sourceCounts.set(cover.sourceUrl, (sourceCounts.get(cover.sourceUrl) ?? 0) + 1);
+    const sourceKey = sourceKeyOf(cover);
+    sourceCounts.set(sourceKey, (sourceCounts.get(sourceKey) ?? 0) + 1);
     for (const { performerId } of cover.performers) {
       const list = performerToCoverIds.get(performerId) ?? [];
       list.push(cover.id);
@@ -330,7 +343,7 @@ export async function getIndexableCoverSitemapEntries() {
   return covers
     .filter((cover) => {
       const sameSongCount = (songCounts.get(cover.songId) ?? 1) - 1;
-      const sameSourceCount = (sourceCounts.get(cover.sourceUrl) ?? 1) - 1;
+      const sameSourceCount = (sourceCounts.get(sourceKeyOf(cover)) ?? 1) - 1;
 
       const relatedCoverIds = new Set<string>();
       for (const { performerId } of cover.performers) {
@@ -580,9 +593,16 @@ export async function findPotentialDuplicateCovers(input: {
   performedAt: Date;
   timestampSeconds?: number;
 }) {
+  // 同一動画は sourceVideoId で突合する（t=・si= 等の違いで重複を見逃さない）。
+  // YouTube 以外の URL は videoId が取れないため sourceUrl の完全一致にフォールバックする。
+  const sourceVideoId = extractYouTubeVideoId(input.sourceUrl);
+  const sourceMatch = sourceVideoId
+    ? { sourceVideoId }
+    : { sourceUrl: normalizeYouTubeSourceUrl(input.sourceUrl) };
+
   const candidates = await db.cover.findMany({
     where: {
-      sourceUrl: input.sourceUrl,
+      ...sourceMatch,
       songId: input.songId,
       performedAt: input.performedAt,
       ...(input.timestampSeconds == null ? {} : { timestampSeconds: input.timestampSeconds }),
@@ -730,6 +750,10 @@ export async function createCover(input: CoverCreateInput) {
     throw new Error("原曲アーティストを指定してください。");
   }
 
+  // 保存直前に sourceUrl を正規化し、内部一致判定用の sourceVideoId を同じ値から導出する。
+  const sourceUrl = normalizeYouTubeSourceUrl(input.sourceUrl);
+  const sourceVideoId = extractYouTubeVideoId(sourceUrl);
+
   return db.$transaction(async (client) => {
     const song = await ensureSong(client, input.songTitle, artistNames);
     const performers = await ensurePerformers(client, input.performerIds, performerNames);
@@ -743,8 +767,8 @@ export async function createCover(input: CoverCreateInput) {
         songId: song.id,
         performedAt: input.performedAt,
         coverType: input.coverType as CoverType,
-        sourceUrl: input.sourceUrl,
-        sourceVideoId: extractYouTubeVideoId(input.sourceUrl),
+        sourceUrl,
+        sourceVideoId,
         sourceTitle: input.sourceTitle,
         sourceImageUrl: input.sourceImageUrl,
         timestampSeconds: input.timestampSeconds,
@@ -759,7 +783,7 @@ export async function createCover(input: CoverCreateInput) {
     });
 
     // 登録実績から歌唱記録候補を自動完了（PENDING → ADOPTED）にする。
-    await syncCandidateStatusForVideo(client, input.sourceUrl, cover.id);
+    await syncCandidateStatusForVideo(client, sourceUrl, cover.id);
 
     return cover;
   });
@@ -792,7 +816,9 @@ export async function createBulkCovers(input: BulkCoverInput) {
     throw new Error("登録する曲を1行以上入力してください。");
   }
 
-  const sourceVideoId = extractYouTubeVideoId(input.sourceUrl);
+  // 保存直前に sourceUrl を正規化し、内部一致判定用の sourceVideoId を同じ値から導出する。
+  const sourceUrl = normalizeYouTubeSourceUrl(input.sourceUrl);
+  const sourceVideoId = extractYouTubeVideoId(sourceUrl);
 
   const commonPerformerNames = normalizeNames(input.commonPerformerNames ?? "");
 
@@ -824,7 +850,7 @@ export async function createBulkCovers(input: BulkCoverInput) {
           songId: song.id,
           performedAt: input.performedAt,
           coverType: input.coverType as CoverType,
-          sourceUrl: input.sourceUrl,
+          sourceUrl,
           sourceVideoId,
           sourceTitle: input.sourceTitle,
           sourceImageUrl: input.sourceImageUrl,
@@ -839,7 +865,7 @@ export async function createBulkCovers(input: BulkCoverInput) {
     }
 
     // 一括登録は複数の Cover を作るが、候補の自動完了判定は1回でよい。
-    await syncCandidateStatusForVideo(client, input.sourceUrl, created[0]?.id);
+    await syncCandidateStatusForVideo(client, sourceUrl, created[0]?.id);
 
     return created;
   });
@@ -864,6 +890,10 @@ export async function updateAdminCover(id: string, input: AdminCoverEditInput) {
     throw new Error("原曲アーティストを指定してください。");
   }
 
+  // 管理画面での編集でも sourceUrl を正規化し、sourceVideoId を同期する。
+  const sourceUrl = normalizeYouTubeSourceUrl(input.sourceUrl);
+  const sourceVideoId = extractYouTubeVideoId(sourceUrl);
+
   return db.$transaction(async (client) => {
     const song = await ensureSong(client, input.songTitle, artistNames);
     const performers = await ensurePerformers(client, input.performerIds, performerNames);
@@ -878,7 +908,8 @@ export async function updateAdminCover(id: string, input: AdminCoverEditInput) {
         songId: song.id,
         performedAt: input.performedAt,
         coverType: input.coverType as CoverType,
-        sourceUrl: input.sourceUrl,
+        sourceUrl,
+        sourceVideoId,
         sourceTitle: input.sourceTitle ?? null,
         timestampSeconds: input.timestampSeconds ?? null,
         status: input.status as ContentStatus

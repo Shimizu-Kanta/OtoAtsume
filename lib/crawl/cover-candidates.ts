@@ -121,7 +121,7 @@ export function classifyVideo(
 
 async function alreadyKnown(videoId: string): Promise<boolean> {
   const [existingCover, existingCandidate] = await Promise.all([
-    db.cover.findFirst({ where: { sourceUrl: { contains: videoId } }, select: { id: true } }),
+    db.cover.findFirst({ where: { sourceVideoId: videoId }, select: { id: true } }),
     db.coverCandidate.findUnique({ where: { videoId }, select: { id: true } })
   ]);
 
