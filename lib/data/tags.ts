@@ -11,21 +11,39 @@ export async function listTags() {
   });
 }
 
-export async function listAdminTags(page = 1, perPage = 50) {
+export type AdminTagSort = "nameAsc" | "performerCountDesc" | "performerCountAsc";
+export type AdminTagSearch = { query?: string; sort?: AdminTagSort };
+
+function adminTagOrderBy(sort: AdminTagSort | undefined): Prisma.TagOrderByWithRelationInput[] {
+  if (sort === "performerCountDesc") {
+    return [{ performers: { _count: "desc" } }, { name: "asc" }];
+  }
+  if (sort === "performerCountAsc") {
+    return [{ performers: { _count: "asc" } }, { name: "asc" }];
+  }
+  return [{ name: "asc" }];
+}
+
+export async function listAdminTags(search: AdminTagSearch = {}, page = 1, perPage = 50) {
   const { db } = await import("@/lib/db");
+  const trimmed = search.query?.trim();
+  const where: Prisma.TagWhereInput | undefined = trimmed
+    ? { name: { contains: trimmed, mode: Prisma.QueryMode.insensitive } }
+    : undefined;
 
   const [items, totalCount] = await Promise.all([
     db.tag.findMany({
+      where,
       include: {
         _count: {
           select: { performers: true }
         }
       },
-      orderBy: { name: "asc" },
+      orderBy: adminTagOrderBy(search.sort),
       skip: pageSkip(page, perPage),
       take: perPage
     }),
-    db.tag.count()
+    db.tag.count({ where })
   ]);
 
   return paginate(items, totalCount, page, perPage);
@@ -225,21 +243,41 @@ export async function listAllTagGroups() {
   });
 }
 
-export async function listAdminTagGroups(page = 1, perPage = 50) {
+export type AdminTagGroupSort = "sortOrderAsc" | "nameAsc" | "tagCountDesc";
+export type AdminTagGroupSearch = { query?: string; sort?: AdminTagGroupSort };
+
+function adminTagGroupOrderBy(
+  sort: AdminTagGroupSort | undefined
+): Prisma.TagGroupOrderByWithRelationInput[] {
+  if (sort === "nameAsc") {
+    return [{ name: "asc" }];
+  }
+  if (sort === "tagCountDesc") {
+    return [{ tags: { _count: "desc" } }, { name: "asc" }];
+  }
+  return [{ sortOrder: "asc" }, { name: "asc" }];
+}
+
+export async function listAdminTagGroups(search: AdminTagGroupSearch = {}, page = 1, perPage = 50) {
   const { db } = await import("@/lib/db");
+  const trimmed = search.query?.trim();
+  const where: Prisma.TagGroupWhereInput | undefined = trimmed
+    ? { name: { contains: trimmed, mode: Prisma.QueryMode.insensitive } }
+    : undefined;
 
   const [items, totalCount] = await Promise.all([
     db.tagGroup.findMany({
+      where,
       include: {
         _count: {
           select: { tags: true }
         }
       },
-      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+      orderBy: adminTagGroupOrderBy(search.sort),
       skip: pageSkip(page, perPage),
       take: perPage
     }),
-    db.tagGroup.count()
+    db.tagGroup.count({ where })
   ]);
 
   return paginate(items, totalCount, page, perPage);

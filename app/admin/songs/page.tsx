@@ -6,11 +6,11 @@ import { Pagination } from "@/components/pagination";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
 import { DeleteSubmitButton } from "@/components/admin/delete-submit-button";
+import { StandaloneArtistPicker } from "@/components/standalone-artist-picker";
 import { getSearchParam, parsePageParam } from "@/lib/utils";
 import { requireAdminPage } from "@/lib/auth/admin";
-import { listAdminSongs, listArtistOptions } from "@/lib/data/admin";
+import { listAdminSongs } from "@/lib/data/admin";
 import { parseOriginalUrlCandidates } from "@/lib/original-url-suggestions";
 import { createSongAction, deleteSongAction } from "./actions";
 import { FetchCandidatesButton } from "./fetch-candidates-button";
@@ -30,11 +30,12 @@ export default async function AdminSongsPage({
   await requireAdminPage();
   const params = await searchParams;
   const missingOriginalUrl = getSearchParam(params, "missing") === "originalUrl";
+  const query = getSearchParam(params, "q") ?? "";
   const page = parsePageParam(getSearchParam(params, "page"));
-  const [{ items: songs, totalCount, totalPages }, artists] = await Promise.all([
-    listAdminSongs({ missingOriginalUrl }, page),
-    listArtistOptions()
-  ]);
+  const { items: songs, totalCount, totalPages } = await listAdminSongs(
+    { missingOriginalUrl, query },
+    page
+  );
   const error = getSearchParam(params, "error");
   const deleted = getSearchParam(params, "deleted") === "1";
 
@@ -43,25 +44,27 @@ export default async function AdminSongsPage({
       <AdminNav />
       <PageHeading title="楽曲管理" description="楽曲マスタを追加・確認します。" />
 
-      <form action="/admin/songs" className="rounded-md border bg-card p-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <label className="inline-flex cursor-pointer items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              name="missing"
-              value="originalUrl"
-              defaultChecked={missingOriginalUrl}
-              className="size-4 accent-primary"
-            />
-            原曲URL未入力のみ表示
-          </label>
-          <div className="flex flex-wrap gap-2">
-            <Button type="submit">絞り込み</Button>
-            <Link href="/admin/songs" className="rounded-md border px-4 py-2 text-sm">
-              条件クリア
-            </Link>
+      <form action="/admin/songs" className="space-y-3 rounded-md border bg-card p-4">
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="flex-1 space-y-2">
+            <Label htmlFor="q">楽曲検索</Label>
+            <Input id="q" name="q" defaultValue={query} placeholder="楽曲名・アーティスト名で検索" />
           </div>
+          <Button type="submit">検索</Button>
+          <Link href="/admin/songs" className="rounded-md border px-4 py-2 text-sm">
+            条件クリア
+          </Link>
         </div>
+        <label className="inline-flex cursor-pointer items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            name="missing"
+            value="originalUrl"
+            defaultChecked={missingOriginalUrl}
+            className="size-4 accent-primary"
+          />
+          原曲URL未入力のみ表示
+        </label>
       </form>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -98,14 +101,8 @@ export default async function AdminSongsPage({
             <Input id="title" name="title" required />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="artistIds">原曲アーティスト</Label>
-            <Select id="artistIds" name="artistIds" multiple className="min-h-32">
-              {artists.map((artist) => (
-                <option key={artist.id} value={artist.id}>
-                  {artist.name}
-                </option>
-              ))}
-            </Select>
+            <Label htmlFor="artistNames">原曲アーティスト</Label>
+            <StandaloneArtistPicker name="artistNames" placeholder="アーティスト名（複数はカンマ区切り）" />
           </div>
           <div className="space-y-2 md:col-span-2">
             <Label htmlFor="originalUrl">原曲URL</Label>

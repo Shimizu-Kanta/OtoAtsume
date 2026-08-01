@@ -68,22 +68,30 @@ function songOrderBy(sort: SongSort | undefined): Prisma.SongOrderByWithRelation
   return [{ title: "asc" }];
 }
 
+// 楽曲名・アーティスト名の contains 検索 where。公開/管理の一覧で共用する。
+export function buildSongWhere(query: string | undefined): Prisma.SongWhereInput {
+  const trimmed = query?.trim();
+  if (!trimmed) {
+    return {};
+  }
+
+  return {
+    OR: [
+      { title: { contains: trimmed, mode: Prisma.QueryMode.insensitive } },
+      {
+        artists: {
+          some: {
+            artist: { name: { contains: trimmed, mode: Prisma.QueryMode.insensitive } }
+          }
+        }
+      }
+    ]
+  };
+}
+
 export async function getSongs(search: SongSearch = {}, page = 1, perPage = 20) {
   const trimmed = search.query?.trim();
-  const where: Prisma.SongWhereInput = trimmed
-    ? {
-        OR: [
-          { title: { contains: trimmed, mode: Prisma.QueryMode.insensitive } },
-          {
-            artists: {
-              some: {
-                artist: { name: { contains: trimmed, mode: Prisma.QueryMode.insensitive } }
-              }
-            }
-          }
-        ]
-      }
-    : {};
+  const where = buildSongWhere(trimmed);
 
   const [items, totalCount] = await Promise.all([
     db.song.findMany({
@@ -135,6 +143,93 @@ async function findSongsBySimilarity(query: string) {
     return songs.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
   } catch (error) {
     console.error("Song similarity search failed", error);
+    return [];
+  }
+}
+
+export type SongSuggestion = {
+  id: string;
+  title: string;
+  artistNames: string[];
+};
+
+function toSongSuggestion(song: {
+  id: string;
+  title: string;
+  artists: { artist: { name: string } }[];
+}): SongSuggestion {
+  return {
+    id: song.id,
+    title: song.title,
+    artistNames: song.artists.map(({ artist }) => artist.name)
+  };
+}
+
+// 楽曲名サジェスト。contains 検索を優先し、不足分は pg_trgm 類似検索で補う。
+export async function suggestSongs(query: string, limit = 8): Promise<SongSuggestion[]> {
+  const trimmed = query.trim();
+  if (!trimmed) {
+    return [];
+  }
+
+  const include = { artists: { include: { artist: true } } } satisfies Prisma.SongInclude;
+
+  const contains = await db.song.findMany({
+    where: { title: { contains: trimmed, mode: Prisma.QueryMode.insensitive } },
+    include,
+    orderBy: { title: "asc" },
+    take: limit
+  });
+
+  const byId = new Map(contains.map((song) => [song.id, song]));
+
+  if (contains.length < limit) {
+    const similar = await findSongsBySimilarity(trimmed);
+    for (const song of similar) {
+      if (!byId.has(song.id)) {
+        byId.set(song.id, song);
+      }
+      if (byId.size >= limit) {
+        break;
+      }
+    }
+  }
+
+  return Array.from(byId.values())
+    .slice(0, limit)
+    .map(toSongSuggestion);
+}
+
+// 表記ゆれ抑止の警告用。類似度が閾値以上の既存楽曲を返す。
+export async function findSimilarSongs(query: string, threshold = 0.6): Promise<SongSuggestion[]> {
+  const trimmed = query.trim();
+  if (!trimmed) {
+    return [];
+  }
+
+  try {
+    const rows = await db.$queryRaw<Array<{ id: string }>>`
+      SELECT id
+      FROM "songs"
+      WHERE similarity(title, ${trimmed}) >= ${threshold}
+      ORDER BY similarity(title, ${trimmed}) DESC
+      LIMIT 5
+    `;
+    if (rows.length === 0) {
+      return [];
+    }
+
+    const ids = rows.map((row) => row.id);
+    const songs = await db.song.findMany({
+      where: { id: { in: ids } },
+      include: { artists: { include: { artist: true } } }
+    });
+    const order = new Map(ids.map((id, index) => [id, index]));
+    return songs
+      .sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0))
+      .map(toSongSuggestion);
+  } catch (error) {
+    console.error("Song similarity warning failed", error);
     return [];
   }
 }

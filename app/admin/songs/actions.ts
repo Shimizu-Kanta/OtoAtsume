@@ -12,7 +12,8 @@ export async function createSongAction(formData: FormData) {
   const parsed = songCreateSchema.safeParse({
     title: formData.get("title"),
     originalUrl: formData.get("originalUrl"),
-    artistIds: formData.getAll("artistIds").map(String).filter(Boolean)
+    artistIds: formData.getAll("artistIds").map(String).filter(Boolean),
+    artistNames: formData.get("artistNames")
   });
 
   if (!parsed.success) {

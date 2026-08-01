@@ -7,6 +7,7 @@ import {
 
 import { db } from "@/lib/db";
 import { coverDetailInclude, coverListInclude } from "@/lib/data/covers";
+import { buildSongWhere } from "@/lib/data/songs";
 import { replacePerformerTags } from "@/lib/data/tags";
 import { pageSkip, paginate } from "@/lib/pagination";
 import { normalizeNames } from "@/lib/utils";
@@ -411,12 +412,20 @@ export async function deleteAdminPerformerIfUnused(id: string, confirmName: stri
 
 export type AdminSongSearch = {
   missingOriginalUrl?: boolean;
+  query?: string;
 };
 
 export async function listAdminSongs(search: AdminSongSearch = {}, page = 1, perPage = 50) {
-  const where: Prisma.SongWhereInput | undefined = search.missingOriginalUrl
-    ? { originalUrl: null }
-    : undefined;
+  const conditions: Prisma.SongWhereInput[] = [];
+  if (search.missingOriginalUrl) {
+    conditions.push({ originalUrl: null });
+  }
+  const searchWhere = buildSongWhere(search.query);
+  if (Object.keys(searchWhere).length > 0) {
+    conditions.push(searchWhere);
+  }
+  const where: Prisma.SongWhereInput | undefined =
+    conditions.length > 0 ? { AND: conditions } : undefined;
 
   const [items, totalCount] = await Promise.all([
     db.song.findMany({
@@ -461,15 +470,30 @@ export async function createAdminSong(input: {
   title: string;
   originalUrl?: string;
   artistIds?: string[];
+  artistNames?: string;
 }) {
-  return db.song.create({
-    data: {
-      title: input.title,
-      originalUrl: input.originalUrl,
-      artists: {
-        create: (input.artistIds ?? []).map((artistId) => ({ artistId }))
-      }
+  return db.$transaction(async (client) => {
+    const artistIds = new Set(input.artistIds ?? []);
+
+    // アーティスト名（ArtistPicker のテキスト入力）を upsert して ID を集める
+    for (const name of normalizeNames(input.artistNames)) {
+      const artist = await client.artist.upsert({
+        where: { name },
+        create: { name },
+        update: {}
+      });
+      artistIds.add(artist.id);
     }
+
+    return client.song.create({
+      data: {
+        title: input.title,
+        originalUrl: input.originalUrl,
+        artists: {
+          create: Array.from(artistIds).map((artistId) => ({ artistId }))
+        }
+      }
+    });
   });
 }
 
@@ -540,19 +564,42 @@ export async function updateAdminSong(
   });
 }
 
-export async function listAdminArtists(page = 1, perPage = 50) {
+export type AdminArtistSort = "nameAsc" | "songCountDesc" | "songCountAsc";
+
+export type AdminArtistSearch = {
+  query?: string;
+  sort?: AdminArtistSort;
+};
+
+function adminArtistOrderBy(sort: AdminArtistSort | undefined): Prisma.ArtistOrderByWithRelationInput[] {
+  if (sort === "songCountDesc") {
+    return [{ songs: { _count: "desc" } }, { name: "asc" }];
+  }
+  if (sort === "songCountAsc") {
+    return [{ songs: { _count: "asc" } }, { name: "asc" }];
+  }
+  return [{ name: "asc" }];
+}
+
+export async function listAdminArtists(search: AdminArtistSearch = {}, page = 1, perPage = 50) {
+  const trimmed = search.query?.trim();
+  const where: Prisma.ArtistWhereInput | undefined = trimmed
+    ? { name: { contains: trimmed, mode: Prisma.QueryMode.insensitive } }
+    : undefined;
+
   const [items, totalCount] = await Promise.all([
     db.artist.findMany({
+      where,
       include: {
         _count: {
           select: { songs: true }
         }
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: adminArtistOrderBy(search.sort),
       skip: pageSkip(page, perPage),
       take: perPage
     }),
-    db.artist.count()
+    db.artist.count({ where })
   ]);
 
   return paginate(items, totalCount, page, perPage);

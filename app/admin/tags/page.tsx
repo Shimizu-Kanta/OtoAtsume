@@ -6,13 +6,18 @@ import { Pagination } from "@/components/pagination";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
 import { DeleteSubmitButton } from "@/components/admin/delete-submit-button";
 import { requireAdminPage } from "@/lib/auth/admin";
-import { listAdminTags } from "@/lib/data/tags";
+import { listAdminTags, type AdminTagSort } from "@/lib/data/tags";
 import { getSearchParam, parsePageParam } from "@/lib/utils";
 import { createTagAction, deleteTagAction, updateTagAction } from "./actions";
 
 export const dynamic = "force-dynamic";
+
+function normalizeTagSort(value: string | undefined): AdminTagSort {
+  return value === "performerCountDesc" || value === "performerCountAsc" ? value : "nameAsc";
+}
 
 export default async function AdminTagsPage({
   searchParams
@@ -22,7 +27,9 @@ export default async function AdminTagsPage({
   await requireAdminPage();
   const params = await searchParams;
   const page = parsePageParam(getSearchParam(params, "page"));
-  const { items: tags, totalCount, totalPages } = await listAdminTags(page);
+  const query = getSearchParam(params, "q") ?? "";
+  const sort = normalizeTagSort(getSearchParam(params, "sort"));
+  const { items: tags, totalCount, totalPages } = await listAdminTags({ query, sort }, page);
   const error = getSearchParam(params, "error");
   const updated = getSearchParam(params, "updated") === "1";
   const deleted = getSearchParam(params, "deleted") === "1";
@@ -50,6 +57,25 @@ export default async function AdminTagsPage({
           タグを削除しました。
         </div>
       ) : null}
+
+      <form action="/admin/tags" className="flex flex-wrap items-end gap-3 rounded-md border bg-card p-4">
+        <div className="flex-1 space-y-2">
+          <Label htmlFor="q">タグ検索</Label>
+          <Input id="q" name="q" defaultValue={query} placeholder="タグ名で検索" />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="sort">並び替え</Label>
+          <Select id="sort" name="sort" defaultValue={sort}>
+            <option value="nameAsc">名前順</option>
+            <option value="performerCountDesc">活動者数が多い順</option>
+            <option value="performerCountAsc">活動者数が少ない順</option>
+          </Select>
+        </div>
+        <Button type="submit">検索</Button>
+        <Link href="/admin/tags" className="rounded-md border px-4 py-2 text-sm">
+          条件クリア
+        </Link>
+      </form>
 
       <form action={createTagAction} className="rounded-md border bg-card p-5">
         <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-end">

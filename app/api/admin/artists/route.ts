@@ -13,7 +13,7 @@ export async function GET() {
     return auth.response;
   }
 
-  const { items: artists, totalCount, page, totalPages } = await listAdminArtists();
+  const { items: artists, totalCount, page, totalPages } = await listAdminArtists({});
   return NextResponse.json({ artists, totalCount, page, totalPages });
 }
 

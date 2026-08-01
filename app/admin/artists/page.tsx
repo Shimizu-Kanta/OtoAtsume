@@ -5,13 +5,18 @@ import { Pagination } from "@/components/pagination";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
 import { DeleteSubmitButton } from "@/components/admin/delete-submit-button";
 import { getSearchParam, parsePageParam } from "@/lib/utils";
 import { requireAdminPage } from "@/lib/auth/admin";
-import { listAdminArtists } from "@/lib/data/admin";
+import { listAdminArtists, type AdminArtistSort } from "@/lib/data/admin";
 import { createArtistAction, deleteArtistAction } from "./actions";
 
 export const dynamic = "force-dynamic";
+
+function normalizeArtistSort(value: string | undefined): AdminArtistSort {
+  return value === "songCountDesc" || value === "songCountAsc" ? value : "nameAsc";
+}
 
 export default async function AdminArtistsPage({
   searchParams
@@ -21,7 +26,9 @@ export default async function AdminArtistsPage({
   await requireAdminPage();
   const params = await searchParams;
   const page = parsePageParam(getSearchParam(params, "page"));
-  const { items: artists, totalCount, totalPages } = await listAdminArtists(page);
+  const query = getSearchParam(params, "q") ?? "";
+  const sort = normalizeArtistSort(getSearchParam(params, "sort"));
+  const { items: artists, totalCount, totalPages } = await listAdminArtists({ query, sort }, page);
   const error = getSearchParam(params, "error");
   const deleted = getSearchParam(params, "deleted") === "1";
 
@@ -48,6 +55,25 @@ export default async function AdminArtistsPage({
           <Input id="name" name="name" required />
         </div>
         <Button type="submit">追加</Button>
+      </form>
+
+      <form action="/admin/artists" className="flex flex-wrap items-end gap-3 rounded-md border bg-card p-4">
+        <div className="flex-1 space-y-2">
+          <Label htmlFor="q">アーティスト検索</Label>
+          <Input id="q" name="q" defaultValue={query} placeholder="アーティスト名で検索" />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="sort">並び替え</Label>
+          <Select id="sort" name="sort" defaultValue={sort}>
+            <option value="nameAsc">名前順</option>
+            <option value="songCountDesc">楽曲数が多い順</option>
+            <option value="songCountAsc">楽曲数が少ない順</option>
+          </Select>
+        </div>
+        <Button type="submit">検索</Button>
+        <Link href="/admin/artists" className="rounded-md border px-4 py-2 text-sm">
+          条件クリア
+        </Link>
       </form>
 
       <p className="text-sm text-muted-foreground">

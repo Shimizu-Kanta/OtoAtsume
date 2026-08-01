@@ -7,12 +7,17 @@ import { Pagination } from "@/components/pagination";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
 import { requireAdminPage } from "@/lib/auth/admin";
-import { listAdminTagGroups } from "@/lib/data/tags";
+import { listAdminTagGroups, type AdminTagGroupSort } from "@/lib/data/tags";
 import { getSearchParam, parsePageParam } from "@/lib/utils";
 import { createTagGroupAction, deleteTagGroupAction, updateTagGroupAction } from "./actions";
 
 export const dynamic = "force-dynamic";
+
+function normalizeTagGroupSort(value: string | undefined): AdminTagGroupSort {
+  return value === "nameAsc" || value === "tagCountDesc" ? value : "sortOrderAsc";
+}
 
 export default async function AdminTagGroupsPage({
   searchParams
@@ -22,7 +27,9 @@ export default async function AdminTagGroupsPage({
   await requireAdminPage();
   const params = await searchParams;
   const page = parsePageParam(getSearchParam(params, "page"));
-  const { items: groups, totalCount, totalPages } = await listAdminTagGroups(page);
+  const query = getSearchParam(params, "q") ?? "";
+  const sort = normalizeTagGroupSort(getSearchParam(params, "sort"));
+  const { items: groups, totalCount, totalPages } = await listAdminTagGroups({ query, sort }, page);
   const error = getSearchParam(params, "error");
   const updated = getSearchParam(params, "updated") === "1";
   const deleted = getSearchParam(params, "deleted") === "1";
@@ -50,6 +57,25 @@ export default async function AdminTagGroupsPage({
           グループを削除しました（タグ自体は削除されていません）。
         </div>
       ) : null}
+
+      <form action="/admin/tag-groups" className="flex flex-wrap items-end gap-3 rounded-md border bg-card p-4">
+        <div className="flex-1 space-y-2">
+          <Label htmlFor="q">グループ検索</Label>
+          <Input id="q" name="q" defaultValue={query} placeholder="グループ名で検索" />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="sort">並び替え</Label>
+          <Select id="sort" name="sort" defaultValue={sort}>
+            <option value="sortOrderAsc">表示順</option>
+            <option value="nameAsc">名前順</option>
+            <option value="tagCountDesc">所属タグ数が多い順</option>
+          </Select>
+        </div>
+        <Button type="submit">検索</Button>
+        <Link href="/admin/tag-groups" className="rounded-md border px-4 py-2 text-sm">
+          条件クリア
+        </Link>
+      </form>
 
       <form action={createTagGroupAction} className="rounded-md border bg-card p-5">
         <div className="grid gap-3 md:grid-cols-[1fr_160px_auto] md:items-end">
