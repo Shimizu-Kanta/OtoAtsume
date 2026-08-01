@@ -20,7 +20,7 @@ import {
   type CoverListItem
 } from "@/lib/data/covers";
 import { evaluateCoverQuality } from "@/lib/content-quality";
-import { cn, formatDate, formatSeconds, withTimestamp } from "@/lib/utils";
+import { cn, formatDate, formatDateInput, formatSeconds, withTimestamp } from "@/lib/utils";
 import { getYouTubeThumbnailUrl } from "@/lib/youtube";
 import type { Metadata } from "next";
 
@@ -146,8 +146,15 @@ export default async function CoverDetailPage({ params, searchParams }: CoverDet
         ]}
       />
       {created ? (
-        <div className="rounded-3xl border border-secondary/40 bg-secondary/20 p-4 text-sm font-medium text-secondary-foreground shadow-sm">
-          カバー記録を登録しました。
+        <div className="flex flex-col gap-3 rounded-3xl border border-secondary/40 bg-secondary/20 p-4 text-sm font-medium text-secondary-foreground shadow-sm sm:flex-row sm:items-center sm:justify-between">
+          <span>カバー記録を登録しました。</span>
+          <Link
+            href={buildContinueRegistrationHref(cover)}
+            className={cn(buttonVariants({ size: "sm" }), "w-full sm:w-auto")}
+          >
+            <Music2 className="size-4" aria-hidden="true" />
+            同じ動画から続けて登録
+          </Link>
         </div>
       ) : null}
       {reported ? (
@@ -382,6 +389,27 @@ function RelatedCoversSection({
       </CoverCarousel>
     </section>
   );
+}
+
+// 連続登録用リンク。楽曲とタイムスタンプ以外（URL・タイトル・歌唱日・種別・活動者）を引き継ぐ。
+function buildContinueRegistrationHref(cover: {
+  sourceUrl: string;
+  sourceTitle: string | null;
+  performedAt: Date;
+  coverType: string;
+  performers: { performer: { id: string } }[];
+}) {
+  const params = new URLSearchParams();
+  params.set("sourceUrl", cover.sourceUrl);
+  if (cover.sourceTitle) {
+    params.set("sourceTitle", cover.sourceTitle);
+  }
+  params.set("performedAt", formatDateInput(cover.performedAt));
+  params.set("coverType", cover.coverType);
+  for (const { performer } of cover.performers) {
+    params.append("performerIds", performer.id);
+  }
+  return `/covers/new?${params.toString()}`;
 }
 
 function InfoCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {

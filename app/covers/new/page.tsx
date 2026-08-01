@@ -13,10 +13,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { coverTypeOptions } from "@/lib/constants";
 import { getPerformerOptions } from "@/lib/data/performers";
 import { getCaptchaSiteKey, isCaptchaRequired } from "@/lib/security/captcha";
-import { getSearchParam } from "@/lib/utils";
+import { getSearchParam, getSearchParamAll } from "@/lib/utils";
 import { createCoverAction } from "./actions";
 
 export const dynamic = "force-dynamic";
+
+function normalizeCoverType(value: string | undefined) {
+  return coverTypeOptions.some((option) => option.value === value) ? value : undefined;
+}
 
 export default async function NewCoverPage({
   searchParams
@@ -27,6 +31,11 @@ export default async function NewCoverPage({
   const error = getSearchParam(params, "error");
   const initialSourceUrl = getSearchParam(params, "sourceUrl");
   const autoFetchMetadata = Boolean(initialSourceUrl && getSearchParam(params, "autoFetch") === "1");
+  // 連続登録（同じ動画から続けて登録）での引き継ぎ値
+  const initialSourceTitle = getSearchParam(params, "sourceTitle");
+  const initialPerformedAt = getSearchParam(params, "performedAt");
+  const initialCoverType = normalizeCoverType(getSearchParam(params, "coverType"));
+  const initialPerformerIds = getSearchParamAll(params, "performerIds");
   const performers = await getPerformerOptions();
 
   return (
@@ -88,7 +97,7 @@ export default async function NewCoverPage({
           <div className="grid gap-4 lg:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="performerIds">既存の活動者</Label>
-              <PerformerPicker performers={performers} />
+              <PerformerPicker performers={performers} defaultSelectedIds={initialPerformerIds} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="performerNames">活動者名を直接入力</Label>
@@ -117,11 +126,17 @@ export default async function NewCoverPage({
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="performedAt">歌唱日</Label>
-              <Input id="performedAt" name="performedAt" type="date" required />
+              <Input
+                id="performedAt"
+                name="performedAt"
+                type="date"
+                required
+                defaultValue={initialPerformedAt ?? ""}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="coverType">歌唱種別</Label>
-              <Select id="coverType" name="coverType" required defaultValue="COVER_VIDEO">
+              <Select id="coverType" name="coverType" required defaultValue={initialCoverType ?? "COVER_VIDEO"}>
                 {coverTypeOptions.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
@@ -131,7 +146,7 @@ export default async function NewCoverPage({
             </div>
             <div className="space-y-2">
               <Label htmlFor="sourceTitle">配信・動画・ライブ名</Label>
-              <Input id="sourceTitle" name="sourceTitle" placeholder="任意" />
+              <Input id="sourceTitle" name="sourceTitle" placeholder="任意" defaultValue={initialSourceTitle ?? ""} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="timestampSeconds">タイムスタンプ秒数</Label>
