@@ -188,7 +188,7 @@ export default async function AdminCoverCandidatesPage({
       {items.length > 0 ? (
         <div className="grid gap-4 lg:grid-cols-2">
           {items.map((candidate) => (
-            <article key={candidate.id} className="overflow-hidden rounded-3xl border border-primary/10 bg-card/90 shadow-sm">
+            <article key={candidate.id} className="overflow-hidden rounded-3xl border border-rule bg-panel shadow-sm">
               <a href={candidate.videoUrl} target="_blank" rel="noreferrer" className="block">
                 {candidate.thumbnailUrl ? (
                   <Image
@@ -286,7 +286,7 @@ export default async function AdminCoverCandidatesPage({
           ))}
         </div>
       ) : (
-        <div className="rounded-3xl border border-primary/10 bg-card/90 p-6 text-sm text-muted-foreground shadow-sm">
+        <div className="rounded-3xl border border-rule bg-panel p-6 text-sm text-muted-foreground shadow-sm">
           この状態の候補はありません。
         </div>
       )}

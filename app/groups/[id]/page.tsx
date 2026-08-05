@@ -92,7 +92,7 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
         ]}
       />
 
-      <section className="overflow-hidden rounded-[2rem] border border-primary/10 bg-card/90 shadow-sm">
+      <section className="overflow-hidden rounded-[2rem] border border-rule bg-panel shadow-sm">
         <div className="bg-primary/10 p-5 sm:p-7">
           <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
             <div className="min-w-0">
@@ -152,7 +152,7 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
             ))}
           </div>
         ) : (
-          <div className="rounded-3xl border border-primary/10 bg-card/90 p-6 text-sm text-muted-foreground shadow-sm">
+          <div className="rounded-3xl border border-rule bg-panel p-6 text-sm text-muted-foreground shadow-sm">
             このグループに所属する活動者はまだ登録されていません。
           </div>
         )}
@@ -193,7 +193,7 @@ function GroupCoverSection({
           ))}
         </CoverCarousel>
       ) : (
-        <div className="rounded-3xl border border-primary/10 bg-card/90 p-5 text-sm text-muted-foreground shadow-sm">
+        <div className="rounded-3xl border border-rule bg-panel p-5 text-sm text-muted-foreground shadow-sm">
           {emptyMessage}
         </div>
       )}

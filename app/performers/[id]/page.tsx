@@ -120,7 +120,7 @@ export default async function PerformerDetailPage({ params }: { params: Promise<
       />
 
       <section
-        className="overflow-hidden rounded-[2rem] border border-primary/10 bg-card/90 shadow-sm"
+        className="overflow-hidden rounded-[2rem] border border-rule bg-panel shadow-sm"
         style={{
           borderTopColor: performer.colorCode ?? undefined,
           borderTopWidth: performer.colorCode ? 5 : undefined,
@@ -185,7 +185,7 @@ export default async function PerformerDetailPage({ params }: { params: Promise<
       </section>
 
       <section className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
-        <div className="rounded-3xl border border-primary/10 bg-card/90 p-5 shadow-sm">
+        <div className="rounded-3xl border border-rule bg-panel p-5 shadow-sm">
           <h2 className="text-lg font-bold tracking-tight">プロフィール</h2>
           <dl className="mt-4 space-y-4">
             <InfoItem
@@ -242,7 +242,7 @@ export default async function PerformerDetailPage({ params }: { params: Promise<
           </dl>
         </div>
 
-        <div className="rounded-3xl border border-primary/10 bg-card/90 p-5 shadow-sm">
+        <div className="rounded-3xl border border-rule bg-panel p-5 shadow-sm">
           <h2 className="text-lg font-bold tracking-tight">リンク</h2>
           <div className="mt-4 space-y-3">
             <ExternalLinkRow label="YouTube URL" href={performer.youtubeUrl} />
@@ -252,7 +252,7 @@ export default async function PerformerDetailPage({ params }: { params: Promise<
       </section>
 
       {stats.totalCoverCount > 0 ? (
-        <section className="rounded-3xl border border-primary/10 bg-card/90 p-5 shadow-sm">
+        <section className="rounded-3xl border border-rule bg-panel p-5 shadow-sm">
           <h2 className="text-lg font-bold tracking-tight">歌唱傾向</h2>
           <p className="mt-3 text-sm leading-7 text-foreground">{summary}</p>
           <div className="mt-4 flex flex-wrap gap-2">
@@ -281,7 +281,7 @@ export default async function PerformerDetailPage({ params }: { params: Promise<
           <Badge variant="default">{performer.covers.length}件</Badge>
         </div>
 
-        <div className="overflow-hidden rounded-3xl border border-primary/10 bg-card/90 shadow-sm">
+        <div className="overflow-hidden rounded-3xl border border-rule bg-panel shadow-sm">
           {performer.covers.length > 0 ? (
             <div className="divide-y">
               {performer.covers.map(({ cover }) => (
@@ -344,7 +344,7 @@ export default async function PerformerDetailPage({ params }: { params: Promise<
             {coPerformers.map((mate) => (
               <article
                 key={mate.id}
-                className="overflow-hidden rounded-3xl border border-primary/10 bg-card/90 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
+                className="overflow-hidden rounded-3xl border border-rule bg-panel shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
                 style={{
                   borderTopColor: mate.colorCode ?? undefined,
                   borderTopWidth: mate.colorCode ? 4 : undefined

@@ -95,7 +95,7 @@ export default async function SongDetailPage({ params }: { params: Promise<{ id:
         ]}
       />
 
-      <section className="overflow-hidden rounded-[2rem] border border-primary/10 bg-card/90 shadow-sm">
+      <section className="overflow-hidden rounded-[2rem] border border-rule bg-panel shadow-sm">
         <div className="bg-primary/10 p-5 sm:p-7">
           <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
             <div className="min-w-0">
@@ -147,7 +147,7 @@ export default async function SongDetailPage({ params }: { params: Promise<{ id:
       </section>
 
       {stats.totalCoverCount > 0 ? (
-        <section className="rounded-3xl border border-primary/10 bg-card/90 p-5 shadow-sm">
+        <section className="rounded-3xl border border-rule bg-panel p-5 shadow-sm">
           <h2 className="text-lg font-bold tracking-tight">この楽曲の歌唱データ</h2>
           <p className="mt-3 text-sm leading-7 text-foreground">{summary}</p>
           {stats.yearlyBreakdown.length > 0 ? (
@@ -162,7 +162,7 @@ export default async function SongDetailPage({ params }: { params: Promise<{ id:
         </section>
       ) : null}
 
-      <section className="rounded-3xl border border-primary/10 bg-card/90 p-5 shadow-sm">
+      <section className="rounded-3xl border border-rule bg-panel p-5 shadow-sm">
         <h2 className="text-lg font-bold tracking-tight">原曲リンク</h2>
         <div className="mt-4 rounded-2xl border bg-background/70 p-3">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Original URL</p>
@@ -197,7 +197,7 @@ export default async function SongDetailPage({ params }: { params: Promise<{ id:
           <Badge variant="default">{song.covers.length}件</Badge>
         </div>
 
-        <div className="overflow-hidden rounded-3xl border border-primary/10 bg-card/90 shadow-sm">
+        <div className="overflow-hidden rounded-3xl border border-rule bg-panel shadow-sm">
           {song.covers.length > 0 ? (
             <div className="divide-y">
               {song.covers.map((cover) => (
@@ -291,7 +291,7 @@ export default async function SongDetailPage({ params }: { params: Promise<{ id:
             {coOccurringSongs.map((coSong) => (
               <article
                 key={coSong.id}
-                className="overflow-hidden rounded-3xl border border-primary/10 bg-card/90 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
+                className="overflow-hidden rounded-3xl border border-rule bg-panel shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
               >
                 <div className="flex h-full flex-col gap-3 p-5">
                   <div className="min-w-0">
@@ -353,7 +353,7 @@ function RelatedSongCard({ song }: { song: SongListItem }) {
   const artists = song.artists.map(({ artist }) => artist.name).join(", ") || "アーティスト未設定";
 
   return (
-    <article className="overflow-hidden rounded-3xl border border-primary/10 bg-card/90 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md">
+    <article className="overflow-hidden rounded-3xl border border-rule bg-panel shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md">
       <div className="flex h-full flex-col gap-3 p-5">
         <div className="min-w-0">
           <Link
@@ -374,7 +374,7 @@ function RelatedSongCard({ song }: { song: SongListItem }) {
 
 function InfoCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="rounded-3xl border border-primary/10 bg-card/90 p-5 shadow-sm">
+    <div className="rounded-3xl border border-rule bg-panel p-5 shadow-sm">
       <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
         <span className="inline-flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
           {icon}

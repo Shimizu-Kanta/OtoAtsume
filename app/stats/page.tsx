@@ -51,7 +51,7 @@ export default async function StatsPage() {
         <p className="text-sm leading-7 text-muted-foreground">
           登録されている{stats.totals.coverCount.toLocaleString("ja-JP")}件の歌唱記録を種別ごとに集計しました。歌ってみた動画・歌枠・ライブなど、どの形式の歌唱が多く記録されているかを示しています。
         </p>
-        <div className="overflow-hidden rounded-3xl border border-primary/10 bg-card/90 shadow-sm">
+        <div className="overflow-hidden rounded-3xl border border-rule bg-panel shadow-sm">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b text-left text-muted-foreground">
@@ -76,7 +76,7 @@ export default async function StatsPage() {
         <p className="text-sm leading-7 text-muted-foreground">
           歌唱日をもとに、各年に何件の歌唱が記録されているかを集計しました。過去の歌唱をさかのぼって登録できるため、必ずしも登録日とは一致しません。
         </p>
-        <div className="overflow-hidden rounded-3xl border border-primary/10 bg-card/90 shadow-sm">
+        <div className="overflow-hidden rounded-3xl border border-rule bg-panel shadow-sm">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b text-left text-muted-foreground">
@@ -110,7 +110,7 @@ export default async function StatsPage() {
         <p className="text-sm leading-7 text-muted-foreground">
           直近12ヶ月間に新しく登録された歌唱記録の件数を月別に集計しました。登録がなかった月も0件として並べています。
         </p>
-        <div className="overflow-hidden rounded-3xl border border-primary/10 bg-card/90 shadow-sm">
+        <div className="overflow-hidden rounded-3xl border border-rule bg-panel shadow-sm">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b text-left text-muted-foreground">
@@ -150,7 +150,7 @@ export default async function StatsPage() {
 
 function StatCard({ icon: Icon, label, value }: { icon: typeof Database; label: string; value: number }) {
   return (
-    <div className="rounded-3xl border border-primary/10 bg-card/90 p-5 shadow-sm">
+    <div className="rounded-3xl border border-rule bg-panel p-5 shadow-sm">
       <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
         <span className="inline-flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
           <Icon className="size-4" aria-hidden="true" />

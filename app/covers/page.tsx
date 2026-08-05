@@ -78,7 +78,7 @@ export default async function CoversPage({
         }
       />
 
-      <form action="/covers" className="overflow-hidden rounded-3xl border border-primary/10 bg-card/90 p-5 shadow-sm">
+      <form action="/covers" className="overflow-hidden rounded-3xl border border-rule bg-panel p-5 shadow-sm">
         {safeView ? <input type="hidden" name="view" value={safeView} /> : null}
         <div className="mb-5 flex flex-col gap-2 border-b pb-4 sm:flex-row sm:items-end sm:justify-between">
           <div>

@@ -16,7 +16,7 @@ export function PendingPerformerNotice({ name }: { name: string }) {
         ]}
       />
 
-      <section className="flex flex-col items-center gap-4 rounded-[2rem] border border-primary/10 bg-card/90 p-10 text-center shadow-sm">
+      <section className="flex flex-col items-center gap-4 rounded-[2rem] border border-rule bg-panel p-10 text-center shadow-sm">
         <span className="inline-flex size-16 items-center justify-center rounded-full bg-primary/10 text-primary">
           <Clock className="size-8" aria-hidden="true" />
         </span>

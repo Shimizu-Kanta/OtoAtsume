@@ -8,7 +8,7 @@ export function PageHeading({
   actions?: React.ReactNode;
 }) {
   return (
-    <div className="mb-8 overflow-hidden rounded-3xl border border-primary/10 bg-card/90 p-5 shadow-sm md:flex md:items-end md:justify-between md:gap-6">
+    <div className="mb-8 overflow-hidden rounded-3xl border border-rule bg-panel p-5 shadow-sm md:flex md:items-end md:justify-between md:gap-6">
       <div className="min-w-0">
         <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">{title}</h1>
         {description ? (

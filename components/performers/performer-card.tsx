@@ -14,7 +14,7 @@ export type PerformerCardData = {
 export function PerformerCard({ performer }: { performer: PerformerCardData }) {
   return (
     <article
-      className="overflow-hidden rounded-3xl border border-primary/10 bg-card/90 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
+      className="overflow-hidden rounded-3xl border border-rule bg-panel shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
       style={{
         borderTopColor: performer.colorCode ?? undefined,
         borderTopWidth: performer.colorCode ? 4 : undefined,
