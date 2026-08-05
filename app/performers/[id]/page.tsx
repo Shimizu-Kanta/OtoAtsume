@@ -5,6 +5,7 @@ import { Cake, CalendarDays, ExternalLink, Music2, Palette, Tag, Users, Youtube 
 import { MasterDataStatus } from "@prisma/client";
 
 import { Breadcrumb } from "@/components/breadcrumb";
+import { LatestCoversFallback } from "@/components/covers/latest-covers-fallback";
 import { PendingPerformerNotice } from "@/components/performers/pending-performer-notice";
 import { PerformerCard } from "@/components/performers/performer-card";
 import { ShareButton } from "@/components/share-button";
@@ -20,10 +21,9 @@ import {
 } from "@/lib/data/performers";
 import { evaluatePerformerQuality } from "@/lib/content-quality";
 import { formatCoverTypeBreakdown, formatDateJp } from "@/lib/content-summary";
+import { siteUrl } from "@/lib/site-url";
 import { cn, formatDate, formatDateInput } from "@/lib/utils";
 import type { Metadata } from "next";
-
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://oto-atsume.com";
 
 export const revalidate = 3600;
 
@@ -193,13 +193,15 @@ export default async function PerformerDetailPage({ params }: { params: Promise<
               label="カラー"
               value={
                 performer.colorCode ? (
-                  <span className="inline-flex items-center gap-2">
-                    <span
-                      className="size-5 rounded-full border shadow-sm"
-                      style={{ backgroundColor: performer.colorCode }}
-                    />
-                    <span>{performer.colorCode}</span>
-                  </span>
+                  // Hexコードは可視テキストにせず、色見本(スウォッチ)で表示する。
+                  // 値は title / aria-label にのみ持たせ、検索インデックスに載らないようにする。
+                  <span
+                    role="img"
+                    aria-label={`イメージカラー ${performer.colorCode}`}
+                    title={performer.colorCode}
+                    className="inline-block size-5 rounded-full border align-middle shadow-sm"
+                    style={{ backgroundColor: performer.colorCode }}
+                  />
                 ) : (
                   "-"
                 )
@@ -420,6 +422,10 @@ export default async function PerformerDetailPage({ params }: { params: Promise<
             ))}
           </div>
         </section>
+      ) : null}
+
+      {coPerformers.length === 0 && taggedMates.length === 0 && groupMates.length === 0 ? (
+        <LatestCoversFallback />
       ) : null}
     </div>
   );

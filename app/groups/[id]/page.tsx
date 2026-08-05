@@ -17,10 +17,9 @@ import {
 } from "@/lib/data/groups";
 import { getGroupPerformerCount, getGroupPerformers } from "@/lib/data/performers";
 import { evaluateGroupQuality } from "@/lib/content-quality";
+import { siteUrl } from "@/lib/site-url";
 import { cn } from "@/lib/utils";
 import type { Metadata } from "next";
-
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://oto-atsume.com";
 
 export const revalidate = 3600;
 

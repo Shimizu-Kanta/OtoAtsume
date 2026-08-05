@@ -8,8 +8,7 @@ import {
 } from "@/lib/content-quality";
 import { getIndexableCoverSitemapEntries } from "@/lib/data/covers";
 import { db } from "@/lib/db";
-
-const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://oto-atsume.com").trim();
+import { siteUrl } from "@/lib/site-url";
 
 // Docker build (Dockerfile builder stage) runs `next build` without a
 // reachable DATABASE_URL, so this route must not be statically prerendered.

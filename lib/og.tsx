@@ -1,8 +1,8 @@
 import { ImageResponse } from "next/og";
 
-export const OG_SIZE = { width: 1200, height: 630 };
+import { siteUrl } from "@/lib/site-url";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://oto-atsume.com";
+export const OG_SIZE = { width: 1200, height: 630 };
 
 const FONT_FAMILY = "Noto Sans JP";
 const FONT_FETCH_TIMEOUT_MS = 5_000;

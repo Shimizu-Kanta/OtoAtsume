@@ -1,6 +1,5 @@
 import { getLatestCovers } from "@/lib/data/covers";
-
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://oto-atsume.com";
+import { siteUrl } from "@/lib/site-url";
 
 // Docker build 時はDBに到達できないため、ビルド時静的化を無効にする。
 export const dynamic = "force-dynamic";

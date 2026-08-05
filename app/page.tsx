@@ -13,9 +13,57 @@ import {
   type CoverListItem
 } from "@/lib/data/covers";
 import { getPublicStats } from "@/lib/data/stats";
+import { absoluteUrl, siteUrl } from "@/lib/site-url";
 import { cn, formatDateInput } from "@/lib/utils";
+import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
+
+// トップページはサイト名だけでなく、実際に検索されるキーワードを title に含める。
+// template("%s | おとあつめ")を適用させないため absolute で指定する。
+export const metadata: Metadata = {
+  title: {
+    absolute: "おとあつめ | VTuber・歌い手の歌ってみた・歌枠 歌唱記録データベース"
+  },
+  description:
+    "VTuber・配信者・歌い手の歌ってみた動画・歌枠・ライブでの歌唱記録を集めるデータベース。ユーザー登録なしで、楽曲・活動者・原曲アーティストから歌唱記録を探せます。",
+  openGraph: {
+    title: "おとあつめ | VTuber・歌い手の歌ってみた・歌枠 歌唱記録データベース"
+  },
+  twitter: {
+    title: "おとあつめ | VTuber・歌い手の歌ってみた・歌枠 歌唱記録データベース"
+  }
+};
+
+// トップページの構造化データ（WebSite: サイト内検索 / Organization: 運営者情報）。
+const homeJsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      name: "おとあつめ",
+      alternateName: "OtoAtsume",
+      url: siteUrl,
+      inLanguage: "ja",
+      description:
+        "VTuber・配信者・歌い手の歌ってみた・歌枠・ライブでの歌唱記録を集めるデータベース。",
+      potentialAction: {
+        "@type": "SearchAction",
+        target: {
+          "@type": "EntryPoint",
+          urlTemplate: `${siteUrl}/covers?song={search_term_string}`
+        },
+        "query-input": "required name=search_term_string"
+      }
+    },
+    {
+      "@type": "Organization",
+      name: "おとあつめ",
+      url: siteUrl,
+      logo: absoluteUrl("/icon.png")
+    }
+  ]
+};
 
 export default async function HomePage({
   searchParams
@@ -33,6 +81,10 @@ export default async function HomePage({
 
   return (
     <div className="space-y-10">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(homeJsonLd).replace(/</g, "\\u003c") }}
+      />
       <section className="overflow-hidden rounded-[2rem] border border-primary/10 bg-card/90 shadow-sm">
         <div className="grid gap-6 p-5 md:grid-cols-[1.3fr_0.7fr] md:p-8">
           <div className="flex min-w-0 flex-col justify-center">

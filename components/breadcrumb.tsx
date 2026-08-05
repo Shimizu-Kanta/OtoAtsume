@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://oto-atsume.com";
+import { absoluteUrl } from "@/lib/site-url";
 
 export type BreadcrumbItem = {
   name: string;
@@ -20,7 +20,7 @@ export function Breadcrumb({ items }: { items: BreadcrumbItem[] }) {
       "@type": "ListItem",
       position: index + 1,
       name: item.name,
-      item: `${siteUrl}${item.href}`
+      item: absoluteUrl(item.href)
     }))
   };
 

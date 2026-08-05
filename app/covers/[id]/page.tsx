@@ -5,6 +5,7 @@ import { CalendarDays, ExternalLink, Flag, Music2, Play, Radio, Timer, Users } f
 import { Breadcrumb } from "@/components/breadcrumb";
 import { CoverCard } from "@/components/covers/cover-card";
 import { CoverThumbnail } from "@/components/covers/cover-thumbnail";
+import { LatestCoversFallback } from "@/components/covers/latest-covers-fallback";
 import { CoverCarousel } from "@/components/home/cover-carousel";
 import { PerformerColorChip } from "@/components/performers/performer-color-chip";
 import { ShareButton } from "@/components/share-button";
@@ -21,10 +22,9 @@ import {
 } from "@/lib/data/covers";
 import { evaluateCoverQuality } from "@/lib/content-quality";
 import { cn, formatDate, formatDateInput, formatSeconds, withTimestamp } from "@/lib/utils";
+import { absoluteUrl, siteUrl } from "@/lib/site-url";
 import { extractYouTubeVideoId, getYouTubeThumbnailUrl } from "@/lib/youtube";
 import type { Metadata } from "next";
-
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://oto-atsume.com";
 
 export const revalidate = 3600;
 
@@ -113,7 +113,7 @@ export default async function CoverDetailPage({ params, searchParams }: CoverDet
     "@context": "https://schema.org",
     "@type": "MusicRecording",
     name: cover.song.title,
-    url: `${siteUrl}/covers/${cover.id}`,
+    url: absoluteUrl(`/covers/${cover.id}`),
     datePublished: cover.performedAt.toISOString(),
     byArtist: performers.map((performer) => ({
       "@type": "Person",
@@ -354,6 +354,12 @@ export default async function CoverDetailPage({ params, searchParams }: CoverDet
             </Link>
           }
         />
+      ) : null}
+
+      {otherPerformerCovers.length === 0 &&
+      otherSongCovers.length === 0 &&
+      sameSourceCovers.length === 0 ? (
+        <LatestCoversFallback excludeCoverId={cover.id} />
       ) : null}
     </div>
   );

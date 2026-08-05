@@ -50,7 +50,9 @@ export function CoverCard({ cover }: { cover: CoverListItem }) {
 
       <div className="flex flex-1 flex-col gap-4 p-4">
         <div className="min-w-0">
-          <h2 className="line-clamp-2 text-base font-bold leading-6 text-foreground">{title}</h2>
+          {/* カードのタイトルは文書構造上の見出しではないため、見出しタグを使わず装飾テキストにする
+              （セクション見出しの h2 と階層が競合しないようにする）。 */}
+          <p className="line-clamp-2 text-base font-bold leading-6 text-foreground">{title}</p>
           <p className="mt-1 truncate text-sm text-muted-foreground">{artistNames(cover)}</p>
         </div>
 

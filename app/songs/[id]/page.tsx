@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { CalendarDays, Disc3, ExternalLink, Music2, Users } from "lucide-react";
 
 import { Breadcrumb } from "@/components/breadcrumb";
+import { LatestCoversFallback } from "@/components/covers/latest-covers-fallback";
 import { ShareButton } from "@/components/share-button";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -16,10 +17,9 @@ import {
   getSongStats,
   type SongListItem
 } from "@/lib/data/songs";
+import { siteUrl } from "@/lib/site-url";
 import { cn, formatDate } from "@/lib/utils";
 import type { Metadata } from "next";
-
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://oto-atsume.com";
 
 export const revalidate = 3600;
 
@@ -313,6 +313,10 @@ export default async function SongDetailPage({ params }: { params: Promise<{ id:
             ))}
           </div>
         </section>
+      ) : null}
+
+      {relatedSongs.length === 0 && coOccurringSongs.length === 0 ? (
+        <LatestCoversFallback />
       ) : null}
     </div>
   );
