@@ -1,15 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CalendarDays, ExternalLink, Flag, Music2, Play, Radio, Timer, Users } from "lucide-react";
+import { ExternalLink, Flag, Music2, Play, Radio, Timer, Users } from "lucide-react";
 
 import { Breadcrumb } from "@/components/breadcrumb";
-import { CoverCard } from "@/components/covers/cover-card";
+import { CoverList } from "@/components/covers/cover-list";
 import { CoverThumbnail } from "@/components/covers/cover-thumbnail";
 import { LatestCoversFallback } from "@/components/covers/latest-covers-fallback";
-import { CoverCarousel } from "@/components/home/cover-carousel";
 import { PerformerColorChip } from "@/components/performers/performer-color-chip";
 import { ShareButton } from "@/components/share-button";
-import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { coverTypeLabel } from "@/lib/constants";
 import {
@@ -167,11 +165,10 @@ export default async function CoverDetailPage({ params, searchParams }: CoverDet
       ) : null}
 
       <section
-        className="overflow-hidden rounded-[2rem] border border-primary/10 bg-card/90 shadow-sm"
+        className="overflow-hidden rounded-[4px] border border-rule bg-panel"
         style={{
           borderTopColor: accentColor ?? undefined,
-          borderTopWidth: accentColor ? 5 : undefined,
-          backgroundImage: accentColor ? `linear-gradient(135deg, ${accentColor}1F, transparent 48%)` : undefined
+          borderTopWidth: accentColor ? 3 : undefined
         }}
       >
         <div className="grid gap-0 lg:grid-cols-[1.08fr_0.92fr]">
@@ -180,9 +177,6 @@ export default async function CoverDetailPage({ params, searchParams }: CoverDet
             target="_blank"
             rel="noreferrer"
             className="group relative block aspect-video overflow-hidden bg-muted"
-            style={{
-              backgroundImage: accentColor ? `linear-gradient(135deg, ${accentColor}24, transparent 62%)` : undefined
-            }}
           >
             <CoverThumbnail
               src={thumbnailUrl}
@@ -190,30 +184,33 @@ export default async function CoverDetailPage({ params, searchParams }: CoverDet
               coverType={cover.coverType}
               sizes="(min-width: 1024px) 55vw, 100vw"
               priority
-              imageClassName="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+              imageClassName="object-cover"
               iconClassName="size-12"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-foreground/45 via-transparent to-transparent" />
-            <span className="absolute bottom-4 right-4 inline-flex items-center gap-2 rounded-full bg-card/90 px-4 py-2 text-sm font-semibold text-primary shadow-sm transition-transform group-hover:scale-105">
-              <Play className="size-4" aria-hidden="true" />
+            <span className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-[3px] border border-rule bg-panel px-3 py-1.5 text-xs font-semibold text-[color:var(--aqua-deep)]">
+              <Play className="size-3.5" aria-hidden="true" />
               情報元を開く
             </span>
           </a>
 
           <div className="flex flex-col justify-between gap-6 p-5 sm:p-7">
             <div>
-              <p className="text-sm font-semibold tracking-[0.24em] text-primary">COVER DETAIL</p>
-              <h1 className="mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+              <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--slate-light)]">
+                Cover Detail
+              </p>
+              <h1 className="mt-3 text-3xl font-bold tracking-tight text-ink sm:text-4xl">
                 {cover.song.title}
               </h1>
-              <p className="mt-3 text-sm leading-6 text-muted-foreground">{artists}</p>
+              <p className="mt-3 text-sm leading-6 text-slate">
+                原曲: <span className="text-ink">{artists}</span>
+              </p>
 
               {sourceTitle ? (
                 <a
                   href={sourceUrlWithTimestamp}
                   target="_blank"
                   rel="noreferrer"
-                  className="mt-4 block rounded-2xl border bg-background/70 p-3 text-sm text-primary underline-offset-4 hover:underline"
+                  className="mt-4 block rounded-[3px] border border-rule bg-[color:var(--paper)] p-3 text-sm text-[color:var(--aqua-deep)] underline-offset-4 hover:underline"
                 >
                   {sourceTitle}
                 </a>
@@ -238,27 +235,37 @@ export default async function CoverDetailPage({ params, searchParams }: CoverDet
         </div>
       </section>
 
-      <section className={cn("grid gap-4", hasTimestamp ? "md:grid-cols-3" : "md:grid-cols-2")}>
-        <InfoCard
-          icon={<CalendarDays className="size-4" aria-hidden="true" />}
-          label="歌唱日"
-          value={formatDate(cover.performedAt)}
-        />
-        <InfoCard
-          icon={<Music2 className="size-4" aria-hidden="true" />}
-          label="歌唱種別"
-          value={coverTypeLabel(cover.coverType)}
-        />
-        {hasTimestamp ? (
-          <InfoCard
-            icon={<Timer className="size-4" aria-hidden="true" />}
-            label="タイムスタンプ"
-            value={formatSeconds(cover.timestampSeconds)}
-          />
-        ) : null}
-      </section>
+      <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-[4px] border border-rule bg-rule sm:grid-cols-4">
+        <div className="bg-panel p-4">
+          <dt className="kv-label">DATE</dt>
+          <dd className="mt-1.5 font-mono text-sm tabular-nums text-ink">{formatDate(cover.performedAt)}</dd>
+        </div>
+        <div className="bg-panel p-4">
+          <dt className="kv-label">TYPE</dt>
+          <dd className="mt-1.5 text-sm text-ink">{coverTypeLabel(cover.coverType)}</dd>
+        </div>
+        <div className="bg-panel p-4">
+          <dt className="kv-label">TIMESTAMP</dt>
+          <dd className="mt-1.5 font-mono text-sm tabular-nums text-ink">
+            {hasTimestamp ? formatSeconds(cover.timestampSeconds) : "—"}
+          </dd>
+        </div>
+        <div className="bg-panel p-4">
+          <dt className="kv-label">SOURCE</dt>
+          <dd className="mt-1.5 truncate text-sm">
+            <a
+              href={sourceUrlWithTimestamp}
+              target="_blank"
+              rel="noreferrer"
+              className="text-[color:var(--aqua-deep)] underline-offset-4 hover:underline"
+            >
+              {sourceHostLabel(cover.sourceUrl)}
+            </a>
+          </dd>
+        </div>
+      </dl>
 
-      <section className="rounded-3xl border border-primary/10 bg-card/90 p-5 shadow-sm">
+      <section className="rounded-[4px] border border-rule bg-panel p-5">
         <div className="flex items-center gap-2">
           <span className="inline-flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
             <Users className="size-4" aria-hidden="true" />
@@ -286,7 +293,7 @@ export default async function CoverDetailPage({ params, searchParams }: CoverDet
       </section>
 
       {sameSourceCovers.length > 0 ? (
-        <section className="rounded-3xl border border-primary/10 bg-card/90 p-5 shadow-sm">
+        <section className="rounded-[4px] border border-rule bg-panel p-5">
           <div className="flex items-center gap-2">
             <span className="inline-flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
               <Radio className="size-4" aria-hidden="true" />
@@ -299,7 +306,7 @@ export default async function CoverDetailPage({ params, searchParams }: CoverDet
             </div>
           </div>
 
-          <div className="mt-4 divide-y overflow-hidden rounded-2xl border bg-background/70">
+          <div className="mt-4 divide-y divide-rule overflow-hidden rounded-[3px] border border-rule bg-panel">
             {sameSourceCovers.map((sourceCover) => {
               const sourceArtists = sourceCover.song.artists
                 .map(({ artist }) => artist.name)
@@ -307,20 +314,20 @@ export default async function CoverDetailPage({ params, searchParams }: CoverDet
 
               return (
                 <div key={sourceCover.id} className="flex items-start gap-3 p-3">
-                  <Badge variant={sourceCover.timestampSeconds != null ? "outline" : "muted"} className="mt-0.5 shrink-0">
-                    <Timer className="mr-1 size-3" aria-hidden="true" />
+                  <span className="mt-0.5 inline-flex shrink-0 items-center gap-1 rounded-[2px] border border-rule px-1.5 py-0.5 font-mono text-xs tabular-nums text-slate">
+                    <Timer className="size-3" aria-hidden="true" />
                     {sourceCover.timestampSeconds != null
                       ? formatSeconds(sourceCover.timestampSeconds)
                       : "-"}
-                  </Badge>
+                  </span>
                   <div className="min-w-0">
                     <Link
                       href={`/covers/${sourceCover.id}`}
-                      className="font-semibold text-foreground underline-offset-4 hover:text-primary hover:underline"
+                      className="font-semibold text-ink underline-offset-4 hover:text-[color:var(--aqua-deep)] hover:underline"
                     >
                       {sourceCover.song.title}
                     </Link>
-                    <p className="mt-0.5 text-sm text-muted-foreground">
+                    <p className="mt-0.5 text-sm text-slate">
                       {sourceArtists ? `${sourceArtists} ／ ` : ""}
                       {sourceCover.performers.map(({ performer }) => performer.name).join(", ")}
                     </p>
@@ -391,13 +398,18 @@ function RelatedCoversSection({
         {action}
       </div>
 
-      <CoverCarousel>
-        {covers.map((cover) => (
-          <CoverCard key={cover.id} cover={cover} />
-        ))}
-      </CoverCarousel>
+      <CoverList covers={covers} />
     </section>
   );
+}
+
+// 情報元URLのホスト名を安全に取り出す（表示用）。
+function sourceHostLabel(url: string) {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return "情報元";
+  }
 }
 
 // 連続登録用リンク。楽曲とタイムスタンプ以外（URL・タイトル・歌唱日・種別・活動者）を引き継ぐ。
@@ -421,16 +433,3 @@ function buildContinueRegistrationHref(cover: {
   return `/covers/new?${params.toString()}`;
 }
 
-function InfoCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
-  return (
-    <div className="rounded-3xl border border-primary/10 bg-card/90 p-5 shadow-sm">
-      <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-        <span className="inline-flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
-          {icon}
-        </span>
-        {label}
-      </div>
-      <p className="mt-4 text-lg font-bold tracking-tight text-foreground">{value}</p>
-    </div>
-  );
-}
