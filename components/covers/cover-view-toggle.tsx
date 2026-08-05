@@ -22,8 +22,8 @@ export function CoverViewToggle({
 }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
-      <p className="text-sm text-muted-foreground">{totalCount}件</p>
-      <div className="inline-flex rounded-md border bg-background p-1" role="group" aria-label="表示形式">
+      <p className="font-mono text-xs tabular-nums text-slate">{totalCount.toLocaleString("ja-JP")} records</p>
+      <div className="inline-flex rounded-[3px] border border-rule bg-panel" role="group" aria-label="表示形式">
         {viewModes.map((mode) => {
           const Icon = mode.icon;
           const selected = value === mode.value;
@@ -35,13 +35,11 @@ export function CoverViewToggle({
               aria-pressed={selected}
               onClick={() => onValueChange(mode.value)}
               className={cn(
-                "inline-flex h-9 items-center justify-center gap-2 rounded-sm px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                selected
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                "inline-flex h-8 items-center justify-center gap-1.5 px-3 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring first:rounded-l-[2px] last:rounded-r-[2px]",
+                selected ? "bg-ink text-white" : "text-slate hover:bg-[#FAFCFD] hover:text-ink"
               )}
             >
-              <Icon className="size-4" aria-hidden="true" />
+              <Icon className="size-3.5" aria-hidden="true" />
               {mode.label}
             </button>
           );

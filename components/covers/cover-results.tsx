@@ -81,7 +81,7 @@ export function CoverResults({
           ))}
         </div>
       ) : (
-        <div className="rounded-3xl border border-primary/10 bg-card/90 p-6 text-sm text-muted-foreground shadow-sm">
+        <div className="rounded-[4px] border border-rule bg-panel p-6 text-sm text-slate">
           条件に一致するカバー記録はありません。
         </div>
       )}

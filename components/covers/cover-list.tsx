@@ -1,65 +1,29 @@
-import Link from "next/link";
-
-import { PerformerColorChip } from "@/components/performers/performer-color-chip";
-import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
-import { coverTypeLabel } from "@/lib/constants";
+import { CoverListRow } from "@/components/covers/cover-list-row";
 import type { CoverListItem } from "@/lib/data/covers";
-import { cn, formatDate, withTimestamp } from "@/lib/utils";
-
-function artistNames(cover: CoverListItem) {
-  return cover.song.artists.map(({ artist }) => artist.name).join(", ");
-}
 
 export function CoverList({ covers }: { covers: CoverListItem[] }) {
   if (covers.length === 0) {
     return (
-      <div className="rounded-md border bg-card p-6 text-sm text-muted-foreground">
+      <div className="rounded-[4px] border border-rule bg-panel p-6 text-sm text-slate">
         条件に一致するカバー記録はありません。
       </div>
     );
   }
 
   return (
-    <div className="overflow-hidden rounded-md border bg-card">
-      <div className="divide-y">
+    <div className="overflow-hidden rounded-[4px] border border-rule bg-panel">
+      {/* データを俯瞰する一覧のカラムヘッダーは英語・大文字・mono */}
+      <div className="grid grid-cols-[56px_minmax(0,1fr)_auto] items-center gap-3 border-b border-rule px-3 py-2">
+        <span />
+        <span className="col-head">TRACK</span>
+        <span className="flex items-center gap-3">
+          <span className="col-head">TYPE</span>
+          <span className="col-head w-[5.5rem] text-right">DATE</span>
+        </span>
+      </div>
+      <div className="divide-y divide-rule">
         {covers.map((cover) => (
-          <div key={cover.id} className="grid gap-3 p-4 md:grid-cols-[1fr_auto] md:items-center">
-            <div className="min-w-0">
-              <Link href={`/covers/${cover.id}`} className="font-medium underline-offset-4 hover:underline">
-                {cover.song.title}
-              </Link>
-              <div className="mt-1 text-sm text-muted-foreground">{artistNames(cover)}</div>
-              <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
-                <span className="text-muted-foreground">歌唱:</span>
-                <div className="flex flex-wrap gap-1.5">
-                  {cover.performers.map(({ performer }) => (
-                    <PerformerColorChip
-                      key={performer.id}
-                      name={performer.name}
-                      colorCode={performer.colorCode}
-                    />
-                  ))}
-                </div>
-                <span className="text-muted-foreground">日付: {formatDate(cover.performedAt)}</span>
-                <Badge variant="muted">{coverTypeLabel(cover.coverType)}</Badge>
-              </div>
-              <a
-                href={withTimestamp(cover.sourceUrl, cover.timestampSeconds)}
-                target="_blank"
-                rel="noreferrer"
-                className="mt-2 block truncate text-sm text-primary underline"
-              >
-                {cover.sourceUrl}
-              </a>
-            </div>
-            <Link
-              href={`/covers/${cover.id}`}
-              className={cn(buttonVariants({ variant: "outline", size: "sm" }), "w-fit")}
-            >
-              詳細
-            </Link>
-          </div>
+          <CoverListRow key={cover.id} cover={cover} />
         ))}
       </div>
     </div>

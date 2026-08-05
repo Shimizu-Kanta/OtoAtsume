@@ -2,9 +2,8 @@ import Link from "next/link";
 import { Play } from "lucide-react";
 
 import { CoverThumbnail } from "@/components/covers/cover-thumbnail";
+import { CoverTypeTag } from "@/components/covers/cover-type-tag";
 import { PerformerColorChip } from "@/components/performers/performer-color-chip";
-import { Badge } from "@/components/ui/badge";
-import { coverTypeLabel } from "@/lib/constants";
 import type { CoverListItem } from "@/lib/data/covers";
 import { formatDate } from "@/lib/utils";
 import { getYouTubeThumbnailUrl } from "@/lib/youtube";
@@ -73,10 +72,10 @@ export function CoverCard({ cover }: { cover: CoverListItem }) {
           </div>
         </div>
 
-        <div className="mt-auto flex flex-wrap items-center gap-2 border-t pt-3">
-          <Badge variant="muted">{coverTypeLabel(cover.coverType)}</Badge>
-          <span className="text-xs text-muted-foreground">{formatDate(cover.performedAt)}</span>
-          <span className="ml-auto text-sm font-semibold text-primary">詳細</span>
+        <div className="mt-auto flex flex-wrap items-center gap-2 border-t border-rule pt-3">
+          <CoverTypeTag type={cover.coverType} />
+          <span className="font-mono text-xs tabular-nums text-slate">{formatDate(cover.performedAt)}</span>
+          <span className="ml-auto text-sm font-semibold text-[color:var(--aqua-deep)]">詳細</span>
         </div>
       </div>
     </Link>
