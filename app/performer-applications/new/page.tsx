@@ -1,6 +1,7 @@
 import { TurnstileCaptcha } from "@/components/captcha/turnstile";
 import { PageHeading } from "@/components/page-heading";
 import { Button } from "@/components/ui/button";
+import { ErrorBanner } from "@/components/ui/notice";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
@@ -27,13 +28,9 @@ export default async function NewPerformerApplicationPage({
         description="一覧にない活動者を確認待ちとして登録できます。管理者の確認後に公開されます。"
       />
 
-      {error ? (
-        <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm">
-          {error}
-        </div>
-      ) : null}
+      {error ? <ErrorBanner>{error}</ErrorBanner> : null}
 
-      <form action={createPerformerApplicationAction} className="space-y-4 rounded-md border bg-card p-5">
+      <form action={createPerformerApplicationAction} className="space-y-4 rounded-[4px] border border-rule bg-panel p-5">
         <div className="space-y-2">
           <Label htmlFor="name">活動者名</Label>
           <Input id="name" name="name" required />

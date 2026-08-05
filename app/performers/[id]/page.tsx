@@ -6,6 +6,7 @@ import { MasterDataStatus } from "@prisma/client";
 
 import { Breadcrumb } from "@/components/breadcrumb";
 import { LatestCoversFallback } from "@/components/covers/latest-covers-fallback";
+import { PerformerColorDot } from "@/components/performers/performer-color-dot";
 import { PendingPerformerNotice } from "@/components/performers/pending-performer-notice";
 import { PerformerCard } from "@/components/performers/performer-card";
 import { ShareButton } from "@/components/share-button";
@@ -120,27 +121,27 @@ export default async function PerformerDetailPage({ params }: { params: Promise<
       />
 
       <section
-        className="overflow-hidden rounded-[2rem] border border-rule bg-panel shadow-sm"
+        className="overflow-hidden rounded-[4px] border border-rule bg-panel"
         style={{
           borderTopColor: performer.colorCode ?? undefined,
-          borderTopWidth: performer.colorCode ? 5 : undefined,
-          backgroundImage: performer.colorCode
-            ? `linear-gradient(135deg, ${performer.colorCode}1F, transparent 48%)`
-            : undefined
+          borderTopWidth: performer.colorCode ? 3 : undefined
         }}
       >
         <div className="p-5 sm:p-7">
           <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
             <div className="min-w-0">
-              <p className="text-sm font-semibold tracking-[0.24em] text-primary">PERFORMER</p>
-              <h1 className="mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+              <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--slate-light)]">
+                Performer
+              </p>
+              <h1 className="mt-2 flex items-center gap-2 text-3xl font-bold tracking-tight text-ink sm:text-4xl">
+                <PerformerColorDot colorCode={performer.colorCode} className="size-3" />
                 {performer.name}
               </h1>
-              <p className="mt-3 text-sm text-muted-foreground">
+              <p className="mt-3 text-sm text-slate">
                 {performer.group ? (
                   <Link
                     href={`/groups/${performer.group.id}`}
-                    className="text-primary underline-offset-4 hover:underline"
+                    className="text-[color:var(--aqua-deep)] underline-offset-4 hover:underline"
                   >
                     {performer.group.name}
                   </Link>
@@ -148,7 +149,7 @@ export default async function PerformerDetailPage({ params }: { params: Promise<
                   "所属グループなし"
                 )}
                 {" / 歌唱履歴 "}
-                {performer.covers.length} 件
+                <span className="font-mono tabular-nums text-ink">{performer.covers.length}</span> 件
               </p>
             </div>
 

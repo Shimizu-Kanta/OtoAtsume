@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { TurnstileCaptcha } from "@/components/captcha/turnstile";
 import { PageHeading } from "@/components/page-heading";
 import { Button } from "@/components/ui/button";
+import { ErrorBanner } from "@/components/ui/notice";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -35,13 +36,9 @@ export default async function ReportPage({
     <div className="space-y-6">
       <PageHeading title="カバー記録を通報" description={`${cover.song.title} の記録について`} />
 
-      {error ? (
-        <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm">
-          {error}
-        </div>
-      ) : null}
+      {error ? <ErrorBanner>{error}</ErrorBanner> : null}
 
-      <form action={action} className="space-y-4 rounded-md border bg-card p-5">
+      <form action={action} className="space-y-4 rounded-[4px] border border-rule bg-panel p-5">
         <div className="space-y-2">
           <Label htmlFor="reason">通報理由</Label>
           <Select id="reason" name="reason" required>

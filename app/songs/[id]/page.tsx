@@ -95,15 +95,17 @@ export default async function SongDetailPage({ params }: { params: Promise<{ id:
         ]}
       />
 
-      <section className="overflow-hidden rounded-[2rem] border border-rule bg-panel shadow-sm">
-        <div className="bg-primary/10 p-5 sm:p-7">
+      <section className="overflow-hidden rounded-[4px] border border-rule bg-panel">
+        <div className="border-b border-rule bg-[color:var(--paper)] p-5 sm:p-7">
           <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
             <div className="min-w-0">
-              <p className="text-sm font-semibold tracking-[0.24em] text-primary">SONG</p>
-              <h1 className="mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+              <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--slate-light)]">
+                Song
+              </p>
+              <h1 className="mt-2 text-3xl font-bold tracking-tight text-ink sm:text-4xl">
                 {song.title}
               </h1>
-              <p className="mt-3 text-sm text-muted-foreground">{artists}</p>
+              <p className="mt-3 text-sm text-slate">原曲: <span className="text-ink">{artists}</span></p>
             </div>
 
             <div className="flex flex-wrap gap-2">
