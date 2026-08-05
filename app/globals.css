@@ -3,24 +3,37 @@
 @tailwind utilities;
 
 :root {
-  --background: 195 45% 98%;
-  --foreground: 222 24% 12%;
-  --card: 0 0% 100%;
-  --card-foreground: 222 24% 12%;
-  --primary: 194 56% 55%;
-  --primary-foreground: 222 24% 12%;
-  --secondary: 194 56% 92%;
-  --secondary-foreground: 194 60% 24%;
-  --muted: 195 28% 93%;
-  --muted-foreground: 218 12% 38%;
-  --accent: 38 88% 52%;
-  --accent-foreground: 222 24% 12%;
-  --destructive: 0 72% 45%;
+  /* --- 新デザイントークン(hex) --- */
+  --paper: #f3f7f8;
+  --panel: #ffffff;
+  --ink: #16212b;
+  --slate: #51606b;
+  --slate-light: #8b99a2;
+  --aqua: #4caecd;
+  --aqua-deep: #2e7891;
+  --rule: #d7e1e4;
+  --error: #c24545;
+  --signal: #f0a11a; /* 既存 --accent 相当。非ブロッキングな注意喚起(重複警告)に限定して使用 */
+
+  /* --- shadcn 互換トークン(既存クラスをそのまま再スキンするため hex を HSL に写像) --- */
+  --background: 192 26% 96%; /* paper */
+  --foreground: 209 32% 13%; /* ink */
+  --card: 0 0% 100%; /* panel */
+  --card-foreground: 209 32% 13%;
+  --primary: 194 56% 55%; /* aqua(リンク・強調・ブランド) */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 194 40% 92%;
+  --secondary-foreground: 195 52% 32%;
+  --muted: 194 22% 93%;
+  --muted-foreground: 205 14% 37%; /* slate */
+  --accent: 38 88% 52%; /* signal */
+  --accent-foreground: 209 32% 13%;
+  --destructive: 0 51% 52%; /* error */
   --destructive-foreground: 0 0% 100%;
-  --border: 195 26% 84%;
-  --input: 195 26% 84%;
-  --ring: 194 56% 55%;
-  --radius: 0.75rem;
+  --border: 194 19% 87%; /* rule */
+  --input: 194 19% 87%;
+  --ring: 194 56% 55%; /* aqua */
+  --radius: 0.25rem; /* カード 4px */
 }
 
 * {
@@ -29,14 +42,30 @@
 
 body {
   min-height: 100vh;
-  background:
-    radial-gradient(circle at top left, hsl(var(--primary) / 0.12), transparent 32rem),
-    hsl(var(--background));
+  background: hsl(var(--background));
   color: hsl(var(--foreground));
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* 見出しは Zen Kaku Gothic New。フォームのラベル等はセクション側で個別指定する。 */
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-heading), var(--font-sans), ui-sans-serif, system-ui, sans-serif;
 }
 
 a {
   text-underline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }
 
 @layer components {
@@ -46,5 +75,15 @@ a {
 
   .form-grid {
     @apply grid gap-4 md:grid-cols-2;
+  }
+
+  /* データを俯瞰する一覧のカラムヘッダー(英語・大文字・mono) */
+  .col-head {
+    @apply font-mono text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-[color:var(--slate-light)];
+  }
+
+  /* key-value パネルのラベル(英語・大文字・mono・小さめ) */
+  .kv-label {
+    @apply font-mono text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-[color:var(--slate-light)];
   }
 }

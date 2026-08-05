@@ -8,6 +8,11 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ["var(--font-sans)", "ui-sans-serif", "system-ui", "sans-serif"],
+        heading: ["var(--font-heading)", "var(--font-sans)", "sans-serif"],
+        mono: ["var(--font-mono)", "ui-monospace", "monospace"]
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -37,12 +42,44 @@ const config: Config = {
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))"
-        }
+        },
+        // 新デザイントークン(hex 直接参照)
+        paper: "var(--paper)",
+        panel: "var(--panel)",
+        ink: "var(--ink)",
+        slate: {
+          DEFAULT: "var(--slate)",
+          light: "var(--slate-light)"
+        },
+        aqua: {
+          DEFAULT: "var(--aqua)",
+          deep: "var(--aqua-deep)"
+        },
+        rule: "var(--rule)",
+        signal: "var(--signal)",
+        error: "var(--error)"
       },
       borderRadius: {
+        none: "0px",
+        sm: "2px",
+        DEFAULT: "3px",
+        md: "3px",
         lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)"
+        xl: "var(--radius)",
+        "2xl": "var(--radius)",
+        "3xl": "var(--radius)",
+        full: "9999px"
+      },
+      // box-shadow は使わない方針。既存の shadow-* ユーティリティを無効化して罫線で表現する。
+      boxShadow: {
+        none: "none",
+        sm: "none",
+        DEFAULT: "none",
+        md: "none",
+        lg: "none",
+        xl: "none",
+        "2xl": "none",
+        inner: "none"
       }
     }
   },

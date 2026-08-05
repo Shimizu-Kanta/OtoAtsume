@@ -1,10 +1,36 @@
 import type { Metadata } from "next";
+import { JetBrains_Mono, Noto_Sans_JP, Zen_Kaku_Gothic_New } from "next/font/google";
 
 import "./globals.css";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { AccessLogger } from "@/components/telemetry/access-logger";
 import { siteUrl } from "@/lib/site-url";
+
+// 本文: Noto Sans JP / 見出し: Zen Kaku Gothic New / 数値・日付・件数: JetBrains Mono。
+// 日本語フォントは巨大なため preload せず swap で読み込む(next/font 最適化に乗せる)。
+const notoSansJp = Noto_Sans_JP({
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+  display: "swap",
+  preload: false,
+  variable: "--font-sans"
+});
+
+const zenKaku = Zen_Kaku_Gothic_New({
+  subsets: ["latin"],
+  weight: ["500", "700"],
+  display: "swap",
+  preload: false,
+  variable: "--font-heading"
+});
+
+const jetBrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["500", "600"],
+  display: "swap",
+  variable: "--font-mono"
+});
 
 const adsenseClientId = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID;
 
@@ -47,7 +73,10 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ja">
+    <html
+      lang="ja"
+      className={`${notoSansJp.variable} ${zenKaku.variable} ${jetBrainsMono.variable}`}
+    >
       <body>
         {/* async 付き script は React 19 が <head> にホイストするため、
             SSR の生 HTML に AdSense のコードスニペットがそのまま出力される */}
