@@ -85,10 +85,12 @@ export default async function HomePage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(homeJsonLd).replace(/</g, "\\u003c") }}
       />
-      <section className="overflow-hidden rounded-[2rem] border border-primary/10 bg-card/90 shadow-sm">
+      <section className="overflow-hidden rounded-[4px] border border-rule bg-panel">
         <div className="grid gap-6 p-5 md:grid-cols-[1.3fr_0.7fr] md:p-8">
           <div className="flex min-w-0 flex-col justify-center">
-            <p className="text-sm font-semibold tracking-[0.24em] text-primary">OTO ATSUME</p>
+            <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--slate-light)]">
+              Oto Atsume
+            </p>
             <h1 className="mt-4 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
               <span className="block sm:inline">みんなで作る、</span>
               <span className="block sm:inline">みんなの推しの、</span>
@@ -113,9 +115,9 @@ export default async function HomePage({
             </div>
           </div>
 
-          <div className="rounded-3xl border border-primary/10 bg-primary/10 p-4">
-            <p className="text-sm font-semibold text-primary">URLから登録</p>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+          <div className="rounded-[4px] border border-rule bg-[color:var(--paper)] p-4">
+            <p className="text-sm font-semibold text-ink">URLから登録</p>
+            <p className="mt-2 text-sm leading-6 text-slate">
               追加したい動画や配信のURLが分かっている場合は、ここから登録画面に進めます。
             </p>
             <form action="/covers/new" className="mt-4 space-y-3">
@@ -135,12 +137,12 @@ export default async function HomePage({
         </div>
       ) : null}
 
-      <section className="rounded-3xl border border-primary/10 bg-card/90 p-5 shadow-sm">
+      <section className="rounded-[4px] border border-rule bg-panel p-5">
         <div className="mb-4 flex items-center gap-2">
-          <Search className="size-5 text-primary" aria-hidden="true" />
+          <Search className="size-5 text-[color:var(--aqua-deep)]" aria-hidden="true" />
           <div>
             <h2 className="font-semibold">カバー記録を検索</h2>
-            <p className="text-sm text-muted-foreground">楽曲名・活動者名・原曲アーティスト名で探せます。</p>
+            <p className="text-sm text-slate">楽曲名・活動者名・原曲アーティスト名で探せます。</p>
           </div>
         </div>
         <form action="/covers" className="grid gap-3 md:grid-cols-[1fr_1fr_1fr_auto]">
@@ -181,14 +183,14 @@ export default async function HomePage({
 
 function StatCard({ icon: Icon, label, value }: { icon: typeof Database; label: string; value: number }) {
   return (
-    <div className="rounded-3xl border border-primary/10 bg-card/90 p-5 shadow-sm transition-colors hover:border-primary/30">
-      <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-        <span className="inline-flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
-          <Icon className="size-4" aria-hidden="true" />
-        </span>
+    <div className="rounded-[4px] border border-rule bg-panel p-5 transition-colors hover:border-[color:var(--aqua)]">
+      <div className="flex items-center gap-1.5 text-xs font-medium text-slate">
+        <Icon className="size-3.5 text-[color:var(--slate-light)]" aria-hidden="true" />
         {label}
       </div>
-      <p className="mt-4 text-3xl font-bold tracking-tight text-foreground">{value.toLocaleString("ja-JP")}</p>
+      <p className="mt-3 font-mono text-4xl font-semibold tabular-nums tracking-tight text-ink">
+        {value.toLocaleString("ja-JP")}
+      </p>
     </div>
   );
 }
@@ -207,20 +209,13 @@ function AnniversaryCoverSection({ groups }: { groups: AnniversaryCoverGroup[] }
           {groups.map((group) => (
             <section
               key={group.performer.id}
-              className="overflow-hidden rounded-3xl border bg-card/90 shadow-sm"
+              className="overflow-hidden rounded-[4px] border border-rule bg-panel"
               style={{
                 borderTopColor: group.performer.colorCode ?? undefined,
-                borderTopWidth: group.performer.colorCode ? 4 : undefined
+                borderTopWidth: group.performer.colorCode ? 3 : undefined
               }}
             >
-              <div
-                className="border-b p-4"
-                style={{
-                  background: group.performer.colorCode
-                    ? `linear-gradient(135deg, ${group.performer.colorCode}1A, transparent 60%)`
-                    : undefined
-                }}
-              >
+              <div className="border-b border-rule p-4">
                 <div className="flex items-start gap-2">
                   {group.performer.colorCode ? (
                     <span
@@ -258,7 +253,7 @@ function AnniversaryCoverSection({ groups }: { groups: AnniversaryCoverGroup[] }
           ))}
         </div>
       ) : (
-        <div className="rounded-3xl border border-primary/10 bg-card/90 p-5 text-sm text-muted-foreground shadow-sm">
+        <div className="rounded-[4px] border border-rule bg-panel p-5 text-sm text-slate">
           今日がデビュー日の活動者・誕生日の活動者は見つかりませんでした。
         </div>
       )}
@@ -300,7 +295,7 @@ function HomeCoverSection({
           ))}
         </CoverCarousel>
       ) : (
-        <div className="rounded-3xl border border-primary/10 bg-card/90 p-5 text-sm text-muted-foreground shadow-sm">
+        <div className="rounded-[4px] border border-rule bg-panel p-5 text-sm text-slate">
           表示できるカバー記録がありません。
         </div>
       )}
