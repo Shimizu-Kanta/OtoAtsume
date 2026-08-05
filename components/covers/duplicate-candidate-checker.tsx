@@ -2,9 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { AlertTriangle, Search } from "lucide-react";
+import { Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { ErrorText, WarningBanner } from "@/components/ui/notice";
 import { formatDate } from "@/lib/utils";
 
 type Candidate = {
@@ -123,11 +124,11 @@ export function DuplicateCandidateChecker() {
   }, [checkDuplicates]);
 
   return (
-    <div className="rounded-md border bg-background p-4">
+    <div className="rounded-[3px] border border-rule bg-panel p-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-sm font-medium">重複候補チェック</p>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="text-sm font-medium text-ink">重複候補チェック</p>
+          <p className="mt-1 text-sm text-slate">
             登録前に、同じ情報元・楽曲・活動者・歌唱日の記録がないか確認できます。
           </p>
         </div>
@@ -143,26 +144,21 @@ export function DuplicateCandidateChecker() {
       </div>
 
       {state.status === "empty" ? (
-        <p className="mt-3 text-sm text-secondary">重複候補は見つかりませんでした。</p>
+        <p className="mt-3 text-sm text-slate">重複候補は見つかりませんでした。</p>
       ) : null}
 
-      {state.status === "error" ? (
-        <p className="mt-3 text-sm text-destructive">{state.message}</p>
-      ) : null}
+      {state.status === "error" ? <div className="mt-3"><ErrorText>{state.message}</ErrorText></div> : null}
 
       {state.status === "found" && state.candidates.length > 0 ? (
-        <div className="mt-4 rounded-md border border-accent/60 bg-accent/10 p-3">
-          <div className="flex gap-2 text-sm font-medium">
-            <AlertTriangle className="mt-0.5 size-4 shrink-0" />
-            似た登録がすでに存在します。重複していないか確認してください。
-          </div>
-          <div className="mt-3 space-y-2">
+        <WarningBanner className="mt-4">
+          <p className="font-medium">似た登録がすでに存在します。重複していないか確認してください。</p>
+          <div className="mt-2 space-y-1">
             {state.candidates.map((candidate) => (
               <div key={candidate.id} className="text-sm">
-                <Link href={`/covers/${candidate.id}`} className="text-primary underline">
+                <Link href={`/covers/${candidate.id}`} className="text-[color:var(--aqua-deep)] underline">
                   {candidate.song.title}
                 </Link>
-                <span className="text-muted-foreground">
+                <span className="text-slate">
                   {" "}
                   / {candidate.performers.map(({ performer }) => performer.name).join(", ")} /{" "}
                   {formatDate(candidate.performedAt)}
@@ -170,22 +166,21 @@ export function DuplicateCandidateChecker() {
               </div>
             ))}
           </div>
-        </div>
+        </WarningBanner>
       ) : null}
 
       {state.status === "found" && state.sameSinging.length > 0 ? (
-        <div className="mt-4 rounded-md border border-accent/60 bg-accent/10 p-3">
-          <div className="flex gap-2 text-sm font-medium">
-            <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+        <WarningBanner className="mt-4">
+          <p className="font-medium">
             同じ日に同じ曲の記録が別のURLで登録されています。同一の歌唱でないか確認してください。
-          </div>
-          <div className="mt-3 space-y-2">
+          </p>
+          <div className="mt-2 space-y-1">
             {state.sameSinging.map((candidate) => (
               <div key={candidate.id} className="text-sm">
-                <Link href={`/covers/${candidate.id}`} className="text-primary underline">
+                <Link href={`/covers/${candidate.id}`} className="text-[color:var(--aqua-deep)] underline">
                   {candidate.song.title}
                 </Link>
-                <span className="text-muted-foreground">
+                <span className="text-slate">
                   {" "}
                   / {candidate.performers.map(({ performer }) => performer.name).join(", ")} /{" "}
                   {formatDate(candidate.performedAt)}
@@ -193,7 +188,7 @@ export function DuplicateCandidateChecker() {
               </div>
             ))}
           </div>
-        </div>
+        </WarningBanner>
       ) : null}
     </div>
   );

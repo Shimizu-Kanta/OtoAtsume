@@ -1,4 +1,4 @@
-import { AlertTriangle, ClipboardList, Info, LinkIcon, Send } from "lucide-react";
+import { ClipboardList, LinkIcon, Send } from "lucide-react";
 
 import { TurnstileCaptcha } from "@/components/captcha/turnstile";
 import { DuplicateCandidateChecker } from "@/components/covers/duplicate-candidate-checker";
@@ -7,6 +7,7 @@ import { PublicCoverFields } from "@/components/covers/public-cover-fields";
 import { YouTubeMetadataFetcher } from "@/components/covers/youtube-metadata-fetcher";
 import { PageHeading } from "@/components/page-heading";
 import { Button } from "@/components/ui/button";
+import { ErrorBanner, InfoNote } from "@/components/ui/notice";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { coverTypeOptions } from "@/lib/constants";
@@ -44,28 +45,14 @@ export default async function NewCoverPage({
         description="ログインなしで登録できます。投稿者名や投稿履歴は記録・表示しません。"
       />
 
-      {error ? (
-        <div className="rounded-3xl border border-destructive/40 bg-destructive/10 p-4 text-sm font-medium text-destructive shadow-sm">
-          <div className="flex gap-2">
-            <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-            <p>{error}</p>
-          </div>
-        </div>
-      ) : null}
+      {error ? <ErrorBanner>{error}</ErrorBanner> : null}
 
-      <div className="rounded-3xl border border-accent/40 bg-accent/10 p-5 text-sm shadow-sm">
-        <div className="flex gap-3">
-          <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-card/80 text-accent-foreground">
-            <Info className="size-4" aria-hidden="true" />
-          </span>
-          <div>
-            <p className="font-semibold">登録前の確認</p>
-            <p className="mt-1 leading-6 text-muted-foreground">
-              メンバー限定配信、非公開コンテンツ、購入者以外に公開されていない有料配信内の情報など、権利者や配信者が公開していない情報の登録は避けてください。有料ライブであっても、公式サイト・公式SNS・ニュース記事などでセットリストが公開されている場合は登録できます。
-            </p>
-          </div>
-        </div>
-      </div>
+      <InfoNote>
+        <p className="font-semibold text-ink">登録前の確認</p>
+        <p className="mt-1 leading-6">
+          メンバー限定配信、非公開コンテンツ、購入者以外に公開されていない有料配信内の情報など、権利者や配信者が公開していない情報の登録は避けてください。有料ライブであっても、公式サイト・公式SNS・ニュース記事などでセットリストが公開されている場合は登録できます。
+        </p>
+      </InfoNote>
 
       <form id="cover-form" action={createCoverAction} className="space-y-6">
         <FormSection
