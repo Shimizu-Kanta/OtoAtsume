@@ -64,7 +64,7 @@ export default async function GroupsPage({
         description="活動者が所属するグループの一覧です。グループごとの歌唱記録や所属活動者を確認できます。"
       />
 
-      <form action="/groups" className="overflow-hidden rounded-3xl border border-primary/10 bg-card/90 p-5 shadow-sm">
+      <form action="/groups" className="overflow-hidden rounded-[4px] border border-rule bg-panel p-5">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="grid gap-4 sm:grid-cols-[220px_auto] sm:items-end">
             <div className="space-y-2">
@@ -78,45 +78,34 @@ export default async function GroupsPage({
               適用
             </button>
           </div>
-          <p className="text-sm font-medium text-primary">{totalCount.toLocaleString("ja-JP")}件</p>
+          <p className="font-mono text-xs tabular-nums text-slate">{totalCount.toLocaleString("ja-JP")} groups</p>
         </div>
       </form>
 
       {groups.length > 0 ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {groups.map((group) => (
-            <article
-              key={group.id}
-              className="overflow-hidden rounded-3xl border border-primary/10 bg-card/90 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
-            >
-              <div className="flex h-full flex-col gap-4 p-5">
-                <div className="min-w-0">
-                  <Link
-                    href={`/groups/${group.id}`}
-                    className="text-lg font-bold text-foreground underline-offset-4 hover:text-primary hover:underline"
-                  >
-                    {group.name}
-                  </Link>
-                  <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
-                    <Users className="size-4" aria-hidden="true" />
-                    所属活動者 {group._count.performers} 名
-                  </p>
-                </div>
-
-                <div className="mt-auto flex justify-end border-t pt-4">
-                  <Link
-                    href={`/groups/${group.id}`}
-                    className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-                  >
-                    詳細を見る
-                  </Link>
-                </div>
-              </div>
-            </article>
-          ))}
+        <div className="overflow-hidden rounded-[4px] border border-rule bg-panel">
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 border-b border-rule px-4 py-2">
+            <span className="col-head">GROUP</span>
+            <span className="col-head text-right">MEMBERS</span>
+          </div>
+          <div className="divide-y divide-rule">
+            {groups.map((group) => (
+              <Link
+                key={group.id}
+                href={`/groups/${group.id}`}
+                className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 transition-colors hover:bg-[#FAFCFD]"
+              >
+                <span className="truncate font-bold text-ink">{group.name}</span>
+                <span className="flex items-center gap-1.5 font-mono text-sm tabular-nums text-slate">
+                  <Users className="size-3.5 text-[color:var(--slate-light)]" aria-hidden="true" />
+                  {group._count.performers.toLocaleString("ja-JP")}
+                </span>
+              </Link>
+            ))}
+          </div>
         </div>
       ) : (
-        <div className="rounded-3xl border border-primary/10 bg-card/90 p-6 text-sm text-muted-foreground shadow-sm">
+        <div className="rounded-[4px] border border-rule bg-panel p-6 text-sm text-slate">
           表示できるグループはまだ登録されていません。
         </div>
       )}
