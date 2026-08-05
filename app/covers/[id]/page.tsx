@@ -6,6 +6,7 @@ import { Breadcrumb } from "@/components/breadcrumb";
 import { CoverList } from "@/components/covers/cover-list";
 import { CoverThumbnail } from "@/components/covers/cover-thumbnail";
 import { LatestCoversFallback } from "@/components/covers/latest-covers-fallback";
+import { SetlistDisclosure } from "@/components/covers/setlist-disclosure";
 import { PerformerColorChip } from "@/components/performers/performer-color-chip";
 import { ShareButton } from "@/components/share-button";
 import { buttonVariants } from "@/components/ui/button";
@@ -235,22 +236,25 @@ export default async function CoverDetailPage({ params, searchParams }: CoverDet
         </div>
       </section>
 
-      <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-[4px] border border-rule bg-rule sm:grid-cols-4">
-        <div className="bg-panel p-4">
+      {/* 値がある項目だけを枠ごと表示し、残りの項目で自然に詰める。 */}
+      <dl className="flex flex-col divide-y divide-rule overflow-hidden rounded-[4px] border border-rule bg-panel sm:flex-row sm:divide-x sm:divide-y-0">
+        <div className="flex-1 p-4">
           <dt className="kv-label">DATE</dt>
           <dd className="mt-1.5 font-mono text-sm tabular-nums text-ink">{formatDate(cover.performedAt)}</dd>
         </div>
-        <div className="bg-panel p-4">
+        <div className="flex-1 p-4">
           <dt className="kv-label">TYPE</dt>
           <dd className="mt-1.5 text-sm text-ink">{coverTypeLabel(cover.coverType)}</dd>
         </div>
-        <div className="bg-panel p-4">
-          <dt className="kv-label">TIMESTAMP</dt>
-          <dd className="mt-1.5 font-mono text-sm tabular-nums text-ink">
-            {hasTimestamp ? formatSeconds(cover.timestampSeconds) : "—"}
-          </dd>
-        </div>
-        <div className="bg-panel p-4">
+        {hasTimestamp ? (
+          <div className="flex-1 p-4">
+            <dt className="kv-label">TIMESTAMP</dt>
+            <dd className="mt-1.5 font-mono text-sm tabular-nums text-ink">
+              {formatSeconds(cover.timestampSeconds)}
+            </dd>
+          </div>
+        ) : null}
+        <div className="min-w-0 flex-1 p-4">
           <dt className="kv-label">SOURCE</dt>
           <dd className="mt-1.5 truncate text-sm">
             <a
@@ -306,7 +310,7 @@ export default async function CoverDetailPage({ params, searchParams }: CoverDet
             </div>
           </div>
 
-          <div className="mt-4 divide-y divide-rule overflow-hidden rounded-[3px] border border-rule bg-panel">
+          <SetlistDisclosure initialCount={4}>
             {sameSourceCovers.map((sourceCover) => {
               const sourceArtists = sourceCover.song.artists
                 .map(({ artist }) => artist.name)
@@ -335,7 +339,7 @@ export default async function CoverDetailPage({ params, searchParams }: CoverDet
                 </div>
               );
             })}
-          </div>
+          </SetlistDisclosure>
         </section>
       ) : null}
 

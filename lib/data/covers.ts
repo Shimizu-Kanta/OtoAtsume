@@ -394,7 +394,8 @@ export async function getRandomCovers(take = 6, where: Prisma.CoverWhereInput = 
     return [];
   }
 
-  const windowSize = Math.min(Math.max(take * 3, take), total);
+  // 同一動画由来の記録は createdAt が近接する（一括登録）ため、ウィンドウを広めに取る。
+  const windowSize = Math.min(Math.max(take * 6, take), total);
   const maxSkip = Math.max(0, total - windowSize);
   const skip = maxSkip > 0 ? Math.floor(Math.random() * (maxSkip + 1)) : 0;
 
@@ -406,7 +407,20 @@ export async function getRandomCovers(take = 6, where: Prisma.CoverWhereInput = 
     take: windowSize
   });
 
-  return shuffleItems(covers).slice(0, take);
+  // 同じ配信・動画（sourceVideoId、無ければ sourceUrl）から複数曲が同時に並ばないよう、
+  // グループごとに代表1件だけを残す（シャッフル済みのため代表はランダム）。
+  const seen = new Set<string>();
+  const deduped: typeof covers = [];
+  for (const cover of shuffleItems(covers)) {
+    const key = cover.sourceVideoId ?? cover.sourceUrl;
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    deduped.push(cover);
+  }
+
+  return deduped.slice(0, take);
 }
 
 export async function getTodayAnniversaryCoverGroups(takePerPerformer = 3) {
