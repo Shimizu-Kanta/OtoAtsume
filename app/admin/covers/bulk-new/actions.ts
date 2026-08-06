@@ -5,10 +5,20 @@ import { revalidatePath } from "next/cache";
 import { requireAdminPage } from "@/lib/auth/admin";
 import { createBulkCovers, type BulkCoverRow } from "@/lib/data/covers";
 import { coverTypeOptions } from "@/lib/constants";
-import { parseTimestampToSeconds } from "@/lib/utils";
+import { formatDateInput, parseTimestampToSeconds } from "@/lib/utils";
+
+// 「同じ動画から続けて追加」に引き継ぐ情報。sourceUrl は必ず作成後の正規化済みの値を使うこと
+// （Task 35: タイムスタンプ付きの表示用URLをそのまま引き継ぐと t= が汚染される不具合の再発防止）。
+export type BulkContinueInfo = {
+  sourceUrl: string;
+  sourceTitle: string;
+  performedAt: string;
+  coverType: string;
+  performerIds: string[];
+};
 
 export type BulkCreateResult =
-  | { ok: true; count: number; firstCoverId: string | null }
+  | { ok: true; count: number; firstCoverId: string | null; continueInfo: BulkContinueInfo | null }
   | { ok: false; error: string };
 
 function isValidCoverType(value: string) {
@@ -122,7 +132,20 @@ export async function createBulkCoversAction(formData: FormData): Promise<BulkCr
     revalidatePath("/admin/covers");
     revalidatePath("/admin/cover-candidates");
 
-    return { ok: true, count: created.length, firstCoverId: created[0]?.id ?? null };
+    const first = created[0];
+    // sourceUrl は created（DB作成後の正規化済みの値）から取る。client の入力値をそのまま
+    // 使うと、t= 等のクエリパラメータが混入したままの URL を「続けて追加」に引き継いでしまう。
+    const continueInfo: BulkContinueInfo | null = first
+      ? {
+          sourceUrl: first.sourceUrl,
+          sourceTitle: first.sourceTitle ?? "",
+          performedAt: formatDateInput(first.performedAt),
+          coverType: first.coverType,
+          performerIds: commonPerformerIds
+        }
+      : null;
+
+    return { ok: true, count: created.length, firstCoverId: first?.id ?? null, continueInfo };
   } catch (error) {
     console.error("createBulkCoversAction failed", error);
     const message = error instanceof Error ? error.message : "一括登録に失敗しました。";

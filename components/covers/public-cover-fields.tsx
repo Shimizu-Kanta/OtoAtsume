@@ -11,12 +11,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { coverTypeOptions } from "@/lib/constants";
+import { coverTypeOptions, multiSongCoverTypes } from "@/lib/constants";
 
 type PerformerOption = { id: string; name: string; group: { name: string } | null };
 
-// 複数曲をまとめて登録できる歌唱種別（1つのアーカイブに複数曲）。
-const MULTI_SONG_TYPES = new Set(["KARAOKE_STREAM", "LIVE_EVENT", "MEDLEY"]);
 const MAX_ROWS = 20;
 
 export function PublicCoverFields({
@@ -42,7 +40,7 @@ export function PublicCoverFields({
   const [songTitle, setSongTitle] = useState(initial.songTitle);
   const [artistNames, setArtistNames] = useState(initial.artistNames);
 
-  const isMulti = MULTI_SONG_TYPES.has(coverType);
+  const isMulti = multiSongCoverTypes.has(coverType);
 
   useEffect(() => {
     function handleMetadataLoaded(event: Event) {

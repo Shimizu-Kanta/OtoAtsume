@@ -33,20 +33,29 @@ function hasTimestampLines(description: string) {
 // 「1つの動画URLから複数曲」を編集する共通の曲リスト。
 // 公開フォーム・管理画面フォームの両方から使う。
 // 送信フィールド: rowTimestamp / rowSongTitle / rowArtistNames / rowPerformerIds（行ごとに1つずつ）。
+//
+// singleRow: 歌ってみた動画・ショート・その他など、1曲のみの歌唱種別用。
+// 曲の追加・削除・行番号・セットリスト一括読み取り（複数曲向け機能）を隠し、
+// 常に1行だけを「1曲入力」の見た目で表示する。送信フィールド名は複数曲時と同じ
+// （rowSongTitle 等）のまま1行分だけ出力するため、送信先の処理は変更不要。
 export function SongRowsEditor({
   participants,
   description = "",
-  maxRows
+  maxRows,
+  singleRow = false
 }: {
   participants: Participant[];
   description?: string;
   maxRows?: number;
+  singleRow?: boolean;
 }) {
   const [rows, setRows] = useState<SongRow[]>(() => [createEmptyRow()]);
   const [notice, setNotice] = useState<string | null>(null);
 
-  const canParseSetlist = useMemo(() => hasTimestampLines(description), [description]);
-  const reachedLimit = maxRows != null && rows.length >= maxRows;
+  const hasTimestampedDescription = useMemo(() => hasTimestampLines(description), [description]);
+  const canParseSetlist = !singleRow && hasTimestampedDescription;
+  const effectiveMaxRows = singleRow ? 1 : maxRows;
+  const reachedLimit = effectiveMaxRows != null && rows.length >= effectiveMaxRows;
 
   function updateRow(key: number, patch: Partial<SongRow>) {
     setRows((current) => current.map((row) => (row.key === key ? { ...row, ...patch } : row)));
@@ -101,7 +110,9 @@ export function SongRowsEditor({
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm text-muted-foreground">
-          タイムスタンプ付きで曲ごとに登録します。歌唱者は共通の活動者から曲ごとに選べます。
+          {singleRow
+            ? "楽曲情報を入力してください。歌唱者は共通の活動者から選べます。"
+            : "タイムスタンプ付きで曲ごとに登録します。歌唱者は共通の活動者から曲ごとに選べます。"}
         </p>
         {canParseSetlist ? (
           <Button type="button" variant="outline" size="sm" onClick={parseSetlist}>
@@ -118,18 +129,20 @@ export function SongRowsEditor({
       <div className="space-y-3">
         {rows.map((row, index) => (
           <div key={row.key} className="space-y-3 rounded-md border p-3">
-            <div className="flex items-start justify-between gap-2">
-              <span className="text-xs font-medium text-muted-foreground">{index + 1}曲目</span>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                aria-label={`${index + 1}曲目を削除`}
-                onClick={() => removeRow(row.key)}
-              >
-                <Trash2 className="size-4" aria-hidden="true" />
-              </Button>
-            </div>
+            {!singleRow ? (
+              <div className="flex items-start justify-between gap-2">
+                <span className="text-xs font-medium text-muted-foreground">{index + 1}曲目</span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  aria-label={`${index + 1}曲目を削除`}
+                  onClick={() => removeRow(row.key)}
+                >
+                  <Trash2 className="size-4" aria-hidden="true" />
+                </Button>
+              </div>
+            ) : null}
 
             <div className="grid gap-3 md:grid-cols-[130px_1fr]">
               <div className="space-y-1">
@@ -172,15 +185,17 @@ export function SongRowsEditor({
         ))}
       </div>
 
-      <div className="flex items-center gap-3">
-        <Button type="button" variant="outline" size="sm" onClick={addRow} disabled={reachedLimit}>
-          <Plus className="size-4" aria-hidden="true" />
-          曲を追加
-        </Button>
-        {reachedLimit ? (
-          <p className="text-xs text-muted-foreground">1度に登録できるのは最大 {maxRows} 曲までです。</p>
-        ) : null}
-      </div>
+      {!singleRow ? (
+        <div className="flex items-center gap-3">
+          <Button type="button" variant="outline" size="sm" onClick={addRow} disabled={reachedLimit}>
+            <Plus className="size-4" aria-hidden="true" />
+            曲を追加
+          </Button>
+          {reachedLimit ? (
+            <p className="text-xs text-muted-foreground">1度に登録できるのは最大 {maxRows} 曲までです。</p>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }

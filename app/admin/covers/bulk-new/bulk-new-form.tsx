@@ -1,24 +1,20 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
-import { Wand2 } from "lucide-react";
+import Link from "next/link";
+import { CheckCircle2, Wand2 } from "lucide-react";
 
 import { PerformerPicker } from "@/components/covers/performer-picker";
 import { SongRowsEditor } from "@/components/covers/song-rows-editor";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { coverTypeOptions, multiSongCoverTypes } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 import { createBulkCoversAction } from "./actions";
 
 type PerformerOption = { id: string; name: string; group: { name: string } | null };
-
-const BULK_COVER_TYPES = [
-  { value: "KARAOKE_STREAM", label: "歌枠" },
-  { value: "LIVE_EVENT", label: "ライブ・イベント" },
-  { value: "MEDLEY", label: "メドレー" }
-];
 
 export function BulkNewForm({
   performers,
@@ -32,22 +28,28 @@ export function BulkNewForm({
     performerIds: string[];
   };
 }) {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [successInfo, setSuccessInfo] = useState<{
+    count: number;
+    firstCoverId: string | null;
+    continueHref: string | null;
+  } | null>(null);
 
   const [sourceUrl, setSourceUrl] = useState(initial.sourceUrl);
   const [sourceTitle, setSourceTitle] = useState("");
   const [sourceImageUrl, setSourceImageUrl] = useState("");
   const [performedAt, setPerformedAt] = useState(initial.performedAt);
   const [coverType, setCoverType] = useState(
-    BULK_COVER_TYPES.some((t) => t.value === initial.coverType) ? initial.coverType : "KARAOKE_STREAM"
+    coverTypeOptions.some((option) => option.value === initial.coverType) ? initial.coverType : "KARAOKE_STREAM"
   );
   const [description, setDescription] = useState("");
   const [selectedPerformers, setSelectedPerformers] = useState<PerformerOption[]>(() =>
     performers.filter((performer) => initial.performerIds.includes(performer.id))
   );
+
+  const isMulti = multiSongCoverTypes.has(coverType);
 
   async function fetchMetadata() {
     setError(null);
@@ -85,15 +87,59 @@ export function BulkNewForm({
     startTransition(async () => {
       const result = await createBulkCoversAction(formData);
       if (result.ok) {
-        if (result.firstCoverId) {
-          router.push(`/covers/${result.firstCoverId}?created=1`);
-        } else {
-          router.push("/admin/covers");
+        let continueHref: string | null = null;
+        if (result.continueInfo) {
+          const params = new URLSearchParams();
+          params.set("sourceUrl", result.continueInfo.sourceUrl);
+          if (result.continueInfo.sourceTitle) {
+            params.set("sourceTitle", result.continueInfo.sourceTitle);
+          }
+          params.set("performedAt", result.continueInfo.performedAt);
+          params.set("coverType", result.continueInfo.coverType);
+          for (const id of result.continueInfo.performerIds) {
+            params.append("performerIds", id);
+          }
+          continueHref = `/admin/covers/bulk-new?${params.toString()}`;
         }
+        setSuccessInfo({ count: result.count, firstCoverId: result.firstCoverId, continueHref });
       } else {
         setError(result.error);
       }
     });
+  }
+
+  if (successInfo) {
+    return (
+      <div className="space-y-4 rounded-md border border-secondary/40 bg-secondary/10 p-6">
+        <div className="flex items-start gap-3">
+          <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-secondary-foreground" aria-hidden="true" />
+          <div>
+            <p className="font-semibold">{successInfo.count}曲を登録しました。</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              続けて同じ動画から追加するか、歌唱記録管理に戻って内容を確認してください。
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {successInfo.continueHref ? (
+            <Link href={successInfo.continueHref} className={cn(buttonVariants())}>
+              同じ動画から続けて追加
+            </Link>
+          ) : null}
+          {successInfo.firstCoverId ? (
+            <Link
+              href={`/covers/${successInfo.firstCoverId}`}
+              className={cn(buttonVariants({ variant: "outline" }))}
+            >
+              登録した歌唱記録を見る
+            </Link>
+          ) : null}
+          <Link href="/admin/covers" className={cn(buttonVariants({ variant: "outline" }))}>
+            歌唱記録管理に戻る
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -152,7 +198,7 @@ export function BulkNewForm({
               value={coverType}
               onChange={(event) => setCoverType(event.target.value)}
             >
-              {BULK_COVER_TYPES.map((option) => (
+              {coverTypeOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
@@ -188,8 +234,13 @@ export function BulkNewForm({
       </section>
 
       <section className="space-y-4 rounded-md border bg-card p-5">
-        <h2 className="text-lg font-semibold">曲リスト</h2>
-        <SongRowsEditor participants={selectedPerformers} description={description} />
+        <h2 className="text-lg font-semibold">{isMulti ? "曲リスト" : "楽曲"}</h2>
+        <SongRowsEditor
+          key={isMulti ? "multi" : "single"}
+          participants={selectedPerformers}
+          description={description}
+          singleRow={!isMulti}
+        />
       </section>
 
       <div className="flex justify-end">

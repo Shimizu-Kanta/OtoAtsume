@@ -43,7 +43,13 @@ export default async function AdminBulkNewCoverPage({
         「この配信・ライブの他の歌唱記録」としてタイムスタンプ順のセットリストが表示されます。
       </div>
 
-      <BulkNewForm performers={performers} initial={initial} />
+      {/*
+        BulkNewForm はクライアントコンポーネントで、送信成功後の状態(successInfo)を
+        自身のReact stateとして保持する。「続けて追加」リンクはクエリパラメータだけが
+        変わる同一ルートへの遷移のため、key を変えないと古い successInfo が残り
+        フォームに戻れなくなる。クエリの内容を key にして、遷移のたびに再マウントする。
+      */}
+      <BulkNewForm key={JSON.stringify(params)} performers={performers} initial={initial} />
     </div>
   );
 }

@@ -7,6 +7,10 @@ export const coverTypeOptions = [
   { value: "OTHER", label: "その他" }
 ] as const;
 
+// 1つのアーカイブURLに複数曲が含まれうる歌唱種別（曲ごとのタイムスタンプで複数曲を登録する）。
+// 公開フォーム・管理画面フォームの両方で同じ判定を使うことで、UI切り替えロジックの二重実装を避ける。
+export const multiSongCoverTypes = new Set<string>(["KARAOKE_STREAM", "LIVE_EVENT", "MEDLEY"]);
+
 export const reportReasonOptions = [
   { value: "WRONG_SONG", label: "楽曲が違う" },
   { value: "WRONG_PERFORMER", label: "活動者が違う" },
