@@ -3,6 +3,7 @@ import { Database, FilePlus2, Music, Search, Sparkles, Users } from "lucide-reac
 
 import { CoverCard } from "@/components/covers/cover-card";
 import { CoverCarousel } from "@/components/home/cover-carousel";
+import { IntroModal } from "@/components/onboarding/intro-modal";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -81,6 +82,7 @@ export default async function HomePage({
 
   return (
     <div className="space-y-10">
+      <IntroModal variant="home" />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(homeJsonLd).replace(/</g, "\\u003c") }}

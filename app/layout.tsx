@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { JetBrains_Mono, Noto_Sans_JP, Zen_Kaku_Gothic_New } from "next/font/google";
 
 import "./globals.css";
+import { HelpButton } from "@/components/onboarding/help-button";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { AccessLogger } from "@/components/telemetry/access-logger";
@@ -91,6 +92,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <SiteHeader />
         <main className="container-page py-8">{children}</main>
         <SiteFooter />
+        <HelpButton />
       </body>
     </html>
   );

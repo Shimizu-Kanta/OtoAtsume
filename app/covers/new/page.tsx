@@ -5,6 +5,7 @@ import { DuplicateCandidateChecker } from "@/components/covers/duplicate-candida
 import { FormSection } from "@/components/covers/form-section";
 import { PublicCoverFields } from "@/components/covers/public-cover-fields";
 import { YouTubeMetadataFetcher } from "@/components/covers/youtube-metadata-fetcher";
+import { IntroModal } from "@/components/onboarding/intro-modal";
 import { PageHeading } from "@/components/page-heading";
 import { Button } from "@/components/ui/button";
 import { ErrorBanner, InfoNote } from "@/components/ui/notice";
@@ -40,6 +41,7 @@ export default async function NewCoverPage({
 
   return (
     <div className="space-y-6">
+      <IntroModal variant="covers-new" />
       <PageHeading
         title="カバー記録登録"
         description="ログインなしで登録できます。投稿者名や投稿履歴は記録・表示しません。"
