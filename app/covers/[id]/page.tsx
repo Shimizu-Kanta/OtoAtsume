@@ -42,7 +42,7 @@ export async function generateMetadata({
 
   if (!cover) {
     return {
-      title: "カバー記録が見つかりません"
+      title: "歌唱記録が見つかりません"
     };
   }
 
@@ -143,13 +143,13 @@ export default async function CoverDetailPage({ params, searchParams }: CoverDet
       <Breadcrumb
         items={[
           { name: "ホーム", href: "/" },
-          { name: "カバー記録", href: "/covers" },
+          { name: "歌唱記録", href: "/covers" },
           { name: cover.song.title, href: `/covers/${cover.id}` }
         ]}
       />
       {created ? (
         <div className="flex flex-col gap-3 rounded-3xl border border-secondary/40 bg-secondary/20 p-4 text-sm font-medium text-secondary-foreground shadow-sm sm:flex-row sm:items-center sm:justify-between">
-          <span>カバー記録を登録しました。</span>
+          <span>歌唱記録を登録しました。</span>
           <Link
             href={buildContinueRegistrationHref(cover)}
             className={cn(buttonVariants({ size: "sm" }), "w-full sm:w-auto")}
@@ -345,16 +345,16 @@ export default async function CoverDetailPage({ params, searchParams }: CoverDet
 
       {otherPerformerCovers.length > 0 ? (
         <RelatedCoversSection
-          title="同じ活動者の他のカバー記録"
-          description="この記録の活動者による他のカバー記録です。"
+          title="同じ活動者の他の歌唱記録"
+          description="この記録の活動者による他の歌唱記録です。"
           covers={otherPerformerCovers}
         />
       ) : null}
 
       {otherSongCovers.length > 0 ? (
         <RelatedCoversSection
-          title="同じ楽曲の他のカバー記録"
-          description="同じ楽曲を歌った他の活動者のカバー記録です。"
+          title="同じ楽曲の他の歌唱記録"
+          description="同じ楽曲を歌った他の活動者の歌唱記録です。"
           covers={otherSongCovers}
           action={
             <Link

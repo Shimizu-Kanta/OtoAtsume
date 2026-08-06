@@ -51,7 +51,7 @@ export default async function AdminCoverEditPage({
     <div className="space-y-6">
       <AdminNav />
       <PageHeading
-        title="カバー記録編集"
+        title="歌唱記録編集"
         description="楽曲、活動者、情報元、公開状態を編集できます。"
         actions={
           <>
@@ -70,7 +70,7 @@ export default async function AdminCoverEditPage({
       ) : null}
       {updated ? (
         <div className="rounded-md border border-secondary/40 bg-secondary/10 p-4 text-sm">
-          カバー記録を更新しました。
+          歌唱記録を更新しました。
         </div>
       ) : null}
 

@@ -5,7 +5,7 @@ export function CoverList({ covers }: { covers: CoverListItem[] }) {
   if (covers.length === 0) {
     return (
       <div className="rounded-[4px] border border-rule bg-panel p-6 text-sm text-slate">
-        条件に一致するカバー記録はありません。
+        条件に一致する歌唱記録はありません。
       </div>
     );
   }

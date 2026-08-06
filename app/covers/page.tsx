@@ -26,7 +26,7 @@ export async function generateMetadata({
   const page = parsePageParam(getSearchParam(params, "page"));
 
   return {
-    title: "カバー記録",
+    title: "歌唱記録",
     robots: isFilteredListing(params) ? { index: false, follow: true } : undefined,
     alternates: {
       canonical: page > 1 ? `/covers?page=${page}` : "/covers"
@@ -68,7 +68,7 @@ export default async function CoversPage({
   return (
     <div className="space-y-6">
       <PageHeading
-        title="カバー記録"
+        title="歌唱記録"
         description="公開済みの歌唱記録を検索できます。同じ情報元URLに複数曲が紐づく場合も正常な記録として扱います。"
         actions={
           <Link href="/covers/new" className={cn(buttonVariants(), "w-full sm:w-auto")}>

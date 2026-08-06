@@ -39,7 +39,7 @@ function formatDailyReportMessage(report: DailySiteReportSummary) {
     `対象日: ${report.date}`,
     "",
     `一日のアクセス数: ${report.accessCount}`,
-    `一日の追加カバー数: ${report.addedCoverCount}`,
+    `一日の追加歌唱記録数: ${report.addedCoverCount}`,
     `一日の新規楽曲数: ${report.addedSongCount}`,
     "",
     "一日のエラー回数:",

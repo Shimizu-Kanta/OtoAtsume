@@ -275,7 +275,7 @@ export default async function PerformerDetailPage({ params }: { params: Promise<
             <div>
               <h2 className="text-xl font-bold tracking-tight">歌唱履歴</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                この活動者に紐づく公開済みのカバー記録です。
+                この活動者に紐づく公開済みの歌唱記録です。
               </p>
             </div>
           </div>
@@ -336,7 +336,7 @@ export default async function PerformerDetailPage({ params }: { params: Promise<
             <div>
               <h2 className="text-xl font-bold tracking-tight">共演のある活動者</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                同じカバー記録に一緒に登録されている活動者を、共演回数の多い順に表示しています。
+                同じ歌唱記録に一緒に登録されている活動者を、共演回数の多い順に表示しています。
               </p>
             </div>
           </div>

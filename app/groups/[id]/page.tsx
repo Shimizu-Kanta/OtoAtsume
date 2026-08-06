@@ -121,18 +121,18 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
 
       <GroupCoverSection
         icon={<CalendarDays className="size-4" aria-hidden="true" />}
-        title="新着カバー記録"
+        title="新着歌唱記録"
         description="このグループの活動者による歌唱記録を、歌唱日が新しい順に表示しています。"
         covers={latestCovers}
-        emptyMessage="このグループのカバー記録はまだ登録されていません。"
+        emptyMessage="このグループの歌唱記録はまだ登録されていません。"
       />
 
       <GroupCoverSection
         icon={<Shuffle className="size-4" aria-hidden="true" />}
-        title="ランダムカバー"
+        title="ランダム歌唱記録"
         description="このグループの歌唱記録からランダムに表示しています。"
         covers={randomCovers}
-        emptyMessage="このグループのカバー記録はまだ登録されていません。"
+        emptyMessage="このグループの歌唱記録はまだ登録されていません。"
       />
 
       <section className="space-y-4">

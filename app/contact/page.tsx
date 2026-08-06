@@ -21,13 +21,13 @@ export default function ContactPage() {
       />
 
       <section className="space-y-3 rounded-md border bg-card p-5">
-        <h2 className="text-lg font-semibold">カバー記録の誤り・問題について</h2>
+        <h2 className="text-lg font-semibold">歌唱記録の誤り・問題について</h2>
         <p className="text-sm leading-7 text-muted-foreground">
-          既に登録されているカバー記録に誤り、重複、リンク切れ、非公開情報の掲載などがある場合は、対象のカバー記録詳細ページにある通報ボタンから連絡してください。
+          既に登録されている歌唱記録に誤り、重複、リンク切れ、非公開情報の掲載などがある場合は、対象の歌唱記録詳細ページにある通報ボタンから連絡してください。
           対象データを特定しやすいため、記録ごとの問題は通報ボタンの利用を推奨します。
         </p>
         <Link href="/covers" className="inline-flex text-sm text-primary underline">
-          カバー記録を探す
+          歌唱記録を探す
         </Link>
       </section>
 

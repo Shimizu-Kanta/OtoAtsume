@@ -67,7 +67,7 @@ async function topPerformersByCoverCount(limit: number) {
 }
 
 async function topArtistsByCoverCount(limit: number) {
-  // カバー記録は128件程度のためメモリ集計で十分。1曲が複数アーティストを持つ場合は各々に加算する。
+  // 歌唱記録は128件程度のためメモリ集計で十分。1曲が複数アーティストを持つ場合は各々に加算する。
   const covers = await db.cover.findMany({
     where: { status: APPROVED },
     select: {

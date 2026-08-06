@@ -108,11 +108,11 @@ export default async function HomePage({
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
               <Link href="/covers" className={cn(buttonVariants({ size: "lg" }), "w-full sm:w-auto")}>
                 <Search className="size-4" />
-                カバーを探す
+                歌唱記録を探す
               </Link>
               <Link href="/covers/new" className={cn(buttonVariants({ variant: "outline", size: "lg" }), "w-full sm:w-auto")}>
                 <FilePlus2 className="size-4" />
-                カバー記録を登録
+                歌唱記録を登録
               </Link>
             </div>
           </div>
@@ -143,7 +143,7 @@ export default async function HomePage({
         <div className="mb-4 flex items-center gap-2">
           <Search className="size-5 text-[color:var(--aqua-deep)]" aria-hidden="true" />
           <div>
-            <h2 className="font-semibold">カバー記録を検索</h2>
+            <h2 className="font-semibold">歌唱記録を検索</h2>
             <p className="text-sm text-slate">楽曲名・活動者名・原曲アーティスト名で探せます。</p>
           </div>
         </div>
@@ -159,7 +159,7 @@ export default async function HomePage({
       </section>
 
       <section className="grid gap-4 sm:grid-cols-3">
-        <StatCard icon={Database} label="カバー記録" value={stats.coverCount} />
+        <StatCard icon={Database} label="歌唱記録" value={stats.coverCount} />
         <StatCard icon={Users} label="活動者" value={stats.performerCount} />
         <StatCard icon={Music} label="楽曲" value={stats.songCount} />
       </section>
@@ -167,14 +167,14 @@ export default async function HomePage({
       <AnniversaryCoverSection groups={anniversaryCoverGroups} />
 
       <HomeCoverSection
-        title="ランダムカバー"
-        description="登録されているカバー記録からランダムに表示しています。"
+        title="ランダム歌唱記録"
+        description="登録されている歌唱記録からランダムに表示しています。"
         covers={randomCovers}
       />
 
       <HomeCoverSection
-        title="新着カバー記録"
-        description="歌唱日が新しいカバー記録を表示しています。"
+        title="新着歌唱記録"
+        description="歌唱日が新しい歌唱記録を表示しています。"
         covers={latestCovers}
         actionHref="/covers"
         actionLabel="すべて見る"
@@ -202,8 +202,8 @@ function AnniversaryCoverSection({ groups }: { groups: AnniversaryCoverGroup[] }
     <section className="space-y-4">
       <SectionHeading
         icon={<Sparkles className="size-5 text-primary" aria-hidden="true" />}
-        title="アニバーサリーカバー"
-        description="今日がデビュー記念日・誕生日の活動者のカバー記録を表示しています。"
+        title="アニバーサリー歌唱記録"
+        description="今日がデビュー記念日・誕生日の活動者の歌唱記録を表示しています。"
       />
 
       {groups.length > 0 ? (
@@ -247,7 +247,7 @@ function AnniversaryCoverSection({ groups }: { groups: AnniversaryCoverGroup[] }
                   </CoverCarousel>
                 ) : (
                   <p className="rounded-2xl border bg-muted/30 p-4 text-sm text-muted-foreground">
-                    この活動者のカバー記録はまだ登録されていません。
+                    この活動者の歌唱記録はまだ登録されていません。
                   </p>
                 )}
               </div>
@@ -298,7 +298,7 @@ function HomeCoverSection({
         </CoverCarousel>
       ) : (
         <div className="rounded-[4px] border border-rule bg-panel p-5 text-sm text-slate">
-          表示できるカバー記録がありません。
+          表示できる歌唱記録がありません。
         </div>
       )}
     </section>

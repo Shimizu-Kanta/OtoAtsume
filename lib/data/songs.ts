@@ -60,7 +60,7 @@ function songOrderBy(sort: SongSort | undefined): Prisma.SongOrderByWithRelation
   }
 
   // Prisma の orderBy はリレーション件数にステータス条件を掛けられないため、
-  // 全ステータスのカバー件数で並ぶ（承認済み以外はごく少数のため近似として許容）。
+  // 全ステータスの歌唱記録件数で並ぶ（承認済み以外はごく少数のため近似として許容）。
   if (sort === "coverCountDesc") {
     return [{ covers: { _count: "desc" } }, { title: "asc" }];
   }

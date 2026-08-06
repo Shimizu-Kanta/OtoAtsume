@@ -148,7 +148,7 @@ function buildCoverWhere(search: CoverSearch = {}, onlyApproved = true): Prisma.
     and.push({ coverType: search.coverType as CoverType });
   }
 
-  // 指定タグのいずれかを持つ活動者が歌っているカバー記録（活動者一覧側と同じ OR 挙動）。
+  // 指定タグのいずれかを持つ活動者が歌っている歌唱記録（活動者一覧側と同じ OR 挙動）。
   if (search.tagIds && search.tagIds.length > 0) {
     and.push({
       performers: {
@@ -270,7 +270,7 @@ export async function getOtherCoversBySong(songId: string, excludeCoverId: strin
   });
 }
 
-// 単一カバーの関連件数（同楽曲 / 同活動者 / 同 sourceUrl の他記録数）。
+// 単一歌唱記録の関連件数（同楽曲 / 同活動者 / 同 sourceUrl の他記録数）。
 // generateMetadata の noindex 判定に使う。すべて自身を除いた APPROVED 件数。
 export async function getCoverRelationCounts(cover: {
   id: string;
@@ -306,9 +306,9 @@ export async function getCoverRelationCounts(cover: {
   return { sameSongCount, samePerformerCount, sameSourceCount };
 }
 
-// sitemap 用に、index 対象（孤立していない）の APPROVED カバーだけを一括判定して返す。
-// 全カバーを1度だけ取得し、songId / sourceUrl / performerId ごとの件数を Map 化して
-// 各カバーを O(1) で判定する（N+1 を避ける）。generateMetadata と同じ evaluateCoverQuality を使う。
+// sitemap 用に、index 対象（孤立していない）の APPROVED 歌唱記録だけを一括判定して返す。
+// 全歌唱記録を1度だけ取得し、songId / sourceUrl / performerId ごとの件数を Map 化して
+// 各歌唱記録を O(1) で判定する（N+1 を避ける）。generateMetadata と同じ evaluateCoverQuality を使う。
 export async function getIndexableCoverSitemapEntries() {
   const covers = await db.cover.findMany({
     where: { status: ContentStatus.APPROVED },

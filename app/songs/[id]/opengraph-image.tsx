@@ -22,6 +22,6 @@ export default async function Image({ params }: { params: Promise<{ id: string }
     label: "SONG",
     title: song.title,
     subtitle: artists || undefined,
-    stat: `カバー記録 ${song.covers.length.toLocaleString("ja-JP")} 件`
+    stat: `歌唱記録 ${song.covers.length.toLocaleString("ja-JP")} 件`
   });
 }

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-// カバー登録フォームの各ステップを囲む共通のセクション枠。
+// 歌唱記録登録フォームの各ステップを囲む共通のセクション枠。
 // overflow-hidden は付けない: 内部のオートコンプリート候補(絶対配置)が枠で切れるため。
 // 角丸は border-radius のみで表現でき、中身をクリップする必要はない。
 export function FormSection({

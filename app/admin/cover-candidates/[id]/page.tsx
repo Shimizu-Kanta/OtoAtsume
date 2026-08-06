@@ -77,7 +77,7 @@ export default async function AdminCoverCandidateConfirmPage({
       <AdminNav />
       <PageHeading
         title="歌唱記録候補の確定"
-        description="推定結果を確認・修正してカバー記録を作成します。"
+        description="推定結果を確認・修正して歌唱記録を作成します。"
         actions={
           <Link href="/admin/cover-candidates" className="text-sm text-primary underline">
             候補一覧に戻る
@@ -179,7 +179,7 @@ export default async function AdminCoverCandidateConfirmPage({
 
           <div className="flex justify-end">
             <Button type="submit" size="lg">
-              カバー記録として確定する
+              歌唱記録として確定する
             </Button>
           </div>
         </form>

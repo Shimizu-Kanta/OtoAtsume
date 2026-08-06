@@ -166,7 +166,7 @@ async function main() {
       performedAt: new Date("2025-01-15T00:00:00.000Z"),
       coverType: CoverType.COVER_VIDEO,
       sourceUrl: "https://example.com/dev/cover-idol",
-      sourceTitle: "開発用カバー動画",
+      sourceTitle: "開発用歌唱記録動画",
       timestampSeconds: 0
     },
     {

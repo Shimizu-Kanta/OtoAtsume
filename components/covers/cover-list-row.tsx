@@ -8,7 +8,7 @@ import { formatDate } from "@/lib/utils";
 import { getYouTubeThumbnailUrl } from "@/lib/youtube";
 
 // リスト行（3.3）: 56px サムネイル + タイトル情報 + 右カラムの種別・日付。
-// カバー一覧・カバー詳細の関連セクションで再利用する。
+// 歌唱記録一覧・歌唱記録詳細の関連セクションで再利用する。
 export function CoverListRow({ cover }: { cover: CoverListItem }) {
   const thumbnailUrl = cover.sourceImageUrl ?? getYouTubeThumbnailUrl(cover.sourceUrl);
   const artists = cover.song.artists.map(({ artist }) => artist.name).join(", ");

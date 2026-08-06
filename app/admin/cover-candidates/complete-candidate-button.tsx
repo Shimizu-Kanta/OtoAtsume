@@ -20,7 +20,7 @@ export function CompleteCandidateButton({
         onClick={(event) => {
           if (
             coverCount === 0 &&
-            !window.confirm("この動画からカバー記録が登録されていませんが、完了にしますか？")
+            !window.confirm("この動画から歌唱記録が登録されていませんが、完了にしますか？")
           ) {
             event.preventDefault();
           }

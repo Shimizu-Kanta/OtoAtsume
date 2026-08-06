@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 
 // 動画メタデータ（タイトル・概要欄・チャンネル）から、既存の活動者・楽曲候補を推定する。
 // 元は app/api/youtube/metadata/route.ts にあったロジックを、歌唱記録候補の巡回（Task 29）と
-// カバー登録フォームの補助APIの双方から使えるよう共通化したもの。挙動は移動前と同一。
+// 歌唱記録登録フォームの補助APIの双方から使えるよう共通化したもの。挙動は移動前と同一。
 
 export type PerformerSuggestionInput = {
   channelId: string;

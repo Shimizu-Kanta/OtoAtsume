@@ -99,7 +99,7 @@ export async function deletePerformerAction(performerId: string, formData: FormD
       )}`;
     } else if (result.reason === "hasCovers") {
       redirectTo = `/admin/performers/${performerId}?error=${encodeURIComponent(
-        `この活動者は ${result.coverCount} 件のカバー記録に紐づいているため削除できません。先に紐づきを修正してください。`
+        `この活動者は ${result.coverCount} 件の歌唱記録に紐づいているため削除できません。先に紐づきを修正してください。`
       )}`;
     }
   } catch (error) {

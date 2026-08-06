@@ -39,7 +39,7 @@ export default async function RankingsPage() {
       <RankingSection
         icon={<Music2 className="size-5 text-[color:var(--aqua-deep)]" aria-hidden="true" />}
         title="最も多く歌われている楽曲 TOP20"
-        intro="登録されている全期間の歌唱記録を対象に、カバー記録の件数が多い楽曲を集計しました。歌ってみた動画・歌枠・ライブなど、種別を問わず合算しています。"
+        intro="登録されている全期間の歌唱記録を対象に、歌唱記録の件数が多い楽曲を集計しました。歌ってみた動画・歌枠・ライブなど、種別を問わず合算しています。"
         unit="件"
         items={topSongs.map((song, index) => ({
           rank: index + 1,

@@ -24,7 +24,7 @@ export default async function AdminDailyReportsPage() {
             <tr>
               <th className="px-4 py-3 font-medium">対象日</th>
               <th className="px-4 py-3 font-medium">アクセス</th>
-              <th className="px-4 py-3 font-medium">追加カバー</th>
+              <th className="px-4 py-3 font-medium">追加歌唱記録</th>
               <th className="px-4 py-3 font-medium">新規楽曲</th>
               <th className="px-4 py-3 font-medium">エラー</th>
               <th className="px-4 py-3 font-medium">未処理通報</th>

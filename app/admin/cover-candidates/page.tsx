@@ -106,7 +106,7 @@ export default async function AdminCoverCandidatesPage({
       <AdminNav />
       <PageHeading
         title="歌唱記録候補"
-        description="活動者のYouTubeチャンネルを巡回して集めた、未登録の歌唱動画候補です。確認して確定すると正式なカバー記録になります。"
+        description="活動者のYouTubeチャンネルを巡回して集めた、未登録の歌唱動画候補です。確認して確定すると正式な歌唱記録になります。"
       />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -123,7 +123,7 @@ export default async function AdminCoverCandidatesPage({
       ) : null}
       {adopted ? (
         <div className="rounded-md border border-secondary/40 bg-secondary/10 p-4 text-sm">
-          カバー記録を作成しました。
+          歌唱記録を作成しました。
         </div>
       ) : null}
       {rejected ? (
@@ -263,7 +263,7 @@ export default async function AdminCoverCandidatesPage({
                       href={`/admin/covers/${candidate.adoptedCoverId}`}
                       className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
                     >
-                      作成されたカバー記録
+                      作成された歌唱記録
                     </Link>
                   ) : null}
 

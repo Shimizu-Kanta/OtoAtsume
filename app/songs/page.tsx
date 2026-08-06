@@ -54,7 +54,7 @@ export default async function SongsPage({
           <div>
             <h2 className="text-base font-semibold">楽曲を探す</h2>
             <p className="mt-1 text-sm text-slate">
-              楽曲名・原曲アーティスト名から、登録済みのカバー記録を探せます。
+              楽曲名・原曲アーティスト名から、登録済みの歌唱記録を探せます。
             </p>
           </div>
           <p className="font-mono text-xs tabular-nums text-slate">{totalCount.toLocaleString("ja-JP")} songs</p>
@@ -70,7 +70,7 @@ export default async function SongsPage({
             <Select id="song-sort" name="sort" defaultValue={sort}>
               <option value="titleAsc">楽曲名 昇順</option>
               <option value="titleDesc">楽曲名 降順</option>
-              <option value="coverCountDesc">カバー記録が多い順</option>
+              <option value="coverCountDesc">歌唱記録が多い順</option>
             </Select>
           </div>
           <button type="submit" className={cn(buttonVariants(), "w-full md:w-auto")}>

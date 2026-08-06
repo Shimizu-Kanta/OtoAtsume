@@ -76,7 +76,7 @@ function performerOrderBy(sort: PerformerSort | undefined): Prisma.PerformerOrde
   // 注意: Prisma の orderBy はリレーション件数に where を適用できないため、
   // ここで並び替えに使われる件数は CoverPerformer の全行（HIDDEN / REJECTED を含む）で、
   // 一覧に表示される _count（APPROVED のみ）とは集計範囲が一致しない。
-  // 現状ほぼ全てのカバー記録が APPROVED のため実害は出ない見込み。
+  // 現状ほぼ全ての歌唱記録が APPROVED のため実害は出ない見込み。
   // 非公開記録が増えて順序の食い違いが目立つ場合は、CoverPerformer を
   // status=APPROVED で groupBy して performerId 順を先に確定させる方式へ差し替える。
   if (sort === "coverCountDesc") {
@@ -199,8 +199,8 @@ export async function getPerformerById(id: string) {
 }
 
 // 確認待ち（PENDING）活動者ページで専用の案内を出すため、ステータスを問わず取得する。
-// performerDetailInclude の covers は APPROVED のカバー記録のみを含むため、
-// 非公開のカバー記録が漏れることはない。
+// performerDetailInclude の covers は APPROVED の歌唱記録のみを含むため、
+// 非公開の歌唱記録が漏れることはない。
 export async function getPerformerByIdAnyStatus(id: string) {
   return db.performer.findFirst({
     where: { id },

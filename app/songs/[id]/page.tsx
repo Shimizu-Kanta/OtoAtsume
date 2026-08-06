@@ -40,8 +40,8 @@ export async function generateMetadata({
   const artists = song.artists.map(({ artist }) => artist.name).join(", ");
   const title = artists ? `${song.title} / ${artists}` : song.title;
   const description = artists
-    ? `${song.title}（${artists}）のカバー記録${song.covers.length}件を掲載。歌ってみた・歌枠・ライブでの歌唱記録をまとめています。`
-    : `${song.title} のカバー記録${song.covers.length}件を掲載。歌ってみた・歌枠・ライブでの歌唱記録をまとめています。`;
+    ? `${song.title}（${artists}）の歌唱記録${song.covers.length}件を掲載。歌ってみた・歌枠・ライブでの歌唱記録をまとめています。`
+    : `${song.title} の歌唱記録${song.covers.length}件を掲載。歌ってみた・歌枠・ライブでの歌唱記録をまとめています。`;
   const { isIndexable } = evaluateSongQuality(song.covers.length);
 
   return {
@@ -122,7 +122,7 @@ export default async function SongDetailPage({ params }: { params: Promise<{ id:
               ) : null}
               <Link href={`/covers?song=${encodeURIComponent(song.title)}`} className={cn(buttonVariants())}>
                 <Music2 className="size-4" aria-hidden="true" />
-                カバー記録を探す
+                歌唱記録を探す
               </Link>
               <ShareButton url={`${siteUrl}/songs/${song.id}`} title={`${song.title} | おとあつめ`} />
             </div>
@@ -143,7 +143,7 @@ export default async function SongDetailPage({ params }: { params: Promise<{ id:
         />
         <InfoCard
           icon={<Music2 className="size-4" aria-hidden="true" />}
-          label="カバー記録"
+          label="歌唱記録"
           value={`${song.covers.length.toLocaleString("ja-JP")} 件`}
         />
       </section>
@@ -192,7 +192,7 @@ export default async function SongDetailPage({ params }: { params: Promise<{ id:
             <div>
               <h2 className="text-xl font-bold tracking-tight">この曲を歌った活動者</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                この楽曲に紐づく公開済みのカバー記録です。
+                この楽曲に紐づく公開済みの歌唱記録です。
               </p>
             </div>
           </div>
@@ -247,7 +247,7 @@ export default async function SongDetailPage({ params }: { params: Promise<{ id:
             </div>
           ) : (
             <p className="p-6 text-sm text-muted-foreground">
-              この曲のカバー記録はまだ登録されていません。
+              この曲の歌唱記録はまだ登録されていません。
             </p>
           )}
         </div>
@@ -367,7 +367,7 @@ function RelatedSongCard({ song }: { song: SongListItem }) {
           <p className="mt-1 truncate text-sm text-muted-foreground">{artists}</p>
         </div>
         <div className="mt-auto">
-          <Badge variant="muted">カバー記録 {song._count.covers} 件</Badge>
+          <Badge variant="muted">歌唱記録 {song._count.covers} 件</Badge>
         </div>
       </div>
     </article>

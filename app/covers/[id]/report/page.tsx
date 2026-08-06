@@ -34,7 +34,7 @@ export default async function ReportPage({
 
   return (
     <div className="space-y-6">
-      <PageHeading title="カバー記録を通報" description={`${cover.song.title} の記録について`} />
+      <PageHeading title="歌唱記録を通報" description={`${cover.song.title} の記録について`} />
 
       {error ? <ErrorBanner>{error}</ErrorBanner> : null}
 

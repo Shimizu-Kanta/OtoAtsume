@@ -35,7 +35,7 @@ export async function GET() {
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0">
   <channel>
-    <title>おとあつめ 新着カバー記録</title>
+    <title>おとあつめ 新着歌唱記録</title>
     <link>${siteUrl}</link>
     <description>VTuber・歌い手の歌ってみた・歌枠・ライブ歌唱記録の新着一覧</description>
     <language>ja</language>

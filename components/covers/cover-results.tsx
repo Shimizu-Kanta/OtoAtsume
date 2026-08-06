@@ -82,7 +82,7 @@ export function CoverResults({
         </div>
       ) : (
         <div className="rounded-[4px] border border-rule bg-panel p-6 text-sm text-slate">
-          条件に一致するカバー記録はありません。
+          条件に一致する歌唱記録はありません。
         </div>
       )}
     </div>

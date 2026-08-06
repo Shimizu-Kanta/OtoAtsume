@@ -72,7 +72,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${siteUrl}/about`, changeFrequency: "monthly", priority: 0.5 }
   ];
 
-  // カバー記録詳細は1件でも固有情報を持つため除外しない。
+  // 歌唱記録詳細は1件でも固有情報を持つため除外しない。
   const coverEntries: MetadataRoute.Sitemap = covers.map((cover) => ({
     url: `${siteUrl}/covers/${cover.id}`,
     lastModified: cover.updatedAt,

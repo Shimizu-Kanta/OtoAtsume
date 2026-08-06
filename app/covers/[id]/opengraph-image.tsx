@@ -2,7 +2,7 @@ import { getCoverById } from "@/lib/data/covers";
 import { createBrandOgImage, OG_SIZE } from "@/lib/og";
 import { formatDate } from "@/lib/utils";
 
-export const alt = "おとあつめ カバー記録";
+export const alt = "おとあつめ 歌唱記録";
 export const size = OG_SIZE;
 export const contentType = "image/png";
 
@@ -13,7 +13,7 @@ export default async function Image({ params }: { params: Promise<{ id: string }
   if (!cover) {
     return createBrandOgImage({
       label: "COVER",
-      title: "カバー記録"
+      title: "歌唱記録"
     });
   }
 

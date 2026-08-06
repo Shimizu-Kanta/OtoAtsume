@@ -43,7 +43,7 @@ export default async function AdminPage() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold">最新登録カバー</h2>
+        <h2 className="text-lg font-semibold">最新登録歌唱記録</h2>
         <div className="overflow-hidden rounded-md border bg-card">
           <div className="divide-y">
             {stats.latestCovers.map((cover) => (

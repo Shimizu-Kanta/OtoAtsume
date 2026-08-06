@@ -33,7 +33,7 @@ export async function deleteSongAction(songId: string, _formData?: FormData) {
     if (result.reason === "hasCovers") {
       redirect(
         `/admin/songs?error=${encodeURIComponent(
-          `この楽曲はカバー記録 ${result.coverCount} 件に使われているため削除できません。`
+          `この楽曲は歌唱記録 ${result.coverCount} 件に使われているため削除できません。`
         )}`
       );
     }

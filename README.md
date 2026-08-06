@@ -229,9 +229,9 @@ GitHub Actions では Cloud SQL Auth Proxy を起動し、`MIGRATION_DATABASE_UR
 ## 主な画面
 
 - `/` トップページ
-- `/covers` カバー記録一覧・検索
-- `/covers/new` カバー記録登録
-- `/covers/:id` カバー記録詳細
+- `/covers` 歌唱記録一覧・検索
+- `/covers/new` 歌唱記録登録
+- `/covers/:id` 歌唱記録詳細
 - `/covers/:id/report` 通報
 - `/performers` 活動者一覧
 - `/songs` 楽曲一覧
@@ -240,7 +240,7 @@ GitHub Actions では Cloud SQL Auth Proxy を起動し、`MIGRATION_DATABASE_UR
 管理者向け画面:
 
 - `/admin` 管理者トップ
-- `/admin/covers` カバー記録管理
+- `/admin/covers` 歌唱記録管理
 - `/admin/reports` 通報管理
 - `/admin/performer-applications` 活動者申請管理
 - `/admin/groups` 所属グループ管理

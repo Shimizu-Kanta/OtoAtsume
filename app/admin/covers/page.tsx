@@ -46,8 +46,8 @@ export default async function AdminCoversPage({
     <div className="space-y-6">
       <AdminNav />
       <PageHeading
-        title="カバー記録管理"
-        description="カバー記録を検索し、編集・非表示対応できます。"
+        title="歌唱記録管理"
+        description="歌唱記録を検索し、編集・非表示対応できます。"
         actions={
           <Link href="/admin/covers/bulk-new" className="rounded-md border px-4 py-2 text-sm">
             一括登録
@@ -63,7 +63,7 @@ export default async function AdminCoversPage({
 
       {deleted ? (
         <div className="rounded-md border border-secondary/40 bg-secondary/10 p-4 text-sm">
-          カバー記録を削除しました。
+          歌唱記録を削除しました。
         </div>
       ) : null}
 
@@ -155,7 +155,7 @@ export default async function AdminCoversPage({
                     <input type="hidden" name="id" value={cover.id} />
                     <DeleteSubmitButton
                       size="sm"
-                      confirmMessage={`カバー記録「${cover.song.title}」を削除します。関連する通報も削除されます。よろしいですか？`}
+                      confirmMessage={`歌唱記録「${cover.song.title}」を削除します。関連する通報も削除されます。よろしいですか？`}
                     >
                       削除
                     </DeleteSubmitButton>

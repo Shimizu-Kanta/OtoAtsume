@@ -48,7 +48,7 @@ export function CoverCarousel({ children, className, itemLayout = "responsive" }
           variant="outline"
           size="sm"
           onClick={() => scroll("prev")}
-          aria-label="前のカバーを表示"
+          aria-label="前の歌唱記録を表示"
         >
           <ChevronLeft className="size-4" />
         </Button>
@@ -57,7 +57,7 @@ export function CoverCarousel({ children, className, itemLayout = "responsive" }
           variant="outline"
           size="sm"
           onClick={() => scroll("next")}
-          aria-label="次のカバーを表示"
+          aria-label="次の歌唱記録を表示"
         >
           <ChevronRight className="size-4" />
         </Button>

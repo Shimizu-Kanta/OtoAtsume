@@ -36,7 +36,7 @@ export async function completeCoverCandidateAction(id: string, _formData?: FormD
   redirect("/admin/cover-candidates?completed=1");
 }
 
-// COVER_VIDEO の候補を確定してカバー記録（APPROVED）を作成する。
+// COVER_VIDEO の候補を確定して歌唱記録（APPROVED）を作成する。
 export async function adoptCoverVideoCandidateAction(candidateId: string, formData: FormData) {
   await requireAdminPage();
 

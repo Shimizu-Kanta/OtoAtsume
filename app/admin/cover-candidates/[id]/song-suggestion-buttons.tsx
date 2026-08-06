@@ -3,7 +3,7 @@
 type SongSuggestion = { id: string; title: string; artistNames: string[] };
 
 // クリックすると確定フォームの楽曲名・アーティスト名の入力欄を埋める。
-// 既存のカバー登録フォームと同じ「候補をクリックして反映」する操作感に合わせている。
+// 既存の歌唱記録登録フォームと同じ「候補をクリックして反映」する操作感に合わせている。
 export function SongSuggestionButtons({ suggestions }: { suggestions: SongSuggestion[] }) {
   if (suggestions.length === 0) {
     return null;

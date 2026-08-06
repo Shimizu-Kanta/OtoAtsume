@@ -152,7 +152,10 @@ export function IntroModal({
   return (
     <div
       className={cn(
-        "fixed inset-0 z-[100] flex items-center justify-center bg-ink/50 p-4 transition-opacity duration-150",
+        // "bg-ink/70" のようなスラッシュ不透明度指定は、--ink が hex 値の CSS 変数のため
+        // Tailwind がアルファ合成できず透明になってしまう。ブラケット記法の hex 直書きなら
+        // Tailwind がビルド時に色を解釈できるため、不透明度指定が正しく機能する。
+        "fixed inset-0 z-[100] flex items-center justify-center bg-[#16212b]/70 p-4 transition-opacity duration-150",
         visible ? "opacity-100" : "opacity-0"
       )}
       onClick={close}
@@ -188,8 +191,11 @@ export function IntroModal({
           {variant === "home" ? (
             <>
               <Button variant="outline" onClick={close}>
-                閉じる
+                使ってみる
               </Button>
+              <Link href="/covers" onClick={close} className={cn(buttonVariants({ variant: "outline" }), "w-full sm:w-auto")}>
+                楽曲を探す
+              </Link>
               <Link href="/covers/new" onClick={close} className={cn(buttonVariants(), "w-full sm:w-auto")}>
                 登録してみる
               </Link>

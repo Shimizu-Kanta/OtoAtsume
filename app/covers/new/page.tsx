@@ -43,7 +43,7 @@ export default async function NewCoverPage({
     <div className="space-y-6">
       <IntroModal variant="covers-new" />
       <PageHeading
-        title="カバー記録登録"
+        title="歌唱記録登録"
         description="ログインなしで登録できます。投稿者名や投稿履歴は記録・表示しません。"
       />
 

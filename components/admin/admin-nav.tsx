@@ -37,7 +37,7 @@ const adminNavSections = [
   {
     title: "確認",
     items: [
-      { href: "/admin/covers", label: "カバー記録", icon: ListMusic },
+      { href: "/admin/covers", label: "歌唱記録", icon: ListMusic },
       { href: "/admin/cover-candidates", label: "歌唱記録候補", icon: Sparkles },
       { href: "/admin/reports", label: "通報", icon: Flag },
       { href: "/admin/performers?status=PENDING", label: "確認待ち活動者", icon: UserCheck }

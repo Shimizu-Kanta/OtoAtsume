@@ -183,16 +183,16 @@ export default async function AdminPerformerEditPage({
         <h2 className="text-lg font-semibold">危険操作</h2>
         <p className="mt-2 text-sm text-muted-foreground">
           この活動者を削除します。削除すると、別名・タグ付けも削除されます。
-          カバー記録に紐づいている場合は削除できません。
+          歌唱記録に紐づいている場合は削除できません。
         </p>
         <p className="mt-2 text-sm">
-          紐づくカバー記録:{" "}
+          紐づく歌唱記録:{" "}
           <span className="font-semibold">{performer._count.covers}</span> 件
         </p>
 
         {performer._count.covers > 0 ? (
           <p className="mt-3 text-sm text-destructive">
-            この活動者はカバー記録に紐づいているため削除できません。先にカバー記録側の紐づきを修正してください。
+            この活動者は歌唱記録に紐づいているため削除できません。先に歌唱記録側の紐づきを修正してください。
           </p>
         ) : null}
 

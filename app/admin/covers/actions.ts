@@ -32,7 +32,7 @@ export async function deleteCoverAction(formData: FormData) {
   const result = await deleteAdminCover(id);
 
   if (!result.ok) {
-    redirect(`/admin/covers?error=${encodeURIComponent("カバー記録が見つかりません。")}`);
+    redirect(`/admin/covers?error=${encodeURIComponent("歌唱記録が見つかりません。")}`);
   }
 
   revalidatePath("/admin/covers");

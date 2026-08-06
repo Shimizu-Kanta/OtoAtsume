@@ -20,7 +20,7 @@ export async function GET(
   const cover = await getCoverById(id, true);
 
   if (!cover) {
-    return NextResponse.json({ error: "カバー記録が見つかりません。" }, { status: 404 });
+    return NextResponse.json({ error: "歌唱記録が見つかりません。" }, { status: 404 });
   }
 
   return NextResponse.json({ cover });

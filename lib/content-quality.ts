@@ -3,13 +3,13 @@ import { MasterDataStatus } from "@prisma/client";
 // ページ品質（掲載可能な情報量）の判定閾値を一箇所に集約する。
 // AdSense 再申請の結果を見て調整するため、各ページにマジックナンバーを散らさない。
 //
-// 現在の閾値「1件」は、データ総量が小さい現状（カバー記録 約130件）に合わせた設定。
-// カバー記録が 500 件を超えた段階で song / performer を 2 に引き上げる想定のため、
+// 現在の閾値「1件」は、データ総量が小さい現状（歌唱記録 約130件）に合わせた設定。
+// 歌唱記録が 500 件を超えた段階で song / performer を 2 に引き上げる想定のため、
 // ここの数値を書き換えるだけで全ページに反映される設計にしている。
 export const CONTENT_QUALITY_THRESHOLDS = {
-  song: 1, // カバー記録が1件以上
-  performer: 1, // カバー記録が1件以上（記録ゼロの活動者を除外）
-  group: 1, // 所属活動者のカバー記録合計が1件以上
+  song: 1, // 歌唱記録が1件以上
+  performer: 1, // 歌唱記録が1件以上（記録ゼロの活動者を除外）
+  group: 1, // 所属活動者の歌唱記録合計が1件以上
   tag: 2 // タグに紐づく「記録を持つ活動者」が2人以上
 } as const;
 
@@ -82,12 +82,12 @@ export function evaluateTagQuality(performerCount: number): ContentQualityResult
 }
 
 export type CoverQualityInput = {
-  sameSongCount: number; // 同じ楽曲の他のカバー記録数（自身を除く）
-  samePerformerCount: number; // 同じ活動者の他のカバー記録数（自身を除く）
-  sameSourceCount: number; // 同じ sourceUrl の他のカバー記録数（自身を除く）
+  sameSongCount: number; // 同じ楽曲の他の歌唱記録数（自身を除く）
+  samePerformerCount: number; // 同じ活動者の他の歌唱記録数（自身を除く）
+  sameSourceCount: number; // 同じ sourceUrl の他の歌唱記録数（自身を除く）
 };
 
-// 3種の関連セクションがすべて空になる「孤立した」カバー記録は情報量が乏しいため index 対象外。
+// 3種の関連セクションがすべて空になる「孤立した」歌唱記録は情報量が乏しいため index 対象外。
 // 関連記録が増えれば自動的に index 対象へ復帰する（手動フラグは設けない）。
 export function evaluateCoverQuality(input: CoverQualityInput): ContentQualityResult {
   const related = input.sameSongCount + input.samePerformerCount + input.sameSourceCount;

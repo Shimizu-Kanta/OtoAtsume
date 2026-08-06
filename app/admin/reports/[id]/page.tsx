@@ -50,7 +50,7 @@ export default async function AdminReportDetailPage({
       </section>
 
       <section className="rounded-md border bg-card p-5">
-        <h2 className="text-lg font-semibold">対象カバー記録</h2>
+        <h2 className="text-lg font-semibold">対象歌唱記録</h2>
         <div className="mt-4 space-y-2 text-sm">
           <p>
             <Link href={`/covers/${report.cover.id}`} className="font-medium text-primary underline">
@@ -70,7 +70,7 @@ export default async function AdminReportDetailPage({
               href={`/admin/covers/${report.cover.id}`}
               className="inline-flex rounded-md border px-3 py-2 text-sm"
             >
-              対象カバー記録を編集
+              対象歌唱記録を編集
             </Link>
           </div>
         </div>
