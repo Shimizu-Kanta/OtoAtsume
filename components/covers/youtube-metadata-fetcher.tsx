@@ -20,14 +20,14 @@ type YouTubeMetadata = {
   cache: "hit" | "miss" | "refresh" | "webpage";
 };
 
-type PerformerSuggestion = {
+export type PerformerSuggestion = {
   id: string;
   name: string;
   groupName: string | null;
   reason: "channel" | "title" | "description" | "url";
 };
 
-type SongSuggestion = {
+export type SongSuggestion = {
   id: string;
   title: string;
   artistNames: string[];
@@ -58,7 +58,15 @@ type FetchState =
     }
   | { status: "error"; message: string };
 
-export function YouTubeMetadataFetcher({ autoFetch = false} : { autoFetch?: boolean }) {
+export function YouTubeMetadataFetcher({
+  autoFetch = false,
+  onSongSuggestionApply,
+  onPerformerSuggestionApply
+}: {
+  autoFetch?: boolean;
+  onSongSuggestionApply?: (song: SongSuggestion) => void;
+  onPerformerSuggestionApply?: (performer: PerformerSuggestion) => void;
+}) {
   const [state, setState] = useState<FetchState>({ status: "idle" });
   const autoFetchedRef = useRef(false);
   const [addedPerformerIds, setAddedPerformerIds] = useState(() => new Set<string>());
@@ -138,7 +146,7 @@ export function YouTubeMetadataFetcher({ autoFetch = false} : { autoFetch?: bool
   }, [autoFetch, fetchMetadata]);
 
   function handleAddPerformer(performer: PerformerSuggestion) {
-    addPerformerToPicker(performer.id);
+    onPerformerSuggestionApply?.(performer);
 
     setAddedPerformerIds((current) => {
       const next = new Set(current);
@@ -148,7 +156,7 @@ export function YouTubeMetadataFetcher({ autoFetch = false} : { autoFetch?: bool
   }
 
   function handleApplySongSuggestion(song: SongSuggestion) {
-    applySongSuggestionToForm(song);
+    onSongSuggestionApply?.(song);
     setAppliedSongSuggestionId(song.id);
     requestDuplicateCheck();
   }
@@ -369,25 +377,6 @@ function setNativeValue(
   } else {
     element.value = value;
   }
-}
-
-function addPerformerToPicker(id: string) {
-  window.dispatchEvent(
-    new CustomEvent("otoatsume:add-performer-id", {
-      detail: { id }
-    })
-  );
-}
-
-function applySongSuggestionToForm(song: SongSuggestion) {
-  const form = document.getElementById("cover-form");
-
-  if (!(form instanceof HTMLFormElement)) {
-    return;
-  }
-
-  setFormValue(form, "songTitle", song.title);
-  setFormValue(form, "artistNames", song.artistNames.join(", "));
 }
 
 function songReasonLabel(reason: SongSuggestion["reason"]) {

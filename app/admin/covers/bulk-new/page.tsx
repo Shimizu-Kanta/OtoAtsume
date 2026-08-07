@@ -1,11 +1,12 @@
 import Link from "next/link";
 
 import { AdminNav } from "@/components/admin/admin-nav";
+import { CoverRegistrationForm } from "@/components/covers/cover-registration-form";
 import { PageHeading } from "@/components/page-heading";
 import { requireAdminPage } from "@/lib/auth/admin";
 import { getPerformerOptions } from "@/lib/data/performers";
 import { getSearchParam, getSearchParamAll } from "@/lib/utils";
-import { BulkNewForm } from "./bulk-new-form";
+import { createAdminCoverAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -17,15 +18,10 @@ export default async function AdminBulkNewCoverPage({
   await requireAdminPage();
   const [params, performers] = await Promise.all([searchParams, getPerformerOptions()]);
 
-  const initial = {
-    sourceUrl: getSearchParam(params, "sourceUrl") ?? "",
-    performedAt: getSearchParam(params, "performedAt") ?? "",
-    coverType: getSearchParam(params, "coverType") ?? "KARAOKE_STREAM",
-    performerIds: getSearchParamAll(params, "performerIds")
-  };
+  const initialSourceUrl = getSearchParam(params, "sourceUrl") ?? "";
   // 「同じURLで記録を追加」（Task 37-1）: sourceUrl + autoFetch=1 が付いている場合、
   // ページ読み込み時に自動でYouTube URL補助（動画情報取得）を実行する。
-  const autoFetchMetadata = Boolean(initial.sourceUrl && getSearchParam(params, "autoFetch") === "1");
+  const autoFetchMetadata = Boolean(initialSourceUrl && getSearchParam(params, "autoFetch") === "1");
 
   return (
     <div className="space-y-6">
@@ -46,17 +42,20 @@ export default async function AdminBulkNewCoverPage({
         「この配信・ライブの他の歌唱記録」としてタイムスタンプ順のセットリストが表示されます。
       </div>
 
-      {/*
-        BulkNewForm はクライアントコンポーネントで、送信成功後の状態(successInfo)を
-        自身のReact stateとして保持する。「続けて追加」リンクはクエリパラメータだけが
-        変わる同一ルートへの遷移のため、key を変えないと古い successInfo が残り
-        フォームに戻れなくなる。クエリの内容を key にして、遷移のたびに再マウントする。
-      */}
-      <BulkNewForm
-        key={JSON.stringify(params)}
+      <CoverRegistrationForm
+        mode="admin"
         performers={performers}
-        initial={initial}
+        initial={{
+          sourceUrl: initialSourceUrl,
+          sourceTitle: "",
+          performedAt: getSearchParam(params, "performedAt") ?? "",
+          coverType: getSearchParam(params, "coverType") ?? "COVER_VIDEO",
+          performerIds: getSearchParamAll(params, "performerIds"),
+          status: "APPROVED"
+        }}
         autoFetchMetadata={autoFetchMetadata}
+        showStatusField
+        action={createAdminCoverAction}
       />
     </div>
   );

@@ -5,7 +5,7 @@ import { Search } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
 
-type PerformerOption = {
+export type PerformerOption = {
   id: string;
   name: string;
   group: {

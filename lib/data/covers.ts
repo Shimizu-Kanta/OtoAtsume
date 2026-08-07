@@ -756,7 +756,7 @@ export async function findSameSingingCandidatesForInput(input: {
   });
 }
 
-export async function createCover(input: CoverCreateInput) {
+export async function createCover(input: CoverCreateInput, status?: ContentStatus) {
   const artistNames = normalizeNames(input.artistNames);
   const performerNames = normalizeNames(input.performerNames);
 
@@ -786,7 +786,7 @@ export async function createCover(input: CoverCreateInput) {
         sourceTitle: input.sourceTitle,
         sourceImageUrl: input.sourceImageUrl,
         timestampSeconds: input.timestampSeconds,
-        status: initialCoverStatus(),
+        status: status ?? initialCoverStatus(),
         performers: {
           create: performers.map((performer) => ({
             performerId: performer.id
@@ -821,6 +821,8 @@ export type BulkCoverInput = {
   // 公開フォームからの未登録活動者名（全曲共通で登録される）。
   commonPerformerNames?: string;
   rows: BulkCoverRow[];
+  // 管理画面のみ明示指定できる。未指定時は initialCoverStatus() が使われる。
+  status?: ContentStatus;
 };
 
 // 1つの動画URLから複数曲を1トランザクションでまとめて登録する。
@@ -869,7 +871,7 @@ export async function createBulkCovers(input: BulkCoverInput) {
           sourceTitle: input.sourceTitle,
           sourceImageUrl: input.sourceImageUrl,
           timestampSeconds: row.timestampSeconds,
-          status: initialCoverStatus(),
+          status: input.status ?? initialCoverStatus(),
           performers: {
             create: performers.map((performer) => ({ performerId: performer.id }))
           }

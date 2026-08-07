@@ -1,54 +1,106 @@
 "use server";
 
+import { ContentStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
 import { requireAdminPage } from "@/lib/auth/admin";
-import { createBulkCovers, type BulkCoverRow } from "@/lib/data/covers";
-import { coverTypeOptions } from "@/lib/constants";
-import { parseTimestampToSeconds } from "@/lib/utils";
+import { createBulkCovers, createCover } from "@/lib/data/covers";
+import { multiSongCoverTypes } from "@/lib/constants";
+import { parseBulkCoverRowsFromFormData } from "@/lib/covers/bulk-rows";
+import type { CoverSubmitResult } from "@/lib/covers/submit-result";
+import { normalizeNames } from "@/lib/utils";
+import { coverCreateSchema } from "@/lib/validations/cover";
 
-// 登録完了後のプレビュー表示に使う、作成済み歌唱記録の要約。
-export type BulkCoverPreviewItem = {
-  id: string;
-  songTitle: string;
-  timestampSeconds: number | null;
-  performerNames: string[];
-};
+const CREATABLE_STATUSES = new Set<string>(["PENDING", "APPROVED"]);
 
-export type BulkCreateResult =
-  | {
-      ok: true;
-      count: number;
-      // 「同じURLで記録を追加」に引き継ぐ、作成後の正規化済み sourceUrl。
-      // タイムスタンプ付きの表示用URLをそのまま引き継ぐと t= が汚染される
-      // （Task 35）ため、必ず DB 作成後の値を使うこと。
-      sourceUrl: string | null;
-      preview: BulkCoverPreviewItem[];
-    }
-  | { ok: false; error: string };
-
-function isValidCoverType(value: string) {
-  return coverTypeOptions.some((option) => option.value === value);
+function parseStatus(formData: FormData): ContentStatus {
+  const value = String(formData.get("status") ?? "");
+  return (CREATABLE_STATUSES.has(value) ? value : "APPROVED") as ContentStatus;
 }
 
-export async function createBulkCoversAction(formData: FormData): Promise<BulkCreateResult> {
+// 管理画面の歌唱記録登録。公開フォーム（/covers/new の createCoverAction）と同じ
+// フィールド名・単曲/複数曲の分岐ロジックを使う（CoverRegistrationForm 参照）。
+// CAPTCHA・レート制限は行わず、ステータス（公開/確認待ち）を明示指定できる点のみ異なる。
+export async function createAdminCoverAction(formData: FormData): Promise<CoverSubmitResult> {
   await requireAdminPage();
 
-  const sourceUrl = (formData.get("sourceUrl") ?? "").toString().trim();
-  const sourceTitle = (formData.get("sourceTitle") ?? "").toString().trim();
-  const sourceImageUrl = (formData.get("sourceImageUrl") ?? "").toString().trim();
-  const performedAt = (formData.get("performedAt") ?? "").toString().trim();
-  const coverType = (formData.get("coverType") ?? "").toString();
+  const status = parseStatus(formData);
+  const coverType = String(formData.get("coverType") ?? "");
+
+  if (multiSongCoverTypes.has(coverType)) {
+    return createAdminMultiSongCover(formData, coverType, status);
+  }
+
+  const parsed = coverCreateSchema.safeParse({
+    performerIds: formData.getAll("performerIds").map(String).filter(Boolean),
+    performerNames: formData.get("performerNames"),
+    songTitle: formData.get("songTitle"),
+    artistNames: formData.get("artistNames"),
+    performedAt: formData.get("performedAt"),
+    coverType: formData.get("coverType"),
+    sourceUrl: formData.get("sourceUrl"),
+    sourceTitle: formData.get("sourceTitle"),
+    sourceImageUrl: formData.get("sourceImageUrl"),
+    timestampSeconds: formData.get("timestampSeconds")
+  });
+
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "入力内容を確認してください。" };
+  }
+
+  let cover;
+  try {
+    cover = await createCover(parsed.data, status);
+  } catch (error) {
+    console.error("createAdminCoverAction create failed", error);
+    const message = error instanceof Error ? error.message : "登録に失敗しました。";
+    return { ok: false, error: message };
+  }
+
+  revalidatePath("/covers");
+  revalidatePath("/admin/covers");
+  revalidatePath("/admin/cover-candidates");
+
+  return {
+    ok: true,
+    coverIds: [cover.id],
+    sourceUrl: cover.sourceUrl,
+    preview: [
+      {
+        id: cover.id,
+        songTitle: cover.song.title,
+        timestampSeconds: cover.timestampSeconds,
+        performerNames: cover.performers.map(({ performer }) => performer.name)
+      }
+    ]
+  };
+}
+
+// 歌枠・ライブ・メドレー：1つのURLから複数曲をまとめて登録する。
+async function createAdminMultiSongCover(
+  formData: FormData,
+  coverType: string,
+  status: ContentStatus
+): Promise<CoverSubmitResult> {
+  const sourceUrl = String(formData.get("sourceUrl") ?? "").trim();
+  const sourceTitle = String(formData.get("sourceTitle") ?? "").trim();
+  const sourceImageUrl = String(formData.get("sourceImageUrl") ?? "").trim();
+  const performedAt = String(formData.get("performedAt") ?? "").trim();
   const commonPerformerIds = formData.getAll("performerIds").map(String).filter(Boolean);
+  const commonPerformerNames = String(formData.get("performerNames") ?? "").trim();
 
   if (!sourceUrl) {
     return { ok: false, error: "情報元URLを入力してください。" };
   }
+
+  try {
+    new URL(sourceUrl);
+  } catch {
+    return { ok: false, error: "情報元URLの形式が正しくありません。" };
+  }
+
   if (!performedAt) {
     return { ok: false, error: "歌唱日を入力してください。" };
-  }
-  if (!isValidCoverType(coverType)) {
-    return { ok: false, error: "歌唱種別を選択してください。" };
   }
 
   const performedAtDate = new Date(`${performedAt}T00:00:00.000Z`);
@@ -56,103 +108,50 @@ export async function createBulkCoversAction(formData: FormData): Promise<BulkCr
     return { ok: false, error: "歌唱日の形式が正しくありません。" };
   }
 
-  const timestamps = formData.getAll("rowTimestamp").map(String);
-  const songTitles = formData.getAll("rowSongTitle").map(String);
-  const artistNamesList = formData.getAll("rowArtistNames").map(String);
-  // 曲ごとの歌唱者はチップUIからカンマ区切りのIDで届く（行と1対1で対応）。
-  const performerIdsList = formData.getAll("rowPerformerIds").map(String);
+  const hasCommonPerformers =
+    commonPerformerIds.length > 0 || normalizeNames(commonPerformerNames).length > 0;
 
-  const rows: BulkCoverRow[] = [];
-  const rowCount = Math.max(
-    timestamps.length,
-    songTitles.length,
-    artistNamesList.length,
-    performerIdsList.length
-  );
+  const parsedRows = parseBulkCoverRowsFromFormData(formData, {
+    commonPerformerIds,
+    hasCommonPerformers
+  });
 
-  for (let i = 0; i < rowCount; i += 1) {
-    const timestamp = (timestamps[i] ?? "").trim();
-    const songTitle = (songTitles[i] ?? "").trim();
-    const artistNames = (artistNamesList[i] ?? "").trim();
-    const rowPerformerIds = (performerIdsList[i] ?? "")
-      .split(",")
-      .map((id) => id.trim())
-      .filter(Boolean);
-
-    // 楽曲名・アーティスト・タイムスタンプがすべて空の行はスキップ
-    // （歌唱者チップは共通の活動者を初期選択するため空行判定には含めない）。
-    if (!timestamp && !songTitle && !artistNames) {
-      continue;
-    }
-
-    if (!songTitle) {
-      return { ok: false, error: `${i + 1}曲目: 楽曲名を入力してください。` };
-    }
-    if (!artistNames) {
-      return { ok: false, error: `${i + 1}曲目: 原曲アーティスト名を入力してください。` };
-    }
-
-    let timestampSeconds: number | undefined;
-    if (timestamp) {
-      const parsed = parseTimestampToSeconds(timestamp);
-      if (parsed == null) {
-        return { ok: false, error: `${i + 1}曲目: タイムスタンプの形式が正しくありません（例: 1:23:45）。` };
-      }
-      timestampSeconds = parsed;
-    }
-
-    // 行に歌唱者が選ばれていなければ共通の活動者を使う。
-    const effectivePerformerIds = rowPerformerIds.length > 0 ? rowPerformerIds : commonPerformerIds;
-    if (effectivePerformerIds.length === 0) {
-      return {
-        ok: false,
-        error: `${i + 1}曲目: 歌唱者が選ばれていません。共通の活動者を選ぶか、曲ごとに歌唱者を選んでください。`
-      };
-    }
-
-    rows.push({
-      songTitle,
-      artistNames,
-      timestampSeconds,
-      performerIds: effectivePerformerIds,
-      performerNames: ""
-    });
+  if (!parsedRows.ok) {
+    return { ok: false, error: parsedRows.error };
   }
 
-  if (rows.length === 0) {
-    return { ok: false, error: "登録する曲を1曲以上入力してください。" };
-  }
-
+  let created;
   try {
-    const created = await createBulkCovers({
+    created = await createBulkCovers({
       sourceUrl,
       sourceTitle: sourceTitle || undefined,
       sourceImageUrl: sourceImageUrl || undefined,
       performedAt: performedAtDate,
       coverType,
       commonPerformerIds,
-      rows
+      commonPerformerNames,
+      rows: parsedRows.rows,
+      status
     });
+  } catch (error) {
+    console.error("createAdminCoverAction bulk create failed", error);
+    const message = error instanceof Error ? error.message : "一括登録に失敗しました。";
+    return { ok: false, error: message };
+  }
 
-    revalidatePath("/covers");
-    revalidatePath("/admin/covers");
-    revalidatePath("/admin/cover-candidates");
+  revalidatePath("/covers");
+  revalidatePath("/admin/covers");
+  revalidatePath("/admin/cover-candidates");
 
-    // 「同じURLで記録を追加」に引き継ぐ sourceUrl は created（DB作成後の正規化済みの値）
-    // から取る。client の入力値をそのまま使うと、t= 等のクエリパラメータが混入したままの
-    // URL を引き継いでしまう（Task 35 / Task 36-2 で一度指摘済みの注意点）。
-    const normalizedSourceUrl = created[0]?.sourceUrl ?? null;
-    const preview: BulkCoverPreviewItem[] = created.map((cover) => ({
+  return {
+    ok: true,
+    coverIds: created.map((cover) => cover.id),
+    sourceUrl: created[0]?.sourceUrl ?? null,
+    preview: created.map((cover) => ({
       id: cover.id,
       songTitle: cover.song.title,
       timestampSeconds: cover.timestampSeconds,
       performerNames: cover.performers.map(({ performer }) => performer.name)
-    }));
-
-    return { ok: true, count: created.length, sourceUrl: normalizedSourceUrl, preview };
-  } catch (error) {
-    console.error("createBulkCoversAction failed", error);
-    const message = error instanceof Error ? error.message : "一括登録に失敗しました。";
-    return { ok: false, error: message };
-  }
+    }))
+  };
 }

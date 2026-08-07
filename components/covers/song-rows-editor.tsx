@@ -34,22 +34,28 @@ function hasTimestampLines(description: string) {
 // 公開フォーム・管理画面フォームの両方から使う。
 // 送信フィールド: rowTimestamp / rowSongTitle / rowArtistNames / rowPerformerIds（行ごとに1つずつ）。
 //
+// rows は親（CoverRegistrationForm）が状態を持つ制御コンポーネント。YouTube URL補助の
+// 楽曲候補反映（1行目に反映 / 新しい行として追加）など、親側からの操作を可能にするため。
+//
 // singleRow: 歌ってみた動画・ショート・その他など、1曲のみの歌唱種別用。
 // 曲の追加・削除・行番号・セットリスト一括読み取り（複数曲向け機能）を隠し、
 // 常に1行だけを「1曲入力」の見た目で表示する。送信フィールド名は複数曲時と同じ
 // （rowSongTitle 等）のまま1行分だけ出力するため、送信先の処理は変更不要。
 export function SongRowsEditor({
+  rows,
+  onRowsChange,
   participants,
   description = "",
   maxRows,
   singleRow = false
 }: {
+  rows: SongRow[];
+  onRowsChange: (rows: SongRow[]) => void;
   participants: Participant[];
   description?: string;
   maxRows?: number;
   singleRow?: boolean;
 }) {
-  const [rows, setRows] = useState<SongRow[]>(() => [createEmptyRow()]);
   const [notice, setNotice] = useState<string | null>(null);
 
   const hasTimestampedDescription = useMemo(() => hasTimestampLines(description), [description]);
@@ -58,21 +64,19 @@ export function SongRowsEditor({
   const reachedLimit = effectiveMaxRows != null && rows.length >= effectiveMaxRows;
 
   function updateRow(key: number, patch: Partial<SongRow>) {
-    setRows((current) => current.map((row) => (row.key === key ? { ...row, ...patch } : row)));
+    onRowsChange(rows.map((row) => (row.key === key ? { ...row, ...patch } : row)));
   }
 
   function addRow() {
     if (reachedLimit) {
       return;
     }
-    setRows((current) => [...current, createEmptyRow()]);
+    onRowsChange([...rows, createEmptyRow()]);
   }
 
   function removeRow(key: number) {
-    setRows((current) => {
-      const next = current.filter((row) => row.key !== key);
-      return next.length > 0 ? next : [createEmptyRow()];
-    });
+    const next = rows.filter((row) => row.key !== key);
+    onRowsChange(next.length > 0 ? next : [createEmptyRow()]);
   }
 
   function parseSetlist() {
@@ -89,7 +93,7 @@ export function SongRowsEditor({
     }
 
     const limited = maxRows != null ? parsed.slice(0, maxRows) : parsed;
-    setRows(
+    onRowsChange(
       limited.map((row) => ({
         key: (rowKeySeed += 1),
         timestamp: formatSeconds(row.timestampSeconds),
