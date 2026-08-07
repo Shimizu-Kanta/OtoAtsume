@@ -51,7 +51,9 @@ export async function generateMetadata({
   }
 
   const groupName = performer.group?.name;
-  const title = groupName ? `${performer.name} / ${groupName}` : performer.name;
+  const title = groupName
+    ? `${performer.name}（${groupName}）の歌ってみた / 歌唱記録一覧`
+    : `${performer.name} の歌ってみた / 歌唱記録一覧`;
   const description = groupName
     ? `${performer.name}（${groupName}）の歌唱記録${performer.covers.length}件を掲載。歌ってみた・歌枠・ライブでの歌唱記録をまとめています。`
     : `${performer.name} の歌唱記録${performer.covers.length}件を掲載。歌ってみた・歌枠・ライブでの歌唱記録をまとめています。`;

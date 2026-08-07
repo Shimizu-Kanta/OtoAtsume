@@ -41,7 +41,7 @@ export async function generateMetadata({
     getGroupPerformerCount(group.id),
     getGroupCoverCount(group.id)
   ]);
-  const title = group.name;
+  const title = `${group.name}の歌ってみた / 歌唱記録一覧`;
   const description = `${group.name}所属の活動者${performerCount}名の歌唱記録${coverCount}件を掲載。歌ってみた・歌枠・ライブでの歌唱記録をまとめています。`;
   const { isIndexable } = evaluateGroupQuality(coverCount);
 

@@ -38,7 +38,9 @@ export async function generateMetadata({
   }
 
   const artists = song.artists.map(({ artist }) => artist.name).join(", ");
-  const title = artists ? `${song.title} / ${artists}` : song.title;
+  const title = artists
+    ? `${song.title}（${artists}）の歌ってみた / 歌唱記録一覧`
+    : `${song.title} の歌ってみた / 歌唱記録一覧`;
   const description = artists
     ? `${song.title}（${artists}）の歌唱記録${song.covers.length}件を掲載。歌ってみた・歌枠・ライブでの歌唱記録をまとめています。`
     : `${song.title} の歌唱記録${song.covers.length}件を掲載。歌ってみた・歌枠・ライブでの歌唱記録をまとめています。`;
