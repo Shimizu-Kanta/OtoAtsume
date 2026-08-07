@@ -18,6 +18,18 @@ export function normalizeNames(value: string | string[] | null | undefined) {
   );
 }
 
+// PostgreSQL の LIKE/ILIKE は既定で \ をエスケープ文字として使う。Prisma の
+// mode: "insensitive" フィルタ（equals/contains 等）は PostgreSQL 上では内部的に
+// ILIKE にコンパイルされるため、値に % や _ が含まれていると意図せず
+// ワイルドカードとして解釈されてしまう（例: title が "%" の場合、
+// 「大文字小文字を無視した完全一致」のつもりが「任意の文字列」にマッチしてしまい、
+// 意図しない既存レコードを誤って一致させてしまう）。ユーザー入力を
+// 大文字小文字無視の完全一致・部分一致として扱いたい場合は、必ずこの関数で
+// エスケープしてから Prisma の contains/equals(mode: insensitive) に渡すこと。
+export function escapeLikePattern(value: string): string {
+  return value.replace(/[\\%_]/g, (char) => `\\${char}`);
+}
+
 export function toOptionalString(value: unknown) {
   if (typeof value !== "string") {
     return undefined;

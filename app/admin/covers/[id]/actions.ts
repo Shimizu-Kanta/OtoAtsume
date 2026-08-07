@@ -31,7 +31,14 @@ export async function updateAdminCoverAction(coverId: string, formData: FormData
     );
   }
 
-  await updateAdminCover(coverId, parsed.data);
+  try {
+    await updateAdminCover(coverId, parsed.data);
+  } catch (error) {
+    console.error("updateAdminCoverAction failed", error);
+    const message = error instanceof Error ? error.message : "更新に失敗しました。";
+    redirect(`/admin/covers/${coverId}?error=${encodeURIComponent(message)}`);
+  }
+
   revalidatePath(`/admin/covers/${coverId}`);
   revalidatePath("/admin/covers");
   revalidatePath(`/covers/${coverId}`);

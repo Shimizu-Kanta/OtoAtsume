@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 
 import { db } from "@/lib/db";
+import { escapeLikePattern } from "@/lib/utils";
 
 export type ArtistSuggestion = { id: string; name: string };
 
@@ -12,7 +13,7 @@ export async function suggestArtists(query: string, limit = 8): Promise<ArtistSu
   }
 
   const contains = await db.artist.findMany({
-    where: { name: { contains: trimmed, mode: Prisma.QueryMode.insensitive } },
+    where: { name: { contains: escapeLikePattern(trimmed), mode: Prisma.QueryMode.insensitive } },
     select: { id: true, name: true },
     orderBy: { name: "asc" },
     take: limit

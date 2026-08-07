@@ -3,6 +3,7 @@ import { ContentStatus, Prisma } from "@prisma/client";
 import { summarizeCoverTypeCounts, summarizeYearlyCounts } from "@/lib/content-summary";
 import { db } from "@/lib/db";
 import { pageSkip, paginate } from "@/lib/pagination";
+import { escapeLikePattern } from "@/lib/utils";
 
 export const songListInclude = {
   artists: {
@@ -75,13 +76,15 @@ export function buildSongWhere(query: string | undefined): Prisma.SongWhereInput
     return {};
   }
 
+  const escaped = escapeLikePattern(trimmed);
+
   return {
     OR: [
-      { title: { contains: trimmed, mode: Prisma.QueryMode.insensitive } },
+      { title: { contains: escaped, mode: Prisma.QueryMode.insensitive } },
       {
         artists: {
           some: {
-            artist: { name: { contains: trimmed, mode: Prisma.QueryMode.insensitive } }
+            artist: { name: { contains: escaped, mode: Prisma.QueryMode.insensitive } }
           }
         }
       }
@@ -175,7 +178,7 @@ export async function suggestSongs(query: string, limit = 8): Promise<SongSugges
   const include = { artists: { include: { artist: true } } } satisfies Prisma.SongInclude;
 
   const contains = await db.song.findMany({
-    where: { title: { contains: trimmed, mode: Prisma.QueryMode.insensitive } },
+    where: { title: { contains: escapeLikePattern(trimmed), mode: Prisma.QueryMode.insensitive } },
     include,
     orderBy: { title: "asc" },
     take: limit

@@ -10,7 +10,7 @@ import { coverDetailInclude, coverListInclude } from "@/lib/data/covers";
 import { buildSongWhere } from "@/lib/data/songs";
 import { replacePerformerTags } from "@/lib/data/tags";
 import { pageSkip, paginate } from "@/lib/pagination";
-import { normalizeNames } from "@/lib/utils";
+import { escapeLikePattern, normalizeNames } from "@/lib/utils";
 
 export async function listReports(status?: ReportStatus, page = 1, perPage = 50) {
   const where = status ? { status } : {};
@@ -175,23 +175,24 @@ export async function listAdminPerformers(
   filters.push(...buildMissingPerformerFilters(search.missingFields ?? []));
 
   if (keyword) {
+    const escapedKeyword = escapeLikePattern(keyword);
     filters.push({
       OR: [
         {
           name: {
-            contains: keyword,
+            contains: escapedKeyword,
             mode: Prisma.QueryMode.insensitive
           }
         },
         {
           youtubeUrl: {
-            contains: keyword,
+            contains: escapedKeyword,
             mode: Prisma.QueryMode.insensitive
           }
         },
         {
           officialUrl: {
-            contains: keyword,
+            contains: escapedKeyword,
             mode: Prisma.QueryMode.insensitive
           }
         },
@@ -199,7 +200,7 @@ export async function listAdminPerformers(
           group: {
             is: {
               name: {
-                contains: keyword,
+                contains: escapedKeyword,
                 mode: Prisma.QueryMode.insensitive
               }
             }
@@ -209,7 +210,7 @@ export async function listAdminPerformers(
           aliases: {
             some: {
               alias: {
-                contains: keyword,
+                contains: escapedKeyword,
                 mode: Prisma.QueryMode.insensitive
               }
             }
@@ -220,7 +221,7 @@ export async function listAdminPerformers(
             some: {
               tag: {
                 name: {
-                  contains: keyword,
+                  contains: escapedKeyword,
                   mode: Prisma.QueryMode.insensitive
                 }
               }
@@ -584,7 +585,7 @@ function adminArtistOrderBy(sort: AdminArtistSort | undefined): Prisma.ArtistOrd
 export async function listAdminArtists(search: AdminArtistSearch = {}, page = 1, perPage = 50) {
   const trimmed = search.query?.trim();
   const where: Prisma.ArtistWhereInput | undefined = trimmed
-    ? { name: { contains: trimmed, mode: Prisma.QueryMode.insensitive } }
+    ? { name: { contains: escapeLikePattern(trimmed), mode: Prisma.QueryMode.insensitive } }
     : undefined;
 
   const [items, totalCount] = await Promise.all([

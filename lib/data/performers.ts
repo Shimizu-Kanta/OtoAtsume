@@ -3,6 +3,7 @@ import { ContentStatus, MasterDataStatus, Prisma } from "@prisma/client";
 import { summarizeCoverTypeCounts, summarizeYearlyCounts } from "@/lib/content-summary";
 import { db } from "@/lib/db";
 import { pageSkip, paginate } from "@/lib/pagination";
+import { escapeLikePattern } from "@/lib/utils";
 
 export const performerListInclude = {
   group: true,
@@ -88,20 +89,21 @@ function performerOrderBy(sort: PerformerSort | undefined): Prisma.PerformerOrde
 
 export async function getPerformers(search: PerformerSearch = {}, page = 1, perPage = 20) {
   const query = search.query?.trim();
+  const escapedQuery = query ? escapeLikePattern(query) : undefined;
   const tagIds = search.tagIds?.map((tag) => tag.trim()).filter(Boolean) ?? [];
 
   const where: Prisma.PerformerWhereInput = {
     status: MasterDataStatus.APPROVED,
-    ...(query
+    ...(escapedQuery
       ? {
           OR: [
-            { name: { contains: query, mode: Prisma.QueryMode.insensitive } },
+            { name: { contains: escapedQuery, mode: Prisma.QueryMode.insensitive } },
             {
               aliases: {
-                some: { alias: { contains: query, mode: Prisma.QueryMode.insensitive } }
+                some: { alias: { contains: escapedQuery, mode: Prisma.QueryMode.insensitive } }
               }
             },
-            { group: { name: { contains: query, mode: Prisma.QueryMode.insensitive } } }
+            { group: { name: { contains: escapedQuery, mode: Prisma.QueryMode.insensitive } } }
           ]
         }
       : {}),

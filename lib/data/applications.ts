@@ -1,13 +1,14 @@
 import { MasterDataStatus } from "@prisma/client";
 
 import { db } from "@/lib/db";
+import { escapeLikePattern } from "@/lib/utils";
 import type { PerformerApplicationCreateInput } from "@/lib/validations/performer-application";
 
 export async function createPerformerApplication(input: PerformerApplicationCreateInput) {
   const existing = await db.performer.findFirst({
     where: {
       name: {
-        equals: input.name,
+        equals: escapeLikePattern(input.name),
         mode: "insensitive"
       }
     }

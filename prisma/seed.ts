@@ -7,6 +7,8 @@ import {
   PrismaClient
 } from "@prisma/client";
 
+import { escapeLikePattern } from "../lib/utils";
+
 const prisma = new PrismaClient();
 
 const CRAWL_KEYWORD_SEEDS: { kind: CrawlKeywordKind; keywords: string[] }[] = [
@@ -66,7 +68,7 @@ function normalizeAdminEmails(value: string | undefined) {
 
 async function upsertSong(title: string, artistNames: string[], originalUrl?: string) {
   const existing = await prisma.song.findFirst({
-    where: { title: { equals: title, mode: "insensitive" } }
+    where: { title: { equals: escapeLikePattern(title), mode: "insensitive" } }
   });
 
   const song =

@@ -11,7 +11,7 @@ import { evaluateCoverQuality } from "@/lib/content-quality";
 import { syncCandidateStatusForVideo } from "@/lib/crawl/candidate-status";
 import { db } from "@/lib/db";
 import { pageSkip, paginate } from "@/lib/pagination";
-import { normalizeNames } from "@/lib/utils";
+import { escapeLikePattern, normalizeNames } from "@/lib/utils";
 import { extractYouTubeVideoId, normalizeYouTubeSourceUrl } from "@/lib/youtube";
 import type {
   AdminCoverEditInput,
@@ -72,7 +72,7 @@ export type CoverSearch = {
 };
 
 function insensitiveContains(value: string) {
-  return { contains: value, mode: Prisma.QueryMode.insensitive };
+  return { contains: escapeLikePattern(value), mode: Prisma.QueryMode.insensitive };
 }
 
 function parseDateStart(value: string | undefined) {
@@ -534,7 +534,7 @@ async function ensureArtist(client: DbClient, name: string) {
 
 async function ensureSong(client: DbClient, title: string, artistNames: string[]) {
   const existing = await client.song.findFirst({
-    where: { title: { equals: title, mode: Prisma.QueryMode.insensitive } }
+    where: { title: { equals: escapeLikePattern(title), mode: Prisma.QueryMode.insensitive } }
   });
 
   const song =
@@ -576,7 +576,7 @@ async function ensurePerformers(
 
   for (const name of performerNames) {
     const existing = await client.performer.findFirst({
-      where: { name: { equals: name, mode: Prisma.QueryMode.insensitive } },
+      where: { name: { equals: escapeLikePattern(name), mode: Prisma.QueryMode.insensitive } },
       select: { id: true }
     });
 
@@ -657,7 +657,7 @@ async function findExistingPerformerIds(performerIds: string[], performerNames: 
 
   for (const name of performerNames) {
     const performer = await db.performer.findFirst({
-      where: { name: { equals: name, mode: Prisma.QueryMode.insensitive } },
+      where: { name: { equals: escapeLikePattern(name), mode: Prisma.QueryMode.insensitive } },
       select: { id: true }
     });
 
@@ -671,7 +671,7 @@ async function findExistingPerformerIds(performerIds: string[], performerNames: 
 
 export async function findPotentialDuplicateCoversForInput(input: DuplicateCandidateInput) {
   const song = await db.song.findFirst({
-    where: { title: { equals: input.songTitle, mode: Prisma.QueryMode.insensitive } },
+    where: { title: { equals: escapeLikePattern(input.songTitle), mode: Prisma.QueryMode.insensitive } },
     select: { id: true }
   });
 
@@ -731,7 +731,7 @@ export async function findSameSingingCandidatesForInput(input: {
   sourceUrl: string;
 }) {
   const song = await db.song.findFirst({
-    where: { title: { equals: input.songTitle, mode: Prisma.QueryMode.insensitive } },
+    where: { title: { equals: escapeLikePattern(input.songTitle), mode: Prisma.QueryMode.insensitive } },
     select: { id: true }
   });
 

@@ -1,6 +1,7 @@
 import { Prisma, type PrismaClient } from "@prisma/client";
 
 import { pageSkip, paginate } from "@/lib/pagination";
+import { escapeLikePattern } from "@/lib/utils";
 
 type DbClient = PrismaClient | Prisma.TransactionClient;
 
@@ -28,7 +29,7 @@ export async function listAdminTags(search: AdminTagSearch = {}, page = 1, perPa
   const { db } = await import("@/lib/db");
   const trimmed = search.query?.trim();
   const where: Prisma.TagWhereInput | undefined = trimmed
-    ? { name: { contains: trimmed, mode: Prisma.QueryMode.insensitive } }
+    ? { name: { contains: escapeLikePattern(trimmed), mode: Prisma.QueryMode.insensitive } }
     : undefined;
 
   const [items, totalCount] = await Promise.all([
@@ -150,7 +151,7 @@ export async function searchAddablePerformersForTag(tagId: string, query: string
 
   return db.performer.findMany({
     where: {
-      name: { contains: trimmed, mode: Prisma.QueryMode.insensitive },
+      name: { contains: escapeLikePattern(trimmed), mode: Prisma.QueryMode.insensitive },
       tags: { none: { tagId } }
     },
     include: { group: true },
@@ -262,7 +263,7 @@ export async function listAdminTagGroups(search: AdminTagGroupSearch = {}, page 
   const { db } = await import("@/lib/db");
   const trimmed = search.query?.trim();
   const where: Prisma.TagGroupWhereInput | undefined = trimmed
-    ? { name: { contains: trimmed, mode: Prisma.QueryMode.insensitive } }
+    ? { name: { contains: escapeLikePattern(trimmed), mode: Prisma.QueryMode.insensitive } }
     : undefined;
 
   const [items, totalCount] = await Promise.all([
@@ -342,7 +343,7 @@ export async function searchAddableTagsForGroup(tagGroupId: string, query: strin
 
   return db.tag.findMany({
     where: {
-      name: { contains: trimmed, mode: Prisma.QueryMode.insensitive },
+      name: { contains: escapeLikePattern(trimmed), mode: Prisma.QueryMode.insensitive },
       groups: { none: { tagGroupId } }
     },
     orderBy: { name: "asc" },

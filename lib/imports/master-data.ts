@@ -18,6 +18,7 @@ import {
   type ImportTarget
 } from "@/lib/imports/types";
 import { colorCodeSchema, debutDateSchema, birthdaySchema } from "@/lib/validations/performer-profile";
+import { escapeLikePattern } from "@/lib/utils";
 
 type RawImportRow = {
   rowNumber: number;
@@ -603,7 +604,7 @@ async function executePerformerImport(
         })
       : null;
     const existing = await client.performer.findFirst({
-      where: { name: { equals: row.name, mode: Prisma.QueryMode.insensitive } }
+      where: { name: { equals: escapeLikePattern(row.name), mode: Prisma.QueryMode.insensitive } }
     });
     const data: Prisma.PerformerUpdateInput = {
       name: row.name,
@@ -723,7 +724,7 @@ async function executeSongImport(
     }
 
     const existing = await client.song.findFirst({
-      where: { title: { equals: row.title, mode: Prisma.QueryMode.insensitive } }
+      where: { title: { equals: escapeLikePattern(row.title), mode: Prisma.QueryMode.insensitive } }
     });
     const song =
       existing ??
@@ -788,7 +789,9 @@ async function findExistingPerformers(names: string[]) {
 
   const performers = await db.performer.findMany({
     where: {
-      OR: names.map((name) => ({ name: { equals: name, mode: Prisma.QueryMode.insensitive } }))
+      OR: names.map((name) => ({
+        name: { equals: escapeLikePattern(name), mode: Prisma.QueryMode.insensitive }
+      }))
     },
     select: { name: true }
   });
@@ -803,7 +806,9 @@ async function findExistingSongs(titles: string[]) {
 
   const songs = await db.song.findMany({
     where: {
-      OR: titles.map((title) => ({ title: { equals: title, mode: Prisma.QueryMode.insensitive } }))
+      OR: titles.map((title) => ({
+        title: { equals: escapeLikePattern(title), mode: Prisma.QueryMode.insensitive }
+      }))
     },
     select: { title: true }
   });
