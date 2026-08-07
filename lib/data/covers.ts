@@ -873,7 +873,10 @@ export async function createBulkCovers(input: BulkCoverInput) {
           performers: {
             create: performers.map((performer) => ({ performerId: performer.id }))
           }
-        }
+        },
+        // 呼び出し元（管理画面の登録完了プレビュー等）で楽曲名・活動者名をそのまま
+        // 表示できるように、作成直後のレコードを関連込みで返す。
+        include: coverListInclude
       });
       created.push(cover);
     }

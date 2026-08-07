@@ -23,6 +23,9 @@ export default async function AdminBulkNewCoverPage({
     coverType: getSearchParam(params, "coverType") ?? "KARAOKE_STREAM",
     performerIds: getSearchParamAll(params, "performerIds")
   };
+  // 「同じURLで記録を追加」（Task 37-1）: sourceUrl + autoFetch=1 が付いている場合、
+  // ページ読み込み時に自動でYouTube URL補助（動画情報取得）を実行する。
+  const autoFetchMetadata = Boolean(initial.sourceUrl && getSearchParam(params, "autoFetch") === "1");
 
   return (
     <div className="space-y-6">
@@ -49,7 +52,12 @@ export default async function AdminBulkNewCoverPage({
         変わる同一ルートへの遷移のため、key を変えないと古い successInfo が残り
         フォームに戻れなくなる。クエリの内容を key にして、遷移のたびに再マウントする。
       */}
-      <BulkNewForm key={JSON.stringify(params)} performers={performers} initial={initial} />
+      <BulkNewForm
+        key={JSON.stringify(params)}
+        performers={performers}
+        initial={initial}
+        autoFetchMetadata={autoFetchMetadata}
+      />
     </div>
   );
 }

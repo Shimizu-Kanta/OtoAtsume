@@ -5,20 +5,26 @@ import { revalidatePath } from "next/cache";
 import { requireAdminPage } from "@/lib/auth/admin";
 import { createBulkCovers, type BulkCoverRow } from "@/lib/data/covers";
 import { coverTypeOptions } from "@/lib/constants";
-import { formatDateInput, parseTimestampToSeconds } from "@/lib/utils";
+import { parseTimestampToSeconds } from "@/lib/utils";
 
-// 「同じ動画から続けて追加」に引き継ぐ情報。sourceUrl は必ず作成後の正規化済みの値を使うこと
-// （Task 35: タイムスタンプ付きの表示用URLをそのまま引き継ぐと t= が汚染される不具合の再発防止）。
-export type BulkContinueInfo = {
-  sourceUrl: string;
-  sourceTitle: string;
-  performedAt: string;
-  coverType: string;
-  performerIds: string[];
+// 登録完了後のプレビュー表示に使う、作成済み歌唱記録の要約。
+export type BulkCoverPreviewItem = {
+  id: string;
+  songTitle: string;
+  timestampSeconds: number | null;
+  performerNames: string[];
 };
 
 export type BulkCreateResult =
-  | { ok: true; count: number; firstCoverId: string | null; continueInfo: BulkContinueInfo | null }
+  | {
+      ok: true;
+      count: number;
+      // 「同じURLで記録を追加」に引き継ぐ、作成後の正規化済み sourceUrl。
+      // タイムスタンプ付きの表示用URLをそのまま引き継ぐと t= が汚染される
+      // （Task 35）ため、必ず DB 作成後の値を使うこと。
+      sourceUrl: string | null;
+      preview: BulkCoverPreviewItem[];
+    }
   | { ok: false; error: string };
 
 function isValidCoverType(value: string) {
@@ -132,20 +138,18 @@ export async function createBulkCoversAction(formData: FormData): Promise<BulkCr
     revalidatePath("/admin/covers");
     revalidatePath("/admin/cover-candidates");
 
-    const first = created[0];
-    // sourceUrl は created（DB作成後の正規化済みの値）から取る。client の入力値をそのまま
-    // 使うと、t= 等のクエリパラメータが混入したままの URL を「続けて追加」に引き継いでしまう。
-    const continueInfo: BulkContinueInfo | null = first
-      ? {
-          sourceUrl: first.sourceUrl,
-          sourceTitle: first.sourceTitle ?? "",
-          performedAt: formatDateInput(first.performedAt),
-          coverType: first.coverType,
-          performerIds: commonPerformerIds
-        }
-      : null;
+    // 「同じURLで記録を追加」に引き継ぐ sourceUrl は created（DB作成後の正規化済みの値）
+    // から取る。client の入力値をそのまま使うと、t= 等のクエリパラメータが混入したままの
+    // URL を引き継いでしまう（Task 35 / Task 36-2 で一度指摘済みの注意点）。
+    const normalizedSourceUrl = created[0]?.sourceUrl ?? null;
+    const preview: BulkCoverPreviewItem[] = created.map((cover) => ({
+      id: cover.id,
+      songTitle: cover.song.title,
+      timestampSeconds: cover.timestampSeconds,
+      performerNames: cover.performers.map(({ performer }) => performer.name)
+    }));
 
-    return { ok: true, count: created.length, firstCoverId: first?.id ?? null, continueInfo };
+    return { ok: true, count: created.length, sourceUrl: normalizedSourceUrl, preview };
   } catch (error) {
     console.error("createBulkCoversAction failed", error);
     const message = error instanceof Error ? error.message : "一括登録に失敗しました。";
