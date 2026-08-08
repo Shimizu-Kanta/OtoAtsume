@@ -31,6 +31,13 @@ function shouldSkipTelemetry() {
     return false;
   }
 
+  // localStorageへの書き込み(syncInternalFlag)を待たず、現在のURLも直接見る。
+  // これにより `?internal=1` を踏んだ最初の1回のページ表示自体も除外できる。
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("internal") === "1") {
+    return true;
+  }
+
   try {
     return window.localStorage.getItem(INTERNAL_FLAG_KEY) === "1";
   } catch {
