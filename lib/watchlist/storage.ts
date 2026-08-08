@@ -1,5 +1,6 @@
 const WATCHLIST_KEY = "oa_watchlist";
 const LAST_CHECK_KEY = "oa_watchlist_last_check";
+const CHECK_INTERVAL_MS = 30 * 60 * 1000;
 export const WATCHLIST_MAX = 10;
 
 export type WatchlistItem = {
@@ -56,7 +57,11 @@ export type AddWatchlistInput = {
   knownCoverCount?: number;
 };
 
-export type AddWatchlistResult = { ok: true; items: WatchlistItem[] } | { ok: false; error: string };
+// added は「実際に新しい項目が保存されたか」。既に同じ曲が入っていた場合は
+// ok: true / added: false になる（需要ログを二重に送らないための判別に使う）。
+export type AddWatchlistResult =
+  | { ok: true; added: boolean; items: WatchlistItem[] }
+  | { ok: false; error: string };
 
 export function addWatchlistItem(input: AddWatchlistInput): AddWatchlistResult {
   const songName = input.songName.trim();
@@ -81,7 +86,7 @@ export function addWatchlistItem(input: AddWatchlistInput): AddWatchlistResult {
   });
 
   if (duplicate) {
-    return { ok: true, items };
+    return { ok: true, added: false, items };
   }
 
   if (items.length >= WATCHLIST_MAX) {
@@ -104,7 +109,7 @@ export function addWatchlistItem(input: AddWatchlistInput): AddWatchlistResult {
 
   const next = [...items, item];
   saveWatchlist(next);
-  return { ok: true, items: next };
+  return { ok: true, added: true, items: next };
 }
 
 export function removeWatchlistItem(id: string): WatchlistItem[] {
@@ -123,19 +128,39 @@ export function countUnread(items: WatchlistItem[]) {
   return items.filter((item) => item.hasUpdate).length;
 }
 
-function jstDateKey(date: Date) {
-  const jst = new Date(date.getTime() + 9 * 60 * 60 * 1000);
-  return jst.toISOString().slice(0, 10);
+// 動作確認用に、間隔を待たず照合を即実行させるためのクエリパラメータ。
+// フラグとしては保存せず「前回照合時刻を消すだけ」にして、次回以降は
+// 通常の間隔判定に戻るようにする（常時強制になると負荷が読めなくなるため）。
+function consumeForceCheckParam() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("watchcheck") !== "1") {
+    return;
+  }
+
+  try {
+    window.localStorage.removeItem(LAST_CHECK_KEY);
+  } catch {
+    // localStorage が使えない環境では強制実行もできないため何もしない。
+  }
 }
 
-// 呼び出し頻度を1ブラウザ1日1回程度に抑えるため、JSTの日付が変わっていなければ照合を走らせない。
-// ただし、まだ一度も照合されていない項目(lastCheckedAtがnull)がある場合は、
-// この日次ゲートに関係なく照合する。これがないと、その日の最初の追加でゲートが
-// 閉じてしまい、同日中に追加した項目が翌日まで件数0のまま放置されてしまう。
+// SPAのページ遷移ごとに無条件実行すると1回の閲覧で何度もAPIを呼ぶことになるため、
+// 必ずこの時刻ベースの間隔判定を通す。
+// 例外は2つ:
+//   - まだ一度も照合されていない項目(lastCheckedAtがnull)がある場合。これがないと、
+//     追加直後の項目が次の間隔まで件数0のまま放置されてしまう。
+//   - `?watchcheck=1` が付いている場合（動作確認用の強制実行）。
 export function shouldRunWatchlistCheck(items: WatchlistItem[]): boolean {
   if (typeof window === "undefined" || items.length === 0) {
     return false;
   }
+
+  // 間隔判定より前に処理する必要がある（後だとそのページでは効かない）。
+  consumeForceCheckParam();
 
   if (items.some((item) => item.lastCheckedAt === null)) {
     return true;
@@ -146,7 +171,9 @@ export function shouldRunWatchlistCheck(items: WatchlistItem[]): boolean {
     if (!lastCheck) {
       return true;
     }
-    return jstDateKey(new Date(lastCheck)) !== jstDateKey(new Date());
+
+    const elapsed = Date.now() - new Date(lastCheck).getTime();
+    return Number.isNaN(elapsed) || elapsed >= CHECK_INTERVAL_MS;
   } catch {
     return false;
   }

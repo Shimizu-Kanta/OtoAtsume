@@ -322,10 +322,14 @@ model SongRequestLog {
   normalizedQuery String
   songName        String
   artistName      String?
+  // 登録済み楽曲なら楽曲ID、未登録曲なら null。登録済みは songId でグルーピングするため
+  // 表記ゆれの影響を受けずに集計できる。
+  songId          String?
   ipHash          String
   createdAt       DateTime @default(now())
 
   @@index([normalizedQuery, createdAt])
+  @@index([songId, createdAt])
   @@index([ipHash, normalizedQuery, createdAt])
   @@map("song_request_logs")
 }

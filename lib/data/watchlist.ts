@@ -2,7 +2,6 @@ import { ContentStatus } from "@prisma/client";
 
 import { db } from "@/lib/db";
 import { findSimilarSongs } from "@/lib/data/songs";
-import { recordSongRequest } from "@/lib/data/song-request-log";
 
 const APPROVED = ContentStatus.APPROVED;
 const MATCH_THRESHOLD = 0.6;
@@ -25,22 +24,20 @@ export type WatchlistCheckResultItem = {
 };
 
 export async function checkWatchlistItems(
-  items: WatchlistCheckItemInput[],
-  ipHash: string
+  items: WatchlistCheckItemInput[]
 ): Promise<WatchlistCheckResultItem[]> {
   const results: WatchlistCheckResultItem[] = [];
 
   for (const item of items) {
-    results.push(await checkWatchlistItem(item, ipHash));
+    results.push(await checkWatchlistItem(item));
   }
 
   return results;
 }
 
-async function checkWatchlistItem(
-  item: WatchlistCheckItemInput,
-  ipHash: string
-): Promise<WatchlistCheckResultItem> {
+// 照合は件数・更新有無を返すだけの責務。需要ランキング用のログ記録は
+// ウォッチリストへの追加時（/api/watchlist/request-log）にのみ行う。
+async function checkWatchlistItem(item: WatchlistCheckItemInput): Promise<WatchlistCheckResultItem> {
   if (item.songId) {
     return countCoversSince(item.id, item.songId, effectiveSince(item));
   }
@@ -51,12 +48,6 @@ async function checkWatchlistItem(
     // 新規マッチ直後は「登録された時点からの新着」として全件を新着扱いにする。
     return countCoversSince(item.id, match.id, item.addedAt);
   }
-
-  await recordSongRequest({
-    songName: item.songName,
-    artistName: item.artistName,
-    ipHash
-  });
 
   return { id: item.id, matched: false, songId: null, newCoverCount: 0, totalCoverCount: 0 };
 }

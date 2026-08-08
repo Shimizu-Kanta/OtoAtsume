@@ -1,3 +1,5 @@
+import { ContentStatus } from "@prisma/client";
+
 import { db } from "@/lib/db";
 
 const DEDUP_WINDOW_MS = 24 * 60 * 60 * 1000;
@@ -10,11 +12,14 @@ export function normalizeRequestQuery(songName: string, artistName: string | nul
   return artist ? `${song}::${artist}` : song;
 }
 
-// 未マッチの検索を匿名でログに残す。同一IP+同一クエリの24時間以内の
-// 重複記録は、ランキングの人気偽装対策としてスキップする。
+// 「気になる曲」への追加を匿名で記録する。登録済み・未登録を問わず記録し、
+// /requests の需要ランキングの集計元になる。
+// 同一IP+同一楽曲の24時間以内の重複記録は、ランキングの人気偽装対策としてスキップする
+// （登録済み楽曲は songId、未登録曲は normalizedQuery で同一性を判定する）。
 export async function recordSongRequest(input: {
   songName: string;
   artistName: string | null;
+  songId: string | null;
   ipHash: string;
 }) {
   const normalizedQuery = normalizeRequestQuery(input.songName, input.artistName);
@@ -23,8 +28,8 @@ export async function recordSongRequest(input: {
   const existing = await db.songRequestLog.findFirst({
     where: {
       ipHash: input.ipHash,
-      normalizedQuery,
-      createdAt: { gte: since }
+      createdAt: { gte: since },
+      ...(input.songId ? { songId: input.songId } : { songId: null, normalizedQuery })
     },
     select: { id: true }
   });
@@ -38,56 +43,114 @@ export async function recordSongRequest(input: {
       normalizedQuery,
       songName: input.songName.slice(0, 200),
       artistName: input.artistName?.slice(0, 200) || null,
+      songId: input.songId,
       ipHash: input.ipHash
     }
   });
 }
 
-export type SongRequestRanking = {
-  normalizedQuery: string;
+export type SongRequestRankingItem = {
+  key: string;
+  songId: string | null;
   songName: string;
   artistName: string | null;
-  count: number;
+  requestCount: number;
+  coverCount: number | null;
 };
 
-// 直近7日間で探された回数が多い順。物理削除は行わず、集計時の期間絞り込みだけで
-// 「1週間で消える」を実現する。
-export async function getRecentSongRequestRanking(limit = 20): Promise<SongRequestRanking[]> {
+export type SongRequestFilter = "all" | "unregistered";
+
+// 直近7日間で「気になる曲」に追加された回数が多い順。物理削除は行わず、
+// 集計時の期間絞り込みだけで「1週間で消える」を実現する。
+// 登録済み楽曲は songId、未登録曲は normalizedQuery でグルーピングする
+// （登録済みは表記ゆれの影響を受けずに集計できる）。
+export async function getSongRequestRanking(
+  filter: SongRequestFilter = "all",
+  limit = 20
+): Promise<SongRequestRankingItem[]> {
   const since = new Date(Date.now() - RANKING_WINDOW_DAYS * 24 * 60 * 60 * 1000);
 
-  const grouped = await db.songRequestLog.groupBy({
-    by: ["normalizedQuery"],
-    where: { createdAt: { gte: since } },
-    _count: { _all: true },
-    orderBy: { _count: { normalizedQuery: "desc" } },
-    take: limit
-  });
-
-  if (grouped.length === 0) {
-    return [];
-  }
-
-  // 表示用の songName/artistName は、各 normalizedQuery の最新ログから拾う
-  // （表記ゆれで同じ normalizedQuery に複数の表記が混ざることは MVP では許容する）。
-  const latestByQuery = await db.songRequestLog.findMany({
+  const logs = await db.songRequestLog.findMany({
     where: {
-      normalizedQuery: { in: grouped.map((row) => row.normalizedQuery) },
-      createdAt: { gte: since }
+      createdAt: { gte: since },
+      ...(filter === "unregistered" ? { songId: null } : {})
     },
     orderBy: { createdAt: "desc" },
-    select: { normalizedQuery: true, songName: true, artistName: true }
+    select: { songId: true, normalizedQuery: true, songName: true, artistName: true }
   });
-  const displayByQuery = new Map<string, { songName: string; artistName: string | null }>();
-  for (const row of latestByQuery) {
-    if (!displayByQuery.has(row.normalizedQuery)) {
-      displayByQuery.set(row.normalizedQuery, { songName: row.songName, artistName: row.artistName });
+
+  // レコード数が少ないためメモリ集計で十分（groupBy では songId と normalizedQuery の
+  // 二段構えのキー付けができないため、ここでまとめて処理する）。
+  const grouped = new Map<string, SongRequestRankingItem>();
+
+  for (const log of logs) {
+    const key = log.songId ? `song:${log.songId}` : `query:${log.normalizedQuery}`;
+    const existing = grouped.get(key);
+
+    if (existing) {
+      existing.requestCount += 1;
+      continue;
     }
+
+    // findMany は createdAt の降順のため、最初に現れたものが最新の表記になる。
+    grouped.set(key, {
+      key,
+      songId: log.songId,
+      songName: log.songName,
+      artistName: log.artistName,
+      requestCount: 1,
+      coverCount: null
+    });
   }
 
-  return grouped.map((row) => ({
-    normalizedQuery: row.normalizedQuery,
-    songName: displayByQuery.get(row.normalizedQuery)?.songName ?? row.normalizedQuery,
-    artistName: displayByQuery.get(row.normalizedQuery)?.artistName ?? null,
-    count: row._count._all
-  }));
+  const ranking = Array.from(grouped.values())
+    .sort((a, b) => b.requestCount - a.requestCount || a.songName.localeCompare(b.songName, "ja"))
+    .slice(0, limit);
+
+  await attachCoverCounts(ranking);
+
+  return ranking;
+}
+
+// 登録済み楽曲について、現在の公開済み歌唱記録件数を埋める。
+async function attachCoverCounts(ranking: SongRequestRankingItem[]) {
+  const songIds = ranking
+    .map((item) => item.songId)
+    .filter((songId): songId is string => songId !== null);
+
+  if (songIds.length === 0) {
+    return;
+  }
+
+  const grouped = await db.cover.groupBy({
+    by: ["songId"],
+    where: { songId: { in: songIds }, status: ContentStatus.APPROVED },
+    _count: { _all: true }
+  });
+  const countBySongId = new Map(grouped.map((row) => [row.songId, row._count._all]));
+
+  // 楽曲が削除済みの場合に備え、存在確認も兼ねてタイトルを引き直す。
+  const songs = await db.song.findMany({
+    where: { id: { in: songIds } },
+    select: { id: true, title: true, artists: { select: { artist: { select: { name: true } } } } }
+  });
+  const songById = new Map(songs.map((song) => [song.id, song]));
+
+  for (const item of ranking) {
+    if (!item.songId) {
+      continue;
+    }
+
+    const song = songById.get(item.songId);
+
+    if (!song) {
+      // 楽曲が削除されている場合は未登録扱いに寄せる。
+      item.songId = null;
+      continue;
+    }
+
+    item.songName = song.title;
+    item.artistName = song.artists.map(({ artist }) => artist.name).join(", ") || null;
+    item.coverCount = countBySongId.get(item.songId) ?? 0;
+  }
 }
