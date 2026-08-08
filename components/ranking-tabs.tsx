@@ -2,9 +2,11 @@ import Link from "next/link";
 
 import { cn } from "@/lib/utils";
 
+// /rankings が「供給」(歌唱記録が多い順)、/requests が「需要」(気になる曲に
+// 追加された順)という対比になっている。
 const TABS = [
   { key: "rankings", href: "/rankings", label: "ランキング" },
-  { key: "requests", href: "/requests", label: "よく探されている曲" }
+  { key: "requests", href: "/requests", label: "気になる曲ランキング" }
 ] as const;
 
 // /rankings と /requests を行き来できるタブ風ナビゲーション。ヘッダーの項目数を

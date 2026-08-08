@@ -13,7 +13,9 @@ export const rateLimitPresets = {
   reportCreate: { limit: 30, windowMs: 60 * 60 * 1000 },
   performerApplicationCreate: { limit: 10, windowMs: 24 * 60 * 60 * 1000 },
   duplicateCheck: { limit: 120, windowMs: 60 * 60 * 1000 },
-  watchlistCheck: { limit: 60, windowMs: 60 * 60 * 1000 }
+  watchlistCheck: { limit: 60, windowMs: 60 * 60 * 1000 },
+  // ウォッチリストは最大10件で、追加操作のたびに1回だけ呼ばれる。
+  songRequestLog: { limit: 30, windowMs: 60 * 60 * 1000 }
 } as const;
 
 // クライアント(IP+UA)を識別するハッシュ。scope ごとに異なる値になるため、
