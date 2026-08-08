@@ -130,7 +130,8 @@ async function alreadyKnown(videoId: string): Promise<boolean> {
 
 // キーワード判定を通過した動画の長さを、キャッシュ優先で解決する。
 // 未取得のIDのみ videos.list（50件ずつ）で取得し、YouTubeVideoMetadataCache に保存する。
-async function resolveDurations(
+// チャンネル巡回とプレイリスト取り込み（lib/crawl/playlist-import.ts）の双方から使う。
+export async function resolveDurations(
   videos: PlaylistVideoItem[],
   dryRun: boolean
 ): Promise<Map<string, number>> {

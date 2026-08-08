@@ -49,6 +49,57 @@ export function isYouTubeUrl(input: string) {
   return parseYouTubeUrl(input) !== null;
 }
 
+// 個人用プレイリスト。ログインユーザー本人にしか見えず playlistItems.list では取得できない。
+const PERSONAL_PLAYLIST_IDS = new Set(["WL", "LL"]);
+
+// 実在するプレイリストIDの形式（PL/UU/OL/FL/RD... など）をゆるく検証する。
+const PLAYLIST_ID_PATTERN = /^[A-Za-z0-9_-]{2,64}$/;
+
+export type ParsedYouTubePlaylist =
+  | { ok: true; playlistId: string }
+  | { ok: false; reason: "invalidUrl" | "noPlaylistId" | "personalPlaylist" };
+
+// YouTube URL の list クエリからプレイリストIDを取り出す。
+// - https://www.youtube.com/playlist?list=PLxxxx
+// - https://www.youtube.com/watch?v=xxxx&list=PLxxxx
+// 注意: decodeURIComponent は使わない。`%` 単体のような不正なパーセント文字列で
+// 例外を投げるため（URL / URLSearchParams はいずれも投げずに処理する）。
+export function extractYouTubePlaylistId(input: string): ParsedYouTubePlaylist {
+  const trimmed = input.trim();
+
+  if (!trimmed) {
+    return { ok: false, reason: "invalidUrl" };
+  }
+
+  let url: URL;
+
+  try {
+    url = new URL(trimmed);
+  } catch {
+    return { ok: false, reason: "invalidUrl" };
+  }
+
+  if (!isYouTubeHostname(normalizeHostname(url.hostname))) {
+    return { ok: false, reason: "invalidUrl" };
+  }
+
+  const listParam = url.searchParams.get("list")?.trim();
+
+  if (!listParam) {
+    return { ok: false, reason: "noPlaylistId" };
+  }
+
+  if (PERSONAL_PLAYLIST_IDS.has(listParam.toUpperCase())) {
+    return { ok: false, reason: "personalPlaylist" };
+  }
+
+  if (!PLAYLIST_ID_PATTERN.test(listParam)) {
+    return { ok: false, reason: "noPlaylistId" };
+  }
+
+  return { ok: true, playlistId: listParam };
+}
+
 function normalizeHostname(hostname: string) {
   return hostname.toLowerCase().replace(/^www\./, "");
 }
