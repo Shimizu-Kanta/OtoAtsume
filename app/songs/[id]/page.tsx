@@ -7,6 +7,7 @@ import { LatestCoversFallback } from "@/components/covers/latest-covers-fallback
 import { ShareButton } from "@/components/share-button";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
+import { AddToWatchlistButton } from "@/components/watchlist/add-to-watchlist-button";
 import { coverTypeLabel } from "@/lib/constants";
 import { evaluateSongQuality } from "@/lib/content-quality";
 import { formatCoverTypeBreakdown, formatDateJp } from "@/lib/content-summary";
@@ -126,6 +127,12 @@ export default async function SongDetailPage({ params }: { params: Promise<{ id:
                 <Music2 className="size-4" aria-hidden="true" />
                 歌唱記録を探す
               </Link>
+              <AddToWatchlistButton
+                songName={song.title}
+                artistName={song.artists.map(({ artist }) => artist.name).join(", ") || null}
+                songId={song.id}
+                label="新しいカバーが増えたら教えてほしい"
+              />
               <ShareButton url={`${siteUrl}/songs/${song.id}`} title={`${song.title} | おとあつめ`} />
             </div>
           </div>

@@ -3,6 +3,7 @@ import Link from "next/link";
 const footerLinks = [
   { href: "/about", label: "おとあつめについて" },
   { href: "/rankings", label: "ランキング" },
+  { href: "/requests", label: "よく探されている曲" },
   { href: "/stats", label: "統計" },
   { href: "/guide", label: "使い方" },
   { href: "/terms", label: "利用規約" },

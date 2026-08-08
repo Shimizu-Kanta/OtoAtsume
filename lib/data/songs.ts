@@ -204,20 +204,35 @@ export async function suggestSongs(query: string, limit = 8): Promise<SongSugges
 }
 
 // 表記ゆれ抑止の警告用。類似度が閾値以上の既存楽曲を返す。
-export async function findSimilarSongs(query: string, threshold = 0.6): Promise<SongSuggestion[]> {
+// since を指定すると、その日時より後に登録された楽曲のみを対象にする
+// （気になる曲ウォッチリストの照合で、登録済みの古い楽曲を毎回拾い直さないため）。
+export async function findSimilarSongs(
+  query: string,
+  threshold = 0.6,
+  since?: Date
+): Promise<SongSuggestion[]> {
   const trimmed = query.trim();
   if (!trimmed) {
     return [];
   }
 
   try {
-    const rows = await db.$queryRaw<Array<{ id: string }>>`
-      SELECT id
-      FROM "songs"
-      WHERE similarity(title, ${trimmed}) >= ${threshold}
-      ORDER BY similarity(title, ${trimmed}) DESC
-      LIMIT 5
-    `;
+    const rows = since
+      ? await db.$queryRaw<Array<{ id: string }>>`
+          SELECT id
+          FROM "songs"
+          WHERE similarity(title, ${trimmed}) >= ${threshold}
+            AND "createdAt" > ${since}
+          ORDER BY similarity(title, ${trimmed}) DESC
+          LIMIT 5
+        `
+      : await db.$queryRaw<Array<{ id: string }>>`
+          SELECT id
+          FROM "songs"
+          WHERE similarity(title, ${trimmed}) >= ${threshold}
+          ORDER BY similarity(title, ${trimmed}) DESC
+          LIMIT 5
+        `;
     if (rows.length === 0) {
       return [];
     }
