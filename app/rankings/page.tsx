@@ -3,6 +3,7 @@ import { unstable_cache } from "next/cache";
 import { BarChart3, Disc3, Music2, TrendingUp, Users } from "lucide-react";
 
 import { PageHeading } from "@/components/page-heading";
+import { RankingTabs } from "@/components/ranking-tabs";
 import { getRankings } from "@/lib/data/rankings";
 import type { Metadata } from "next";
 
@@ -35,6 +36,8 @@ export default async function RankingsPage() {
         title="ランキング"
         description="おとあつめに登録されている公開済みの歌唱記録をもとに集計したランキングです。集計は登録データの更新に応じて自動的に反映されます。"
       />
+
+      <RankingTabs active="rankings" />
 
       <RankingSection
         icon={<Music2 className="size-5 text-[color:var(--aqua-deep)]" aria-hidden="true" />}

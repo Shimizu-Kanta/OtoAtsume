@@ -13,12 +13,14 @@ export function AddToWatchlistButton({
   songName,
   artistName = null,
   songId = null,
+  knownCoverCount,
   label = "気になる曲に追加",
   className
 }: {
   songName: string;
   artistName?: string | null;
   songId?: string | null;
+  knownCoverCount?: number;
   label?: string;
   className?: string;
 }) {
@@ -26,7 +28,7 @@ export function AddToWatchlistButton({
   const [error, setError] = useState<string | null>(null);
 
   function handleClick() {
-    const result = addWatchlistItem({ songName, artistName, songId });
+    const result = addWatchlistItem({ songName, artistName, songId, knownCoverCount });
 
     if (!result.ok) {
       setError(result.error);

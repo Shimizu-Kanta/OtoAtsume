@@ -131,6 +131,7 @@ export default async function SongDetailPage({ params }: { params: Promise<{ id:
                 songName={song.title}
                 artistName={song.artists.map(({ artist }) => artist.name).join(", ") || null}
                 songId={song.id}
+                knownCoverCount={song.covers.length}
                 label="新しいカバーが増えたら教えてほしい"
               />
               <ShareButton url={`${siteUrl}/songs/${song.id}`} title={`${song.title} | おとあつめ`} />
@@ -339,8 +340,11 @@ function buildSongSummary(
   stats: Awaited<ReturnType<typeof getSongStats>>
 ) {
   const parts: string[] = [];
+  // コラボカバーでは1件の歌唱記録に複数の活動者が紐づくため、活動者数が歌唱記録数を
+  // 上回りうる。「N人がM回」という表現だと矛盾して見えるため、「M件の歌唱記録」
+  // 「のべN人」という言い方にして、両者の意味の違いが伝わるようにする。
   parts.push(
-    `「${title}」は、おとあつめに登録されている中で${stats.performerCount}人の活動者が計${stats.totalCoverCount}回歌唱している楽曲です。`
+    `「${title}」は、おとあつめに登録されている中で${stats.totalCoverCount}件の歌唱記録があり、のべ${stats.performerCount}人の活動者が歌唱している楽曲です。`
   );
 
   if (stats.firstPerformedAt && stats.latestPerformedAt) {
