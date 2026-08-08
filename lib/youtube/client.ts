@@ -331,13 +331,19 @@ function mapPlaylistItem(
   };
 }
 
+export type FetchPlaylistItemsResult = {
+  items: PlaylistVideoItem[];
+  // maxPages に達した時点でまだ続きのページが残っていたか（＝上限で打ち切ったか）。
+  truncated: boolean;
+};
+
 // アップロードプレイリストから動画を取得する。maxPages 分だけ pageToken で遡る。
 // アップロードプレイリストは新しい順のため、publishedAfter より古い動画に到達したら
 // それ以降のページは不要として打ち切る。 quota: 1 unit / page
-export async function fetchPlaylistItems(
+export async function fetchPlaylistItemsDetailed(
   playlistId: string,
   options: FetchPlaylistItemsOptions = {}
-): Promise<PlaylistVideoItem[]> {
+): Promise<FetchPlaylistItemsResult> {
   const apiKey = process.env.YOUTUBE_DATA_API_KEY;
   if (!apiKey) {
     throw new YouTubeMetadataError("YouTube Data APIキーが設定されていません。");
@@ -346,6 +352,7 @@ export async function fetchPlaylistItems(
   const maxPages = Math.max(options.maxPages ?? 1, 1);
   const items: PlaylistVideoItem[] = [];
   let pageToken: string | undefined;
+  let truncated = false;
 
   for (let page = 0; page < maxPages; page += 1) {
     const endpoint = new URL("https://www.googleapis.com/youtube/v3/playlistItems");
@@ -381,8 +388,21 @@ export async function fetchPlaylistItems(
     if (!pageToken) {
       break;
     }
+
+    // 次ページがあるのに maxPages に達した場合は、上限で打ち切ったことを伝える。
+    if (page === maxPages - 1) {
+      truncated = true;
+    }
   }
 
+  return { items, truncated };
+}
+
+export async function fetchPlaylistItems(
+  playlistId: string,
+  options: FetchPlaylistItemsOptions = {}
+): Promise<PlaylistVideoItem[]> {
+  const { items } = await fetchPlaylistItemsDetailed(playlistId, options);
   return items;
 }
 
