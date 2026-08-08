@@ -317,6 +317,19 @@ model CoverCandidate {
   @@map("cover_candidates")
 }
 
+model SongRequestLog {
+  id              String   @id @default(cuid())
+  normalizedQuery String
+  songName        String
+  artistName      String?
+  ipHash          String
+  createdAt       DateTime @default(now())
+
+  @@index([normalizedQuery, createdAt])
+  @@index([ipHash, normalizedQuery, createdAt])
+  @@map("song_request_logs")
+}
+
 model CrawlKeyword {
   id        String           @id @default(uuid())
   keyword   String           @unique

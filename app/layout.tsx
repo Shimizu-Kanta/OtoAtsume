@@ -6,6 +6,7 @@ import { HelpButton } from "@/components/onboarding/help-button";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { AccessLogger } from "@/components/telemetry/access-logger";
+import { WatchlistWidget } from "@/components/watchlist/watchlist-widget";
 import { siteUrl } from "@/lib/site-url";
 
 // 本文: Noto Sans JP / 見出し: Zen Kaku Gothic New / 数値・日付・件数: JetBrains Mono。
@@ -92,6 +93,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <SiteHeader />
         <main className="container-page py-8">{children}</main>
         <SiteFooter />
+        <WatchlistWidget />
         <HelpButton />
       </body>
     </html>

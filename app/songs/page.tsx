@@ -7,6 +7,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { AddToWatchlistButton } from "@/components/watchlist/add-to-watchlist-button";
 import { getSongs, type SongListItem, type SongSort } from "@/lib/data/songs";
 import { cn, getSearchParam, isFilteredListing, parsePageParam } from "@/lib/utils";
 import type { Metadata } from "next";
@@ -107,8 +108,14 @@ export default async function SongsPage({
           </div>
         </div>
       ) : (
-        <div className="rounded-[4px] border border-rule bg-panel p-6 text-sm text-slate">
-          条件に一致する楽曲は見つかりませんでした。
+        <div className="space-y-3 rounded-[4px] border border-rule bg-panel p-6 text-sm text-slate">
+          <p>条件に一致する楽曲は見つかりませんでした。</p>
+          {q?.trim() ? (
+            <AddToWatchlistButton
+              songName={q.trim()}
+              label="この曲が追加されたら教えてほしい"
+            />
+          ) : null}
         </div>
       )}
 

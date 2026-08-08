@@ -12,20 +12,24 @@ export const rateLimitPresets = {
   coverCreate: { limit: 20, windowMs: 60 * 60 * 1000 },
   reportCreate: { limit: 30, windowMs: 60 * 60 * 1000 },
   performerApplicationCreate: { limit: 10, windowMs: 24 * 60 * 60 * 1000 },
-  duplicateCheck: { limit: 120, windowMs: 60 * 60 * 1000 }
+  duplicateCheck: { limit: 120, windowMs: 60 * 60 * 1000 },
+  watchlistCheck: { limit: 60, windowMs: 60 * 60 * 1000 }
 } as const;
 
-function clientKey(headerReader: HeaderReader, scope: string) {
+// クライアント(IP+UA)を識別するハッシュ。scope ごとに異なる値になるため、
+// 用途をまたいで同一クライアントを突き合わせることはできない。
+export function clientIdentityHash(headerReader: HeaderReader, scope: string) {
   const forwardedFor = headerReader.get("x-forwarded-for")?.split(",")[0]?.trim();
   const realIp = headerReader.get("x-real-ip")?.trim();
   const ip = forwardedFor || realIp || "local";
   const userAgent = headerReader.get("user-agent")?.trim() || "unknown";
   const salt = process.env.AUTH_SECRET || process.env.CAPTCHA_SECRET_KEY || "otoatsume-rate-limit";
-  const digest = createHash("sha256")
-    .update(`${salt}:${scope}:${ip}:${userAgent}`)
-    .digest("hex");
 
-  return `${scope}:${digest}`;
+  return createHash("sha256").update(`${salt}:${scope}:${ip}:${userAgent}`).digest("hex");
+}
+
+function clientKey(headerReader: HeaderReader, scope: string) {
+  return `${scope}:${clientIdentityHash(headerReader, scope)}`;
 }
 
 export async function checkRouteRateLimit(
