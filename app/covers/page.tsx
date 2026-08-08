@@ -9,6 +9,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { AddToWatchlistButton } from "@/components/watchlist/add-to-watchlist-button";
 import { coverTypeOptions } from "@/lib/constants";
 import { getApprovedCovers, type CoverSort } from "@/lib/data/covers";
 import { listTagsGroupedForFilter } from "@/lib/data/tags";
@@ -165,6 +166,15 @@ export default async function CoversPage({
       </form>
 
       <CoverResults covers={covers} totalCount={totalCount} initialViewMode={view} />
+
+      {covers.length === 0 && search.song?.trim() ? (
+        <div className="rounded-[4px] border border-rule bg-panel p-6 text-sm text-slate">
+          <AddToWatchlistButton
+            songName={search.song.trim()}
+            label="この曲が追加されたら教えてほしい"
+          />
+        </div>
+      ) : null}
 
       <Pagination page={page} totalPages={totalPages} basePath="/covers" params={params} />
     </div>

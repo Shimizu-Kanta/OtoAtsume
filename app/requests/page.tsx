@@ -2,6 +2,7 @@ import { unstable_cache } from "next/cache";
 import { Search } from "lucide-react";
 
 import { PageHeading } from "@/components/page-heading";
+import { RankingTabs } from "@/components/ranking-tabs";
 import { AddToWatchlistButton } from "@/components/watchlist/add-to-watchlist-button";
 import { getRecentSongRequestRanking } from "@/lib/data/song-request-log";
 import type { Metadata } from "next";
@@ -37,6 +38,8 @@ export default async function RequestsPage() {
         title="よく探されている曲"
         description="楽曲検索や「気になる曲」リストの照合で見つからなかった曲を匿名で集計しています。直近7日間の件数が多い順に表示し、8日以上前の記録は自動的に対象から外れます。"
       />
+
+      <RankingTabs active="requests" />
 
       {ranking.length > 0 ? (
         <ol className="overflow-hidden rounded-[4px] border border-rule bg-panel divide-y divide-rule">

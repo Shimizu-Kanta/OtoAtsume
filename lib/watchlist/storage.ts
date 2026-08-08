@@ -53,6 +53,7 @@ export type AddWatchlistInput = {
   songName: string;
   artistName?: string | null;
   songId?: string | null;
+  knownCoverCount?: number;
 };
 
 export type AddWatchlistResult = { ok: true; items: WatchlistItem[] } | { ok: false; error: string };
@@ -97,7 +98,7 @@ export function addWatchlistItem(input: AddWatchlistInput): AddWatchlistResult {
     songId: input.songId ?? null,
     addedAt: new Date().toISOString(),
     lastCheckedAt: null,
-    knownCoverCount: 0,
+    knownCoverCount: input.knownCoverCount ?? 0,
     hasUpdate: false
   };
 
@@ -128,9 +129,16 @@ function jstDateKey(date: Date) {
 }
 
 // 呼び出し頻度を1ブラウザ1日1回程度に抑えるため、JSTの日付が変わっていなければ照合を走らせない。
+// ただし、まだ一度も照合されていない項目(lastCheckedAtがnull)がある場合は、
+// この日次ゲートに関係なく照合する。これがないと、その日の最初の追加でゲートが
+// 閉じてしまい、同日中に追加した項目が翌日まで件数0のまま放置されてしまう。
 export function shouldRunWatchlistCheck(items: WatchlistItem[]): boolean {
   if (typeof window === "undefined" || items.length === 0) {
     return false;
+  }
+
+  if (items.some((item) => item.lastCheckedAt === null)) {
+    return true;
   }
 
   try {
