@@ -10,7 +10,7 @@ import {
 import { evaluateCoverQuality } from "@/lib/content-quality";
 import { syncCandidateStatusForVideo } from "@/lib/crawl/candidate-status";
 import { db } from "@/lib/db";
-import { pageSkip, paginate } from "@/lib/pagination";
+import { pageSkip, paginate, type Paginated } from "@/lib/pagination";
 import { escapeLikePattern, normalizeNames } from "@/lib/utils";
 import { extractYouTubeVideoId, normalizeYouTubeSourceUrl } from "@/lib/youtube";
 import type {
@@ -57,7 +57,26 @@ export type CoverDetail = Prisma.CoverGetPayload<{
   include: typeof coverDetailInclude;
 }>;
 
-export type CoverSort = "performedAtDesc" | "performedAtAsc";
+export type CoverSort = "performedAtDesc" | "performedAtAsc" | "addedAtDesc";
+
+// カード表示用に、同一動画（sourceVideoId）の歌唱記録を1枚の「アルバム」としてまとめた単位。
+// 歌ってみた1本のような単曲は totalTrackCount === 1 のアルバムとして扱う。
+export type CoverAlbum = {
+  // sourceVideoId、無ければ代表 cover の id。
+  key: string;
+  sourceVideoId: string | null;
+  sourceUrl: string;
+  sourceTitle: string | null;
+  coverType: CoverType;
+  performedAt: Date;
+  // 収録曲の createdAt の最大値（「最新入荷」の判断材料）。
+  lastAddedAt: Date;
+  // 検索条件に一致した曲のみ。タイムスタンプ昇順。
+  tracks: CoverListItem[];
+  // 検索条件を無視した、この動画の登録曲総数。
+  // 楽曲名で検索したときに「12曲中1曲が一致」と表示できるよう tracks とは別に持つ。
+  totalTrackCount: number;
+};
 
 export type CoverSearch = {
   performer?: string;
@@ -169,6 +188,12 @@ function coverOrderBy(sort: CoverSort | undefined): Prisma.CoverOrderByWithRelat
     return [{ performedAt: "asc" }, { createdAt: "asc" }];
   }
 
+  // 「最新入荷」。配信日順だと「2年前の配信に今日12曲追加した」ものが一覧に出てこないため、
+  // 登録日順を別軸として用意する。
+  if (sort === "addedAtDesc") {
+    return [{ createdAt: "desc" }];
+  }
+
   return [{ performedAt: "desc" }, { createdAt: "desc" }];
 }
 
@@ -187,6 +212,138 @@ export async function getApprovedCovers(search: CoverSearch = {}, page = 1, perP
   ]);
 
   return paginate(items, totalCount, page, perPage);
+}
+
+// カード表示用に、同一動画の歌唱記録を1枚のアルバムとしてまとめて返す。
+// グループ単位でページングするため、二段構えのクエリにしている。
+//
+// なぜ第1段でスカラー3列を全件取得しているか:
+//   sourceVideoId が nullable なため、Prisma の groupBy では null のレコードが
+//   全部ひとつのグループに潰れてしまう。回避するには COALESCE(source_video_id, id) の
+//   生成列を足すか raw SQL を書く必要があるが、現在のカバー件数(300件規模)では
+//   3列だけの全件取得のほうがはるかに単純で速い。
+//   カバー件数が5,000件を超えたらこの方式は見直すこと。その時点で albumKey カラム
+//   (sourceVideoId ?? id を書き込み時に同期)を追加し、groupBy + skip/take に切り替える。
+export async function getApprovedCoverAlbums(
+  search: CoverSearch = {},
+  page = 1,
+  perPage = 24
+): Promise<Paginated<CoverAlbum>> {
+  const where = buildCoverWhere(search, true);
+
+  // 第1段: 並び順を保ったままアルバムキーの一覧を作る。
+  const keyRows = await db.cover.findMany({
+    where,
+    select: { id: true, sourceVideoId: true, createdAt: true },
+    orderBy: coverOrderBy(search.sort)
+  });
+
+  const orderedKeys: string[] = [];
+  const sourceVideoIdByKey = new Map<string, string | null>();
+  const lastAddedAtByKey = new Map<string, Date>();
+
+  for (const row of keyRows) {
+    const key = row.sourceVideoId ?? row.id;
+    const lastAddedAt = lastAddedAtByKey.get(key);
+
+    if (lastAddedAt === undefined) {
+      orderedKeys.push(key);
+      sourceVideoIdByKey.set(key, row.sourceVideoId);
+      lastAddedAtByKey.set(key, row.createdAt);
+    } else if (row.createdAt > lastAddedAt) {
+      lastAddedAtByKey.set(key, row.createdAt);
+    }
+  }
+
+  const totalCount = orderedKeys.length;
+  const skip = pageSkip(page, perPage);
+  const pageKeys = orderedKeys.slice(skip, skip + perPage);
+
+  if (pageKeys.length === 0) {
+    return paginate<CoverAlbum>([], totalCount, page, perPage);
+  }
+
+  const videoIds: string[] = [];
+  const soloIds: string[] = [];
+
+  for (const key of pageKeys) {
+    const sourceVideoId = sourceVideoIdByKey.get(key) ?? null;
+
+    if (sourceVideoId) {
+      videoIds.push(sourceVideoId);
+    } else {
+      soloIds.push(key);
+    }
+  }
+
+  const [trackRows, trackCountRows] = await Promise.all([
+    // 第2段: そのページのアルバムの中身。where を再適用するため、
+    // tracks には検索条件に一致した曲だけが入る。
+    db.cover.findMany({
+      where: {
+        AND: [where, { OR: [{ sourceVideoId: { in: videoIds } }, { id: { in: soloIds } }] }]
+      },
+      include: coverListInclude,
+      orderBy: [{ timestampSeconds: { sort: "asc", nulls: "last" } }, { performedAt: "asc" }]
+    }),
+    // 第3段: 検索条件を無視した総曲数。soloIds 側は 1 固定なので問い合わせない。
+    videoIds.length > 0
+      ? db.cover.groupBy({
+          by: ["sourceVideoId"],
+          where: { status: ContentStatus.APPROVED, sourceVideoId: { in: videoIds } },
+          _count: { _all: true }
+        })
+      : Promise.resolve([])
+  ]);
+
+  const tracksByKey = new Map<string, CoverListItem[]>();
+  for (const track of trackRows) {
+    const key = track.sourceVideoId ?? track.id;
+    const tracks = tracksByKey.get(key);
+
+    if (tracks) {
+      tracks.push(track);
+    } else {
+      tracksByKey.set(key, [track]);
+    }
+  }
+
+  const totalTrackCountByVideoId = new Map<string, number>();
+  for (const row of trackCountRows) {
+    if (row.sourceVideoId) {
+      totalTrackCountByVideoId.set(row.sourceVideoId, row._count._all);
+    }
+  }
+
+  // 第1段のキー配列の順序を維持する。
+  const albums = pageKeys.flatMap<CoverAlbum>((key) => {
+    const tracks = tracksByKey.get(key);
+
+    if (!tracks || tracks.length === 0) {
+      return [];
+    }
+
+    const head = tracks[0];
+    const sourceVideoId = sourceVideoIdByKey.get(key) ?? null;
+
+    return [
+      {
+        key,
+        sourceVideoId,
+        sourceUrl: head.sourceUrl,
+        sourceTitle: head.sourceTitle,
+        coverType: head.coverType,
+        performedAt: head.performedAt,
+        lastAddedAt: lastAddedAtByKey.get(key) ?? head.createdAt,
+        tracks,
+        totalTrackCount: sourceVideoId
+          ? totalTrackCountByVideoId.get(sourceVideoId) ?? tracks.length
+          : 1
+      }
+    ];
+  });
+
+  return paginate(albums, totalCount, page, perPage);
 }
 
 export async function getAdminCovers(search: CoverSearch = {}, page = 1, perPage = 50) {

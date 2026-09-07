@@ -14,15 +14,24 @@ const viewModes = [
 export function CoverViewToggle({
   value,
   totalCount,
+  albumCount,
   onValueChange
 }: {
   value: CoverViewMode;
   totalCount: number;
+  // カード表示はアルバム単位でページングするため、件数もアルバム数と曲数の両方を出す。
+  albumCount?: number;
   onValueChange: (value: CoverViewMode) => void;
 }) {
+  const records = `${totalCount.toLocaleString("ja-JP")} records`;
+  const countLabel =
+    value === "card" && albumCount !== undefined
+      ? `${albumCount.toLocaleString("ja-JP")} albums / ${records}`
+      : records;
+
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
-      <p className="font-mono text-xs tabular-nums text-slate">{totalCount.toLocaleString("ja-JP")} records</p>
+      <p className="font-mono text-xs tabular-nums text-slate">{countLabel}</p>
       <div className="inline-flex rounded-[3px] border border-rule bg-panel" role="group" aria-label="表示形式">
         {viewModes.map((mode) => {
           const Icon = mode.icon;
