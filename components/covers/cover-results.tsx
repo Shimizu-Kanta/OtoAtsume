@@ -3,10 +3,10 @@
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
-import { CoverCard } from "@/components/covers/cover-card";
+import { CoverAlbumCard } from "@/components/covers/cover-album-card";
 import { CoverList } from "@/components/covers/cover-list";
 import { CoverViewToggle, type CoverViewMode } from "@/components/covers/cover-view-toggle";
-import type { CoverListItem } from "@/lib/data/covers";
+import type { CoverAlbum, CoverListItem } from "@/lib/data/covers";
 
 const STORAGE_KEY = "oa_view_mode";
 // 旧キー。既存ユーザーの設定を失わないよう読み取り時のみフォールバックする。
@@ -45,11 +45,15 @@ function resolveInitialViewMode(initialViewMode: string | null | undefined): Cov
 
 export function CoverResults({
   covers,
+  albums,
   totalCount,
+  albumCount,
   initialViewMode
 }: {
   covers: CoverListItem[];
+  albums: CoverAlbum[];
   totalCount?: number;
+  albumCount?: number;
   initialViewMode?: string | null;
 }) {
   const router = useRouter();
@@ -74,20 +78,28 @@ export function CoverResults({
     startTransition(() => {
       const nextUrl = new URL(window.location.href);
       nextUrl.searchParams.set("view", nextViewMode);
+      // カードはアルバム単位、リストは曲単位でページングするためページ数の意味が変わる。
+      // 切り替え時は1ページ目に戻す。
+      nextUrl.searchParams.delete("page");
       router.replace(`${nextUrl.pathname}${nextUrl.search}`, { scroll: false });
     });
   }
 
   return (
     <div className="space-y-5" data-pending={isPending ? "true" : undefined}>
-      <CoverViewToggle value={viewMode} totalCount={totalCount ?? covers.length} onValueChange={handleViewChange} />
+      <CoverViewToggle
+        value={viewMode}
+        totalCount={totalCount ?? covers.length}
+        albumCount={albumCount ?? albums.length}
+        onValueChange={handleViewChange}
+      />
 
       {viewMode === "list" ? (
         <CoverList covers={covers} />
-      ) : covers.length > 0 ? (
+      ) : albums.length > 0 ? (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-          {covers.map((cover) => (
-            <CoverCard key={cover.id} cover={cover} />
+          {albums.map((album) => (
+            <CoverAlbumCard key={album.key} album={album} />
           ))}
         </div>
       ) : (

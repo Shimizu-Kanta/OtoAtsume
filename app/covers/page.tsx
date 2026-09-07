@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { AddToWatchlistButton } from "@/components/watchlist/add-to-watchlist-button";
 import { coverTypeOptions } from "@/lib/constants";
-import { getApprovedCovers, type CoverSort } from "@/lib/data/covers";
+import { getApprovedCoverAlbums, getApprovedCovers, type CoverSort } from "@/lib/data/covers";
 import { listTagsGroupedForFilter } from "@/lib/data/tags";
 import { cn, getSearchParam, getSelectedTagIds, isFilteredListing, parsePageParam } from "@/lib/utils";
 import type { Metadata } from "next";
@@ -36,7 +36,7 @@ export async function generateMetadata({
 }
 
 function normalizeCoverSort(value: string | undefined): CoverSort {
-  return value === "performedAtAsc" ? value : "performedAtDesc";
+  return value === "performedAtAsc" || value === "addedAtDesc" ? value : "performedAtDesc";
 }
 
 export default async function CoversPage({
@@ -60,10 +60,16 @@ export default async function CoversPage({
   const page = parsePageParam(getSearchParam(params, "page"));
   const view = getSearchParam(params, "view");
   const safeView = view === "card" || view === "list" ? view : undefined;
-  const [{ items: covers, totalCount, totalPages }, tagFilter] = await Promise.all([
+  // カード表示はアルバム単位、リスト表示は曲単位でページングするため両方を取得する。
+  const [albums, covers, tagFilter] = await Promise.all([
+    getApprovedCoverAlbums(search, page),
     getApprovedCovers(search, page),
     listTagsGroupedForFilter()
   ]);
+  const totalCount = covers.totalCount;
+  // Pagination はサーバコンポーネント側にあるため、表示モードは URL クエリの view からのみ
+  // 判定する（未指定時はカード扱い）。
+  const totalPages = safeView === "list" ? covers.totalPages : albums.totalPages;
   const hasTags = tagFilter.grouped.some((group) => group.tags.length > 0) || tagFilter.ungrouped.length > 0;
 
   return (
@@ -130,8 +136,9 @@ export default async function CoversPage({
           <div className="space-y-2">
             <Label htmlFor="sort">並び替え</Label>
             <Select id="sort" name="sort" defaultValue={sort}>
-              <option value="performedAtDesc">歌唱日 新しい順</option>
-              <option value="performedAtAsc">歌唱日 古い順</option>
+              <option value="performedAtDesc">新譜（配信日が新しい順）</option>
+              <option value="performedAtAsc">配信日が古い順</option>
+              <option value="addedAtDesc">最新入荷（登録が新しい順）</option>
             </Select>
           </div>
         </div>
@@ -165,9 +172,15 @@ export default async function CoversPage({
         </div>
       </form>
 
-      <CoverResults covers={covers} totalCount={totalCount} initialViewMode={view} />
+      <CoverResults
+        covers={covers.items}
+        albums={albums.items}
+        totalCount={totalCount}
+        albumCount={albums.totalCount}
+        initialViewMode={view}
+      />
 
-      {covers.length === 0 && search.song?.trim() ? (
+      {covers.items.length === 0 && search.song?.trim() ? (
         <div className="rounded-[4px] border border-rule bg-panel p-6 text-sm text-slate">
           <AddToWatchlistButton
             songName={search.song.trim()}
