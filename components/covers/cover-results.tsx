@@ -8,10 +8,24 @@ import { CoverList } from "@/components/covers/cover-list";
 import { CoverViewToggle, type CoverViewMode } from "@/components/covers/cover-view-toggle";
 import type { CoverListItem } from "@/lib/data/covers";
 
-const STORAGE_KEY = "coversViewMode";
+const STORAGE_KEY = "oa_view_mode";
+// 旧キー。既存ユーザーの設定を失わないよう読み取り時のみフォールバックする。
+// 書き込みは新キーのみで、旧キーの削除は次のリリースで行う。
+const LEGACY_STORAGE_KEY = "coversViewMode";
 
 function normalizeViewMode(value: string | null | undefined): CoverViewMode | null {
   return value === "card" || value === "list" ? value : null;
+}
+
+function readStoredViewMode(): CoverViewMode | null {
+  try {
+    return (
+      normalizeViewMode(window.localStorage.getItem(STORAGE_KEY)) ??
+      normalizeViewMode(window.localStorage.getItem(LEGACY_STORAGE_KEY))
+    );
+  } catch {
+    return null;
+  }
 }
 
 function resolveInitialViewMode(initialViewMode: string | null | undefined): CoverViewMode {
@@ -26,11 +40,7 @@ function resolveInitialViewMode(initialViewMode: string | null | undefined): Cov
     return normalizeViewMode(urlViewMode) ?? "card";
   }
 
-  try {
-    return normalizeViewMode(window.localStorage.getItem(STORAGE_KEY)) ?? "card";
-  } catch {
-    return "card";
-  }
+  return readStoredViewMode() ?? "card";
 }
 
 export function CoverResults({
@@ -75,7 +85,7 @@ export function CoverResults({
       {viewMode === "list" ? (
         <CoverList covers={covers} />
       ) : covers.length > 0 ? (
-        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {covers.map((cover) => (
             <CoverCard key={cover.id} cover={cover} />
           ))}

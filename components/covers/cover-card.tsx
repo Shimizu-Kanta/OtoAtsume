@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { Play } from "lucide-react";
 
-import { CoverThumbnail } from "@/components/covers/cover-thumbnail";
+import { CoverJacket } from "@/components/covers/cover-jacket";
 import { CoverTypeTag } from "@/components/covers/cover-type-tag";
 import { PerformerColorChip } from "@/components/performers/performer-color-chip";
 import type { CoverListItem } from "@/lib/data/covers";
@@ -15,51 +14,49 @@ function artistNames(cover: CoverListItem) {
 export function CoverCard({ cover }: { cover: CoverListItem }) {
   const thumbnailUrl = cover.sourceImageUrl ?? getYouTubeThumbnailUrl(cover.sourceUrl);
   const title = cover.song.title;
+  const artists = artistNames(cover);
   const accentColor = cover.performers.find(({ performer }) => performer.colorCode)?.performer.colorCode;
 
   return (
     <Link
       href={`/covers/${cover.id}`}
-      className="group flex h-full min-w-0 flex-col overflow-hidden rounded-3xl border bg-card shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+      className="group flex h-full min-w-0 flex-col overflow-hidden rounded-[8px] border bg-card shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       style={{
+        // 活動者色は上辺のラインのみで示す。ジャケットの背後に色が透けると絵が濁るため、
+        // カード面・サムネイル面への linear-gradient は敷かない。
         borderTopColor: accentColor ?? undefined,
-        borderTopWidth: accentColor ? 4 : undefined,
-        backgroundImage: accentColor ? `linear-gradient(135deg, ${accentColor}12, transparent 46%)` : undefined
+        borderTopWidth: accentColor ? 4 : undefined
       }}
     >
-      <div
-        className="relative aspect-video w-full overflow-hidden bg-muted"
-        style={{
-          backgroundImage: accentColor ? `linear-gradient(135deg, ${accentColor}24, transparent 62%)` : undefined
-        }}
-      >
-        <CoverThumbnail
+      <div className="relative overflow-hidden rounded-[6px]">
+        <CoverJacket
           src={thumbnailUrl}
           alt={`${title} のサムネイル`}
           coverType={cover.coverType}
-          sizes="(min-width: 1024px) 320px, (min-width: 640px) 45vw, 90vw"
-          imageClassName="object-cover transition-transform duration-300 group-hover:scale-[1.04]"
+          variant="frame"
+          sizes="(min-width: 1280px) 200px, (min-width: 640px) 25vw, 45vw"
           iconClassName="size-9"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-foreground/45 via-foreground/5 to-transparent opacity-80" />
-        <span className="absolute bottom-3 right-3 inline-flex size-10 items-center justify-center rounded-full bg-card/90 text-primary shadow-sm transition-transform group-hover:scale-105">
-          <Play className="ml-0.5 size-4" aria-hidden="true" />
-        </span>
+
+        {/* 配信・動画名の帯。ホバー時のみ見せるが、クローラからテキストが消えないよう
+            条件レンダリングにはせず DOM に常在させて CSS の opacity で出し入れする。
+            スマホではホバーが無く表示されないが、同じ情報は詳細ページにある。 */}
+        {cover.sourceTitle ? (
+          <div className="absolute inset-x-0 bottom-0 bg-foreground/85 px-2 py-1.5 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+            <span className="line-clamp-2 text-[11px] leading-4 text-background">
+              {cover.sourceTitle}
+            </span>
+          </div>
+        ) : null}
       </div>
 
-      <div className="flex flex-1 flex-col gap-4 p-4">
-        <div className="min-w-0">
+      <div className="flex flex-1 flex-col gap-2 p-3">
+        <div className="min-w-0 space-y-1.5">
           {/* カードのタイトルは文書構造上の見出しではないため、見出しタグを使わず装飾テキストにする
               （セクション見出しの h2 と階層が競合しないようにする）。 */}
-          <p className="line-clamp-2 text-base font-bold leading-6 text-foreground">{title}</p>
-          <p className="mt-1 truncate text-sm text-muted-foreground">{artistNames(cover)}</p>
-        </div>
+          <p className="line-clamp-2 text-sm font-bold leading-5 text-foreground">{title}</p>
 
-        <div className="space-y-2 text-sm">
-          <div>
-            <p className="mb-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-              Singer
-            </p>
+          {cover.performers.length > 0 ? (
             <div className="flex flex-wrap gap-1.5">
               {cover.performers.map(({ performer }) => (
                 <PerformerColorChip
@@ -69,13 +66,14 @@ export function CoverCard({ cover }: { cover: CoverListItem }) {
                 />
               ))}
             </div>
-          </div>
+          ) : null}
+
+          {artists ? <p className="truncate text-xs text-muted-foreground">{artists}</p> : null}
         </div>
 
-        <div className="mt-auto flex flex-wrap items-center gap-2 border-t border-rule pt-3">
+        <div className="mt-auto flex flex-wrap items-center gap-2 border-t border-rule pt-2.5">
           <CoverTypeTag type={cover.coverType} />
           <span className="font-mono text-xs tabular-nums text-slate">{formatDate(cover.performedAt)}</span>
-          <span className="ml-auto text-sm font-semibold text-[color:var(--aqua-deep)]">詳細</span>
         </div>
       </div>
     </Link>

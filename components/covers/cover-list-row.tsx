@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { CoverThumbnail } from "@/components/covers/cover-thumbnail";
+import { CoverJacket } from "@/components/covers/cover-jacket";
 import { CoverTypeTag } from "@/components/covers/cover-type-tag";
 import { PerformerColorChip } from "@/components/performers/performer-color-chip";
 import type { CoverListItem } from "@/lib/data/covers";
@@ -18,16 +18,15 @@ export function CoverListRow({ cover }: { cover: CoverListItem }) {
       href={`/covers/${cover.id}`}
       className="grid grid-cols-[56px_minmax(0,1fr)_auto] items-center gap-3 px-3 py-2.5 transition-colors hover:bg-[#FAFCFD]"
     >
-      <div className="relative size-14 shrink-0 overflow-hidden rounded-[3px] border border-rule bg-muted">
-        <CoverThumbnail
-          src={thumbnailUrl}
-          alt=""
-          coverType={cover.coverType}
-          sizes="56px"
-          imageClassName="object-cover"
-          iconClassName="size-5"
-        />
-      </div>
+      <CoverJacket
+        src={thumbnailUrl}
+        alt=""
+        coverType={cover.coverType}
+        variant="crop"
+        sizes="56px"
+        className="size-14 shrink-0 rounded-[3px] border border-rule bg-muted"
+        iconClassName="size-5"
+      />
 
       <div className="min-w-0">
         <p className="truncate">
