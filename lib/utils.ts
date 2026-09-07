@@ -137,7 +137,13 @@ export function withTimestamp(sourceUrl: string, timestampSeconds: number | null
   }
 }
 
-const OPTIMIZABLE_IMAGE_HOSTS = new Set(["img.youtube.com", "i.ytimg.com"]);
+// next/image の最適化は現在どのホストに対しても行わない（Set が空なので全て unoptimized）。
+// ジャケット表示（CoverJacket variant="frame"）は同じサムネイルを前景・背景の2箇所で使うため、
+// 最適化を通すと幅違いで2回変換が走り Cloud Run の CPU を無駄に使う。最適化を切れば両方が
+// 同じ img.youtube.com の URL を参照するのでブラウザキャッシュが効き、ネットワークリクエストは
+// 1回で済む。hqdefault.jpg は元から10〜20KB程度で WebP/AVIF 変換の恩恵も小さい。
+// next.config.mjs の remotePatterns は将来戻す可能性があるため残してある。
+const OPTIMIZABLE_IMAGE_HOSTS = new Set<string>([]);
 
 // Keep in sync with images.remotePatterns in next.config.mjs — unconfigured
 // hosts must fall back to unoptimized rendering or next/image throws at runtime.
