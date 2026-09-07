@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 type CoverCarouselProps = {
   children: ReactNode;
   className?: string;
-  itemLayout?: "responsive" | "single";
+  itemLayout?: "responsive" | "single" | "shelf";
 };
 
 export function CoverCarousel({ children, className, itemLayout = "responsive" }: CoverCarouselProps) {
@@ -35,10 +35,16 @@ export function CoverCarousel({ children, className, itemLayout = "responsive" }
     return null;
   }
 
+  // shelf は正方形ジャケットを棚に並べる用途。画面幅に応じて3〜7枚が見える。
   const itemClassName =
     itemLayout === "single"
       ? "w-full shrink-0 snap-start"
-      : "w-[85%] shrink-0 snap-start sm:w-[calc((100%_-_1rem)/2)] xl:w-[calc((100%_-_2rem)/3)]";
+      : itemLayout === "shelf"
+        ? "w-[38%] shrink-0 snap-start sm:w-[22%] lg:w-[16%] xl:w-[13%]"
+        : "w-[85%] shrink-0 snap-start sm:w-[calc((100%_-_1rem)/2)] xl:w-[calc((100%_-_2rem)/3)]";
+
+  // 棚は自由に眺められたほうがよいので、吸着を弱める。
+  const snapClassName = itemLayout === "shelf" ? "snap-proximity" : "snap-mandatory";
 
   return (
     <div className={cn("space-y-3", className)}>
@@ -67,7 +73,7 @@ export function CoverCarousel({ children, className, itemLayout = "responsive" }
         ref={viewportRef}
         className="-mx-4 overflow-x-auto scroll-smooth px-4 pb-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
       >
-        <div className="flex snap-x snap-mandatory gap-4">
+        <div className={cn("flex snap-x gap-4", snapClassName)}>
           {items.map((item, index) => (
             <div
               key={index}

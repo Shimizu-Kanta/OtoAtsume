@@ -1,17 +1,22 @@
 import Link from "next/link";
 import { Database, FilePlus2, Music, Search, Sparkles, Users } from "lucide-react";
 
-import { CoverCard } from "@/components/covers/cover-card";
+import { CoverAlbumCard } from "@/components/covers/cover-album-card";
 import { CoverCarousel } from "@/components/home/cover-carousel";
+import { SectionHeading } from "@/components/home/section-heading";
+import { ShelfSection } from "@/components/home/shelf-section";
+import { SpineShelf } from "@/components/home/spine-shelf";
 import { IntroModal } from "@/components/onboarding/intro-modal";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  getLatestCovers,
+  attachTrackCounts,
+  getApprovedCoverAlbums,
   getRandomCovers,
   getTodayAnniversaryCoverGroups,
+  limitAlbumsPerPerformer,
   type AnniversaryCoverGroup,
-  type CoverListItem
+  type CoverAlbum
 } from "@/lib/data/covers";
 import { getPublicStats } from "@/lib/data/stats";
 import { absoluteUrl, siteUrl } from "@/lib/site-url";
@@ -73,11 +78,35 @@ export default async function HomePage({
 }) {
   const params = await searchParams;
   const applicationDone = params.application === "1";
-  const [randomCovers, anniversaryCoverGroups, latestCovers, stats] = await Promise.all([
-    getRandomCovers(6),
+  // 棚ごとのデータ取得。getApprovedCoverAlbums は1回あたり3クエリ発行する点に注意。
+  const [
+    newArrivalCandidates,
+    newReleaseAlbums,
+    backNumberAlbums,
+    randomCovers,
+    anniversaryCoverGroups,
+    stats
+  ] = await Promise.all([
+    getApprovedCoverAlbums({ sort: "addedAtDesc" }, 1, 24),
+    getApprovedCoverAlbums({ sort: "performedAtDesc" }, 1, 12),
+    getApprovedCoverAlbums({ sort: "performedAtAsc" }, 1, 30),
+    getRandomCovers(12),
     getTodayAnniversaryCoverGroups(3),
-    getLatestCovers(6),
     getPublicStats()
+  ]);
+
+  // まとめて登録した日に入荷棚が1人で埋まらないよう、同一活動者は2枚までに間引く。
+  const newArrivalAlbums = limitAlbumsPerPerformer(newArrivalCandidates.items, 12);
+  // ランダム棚とアニバーサリー棚は CoverListItem なので、曲数バッジが機能するよう
+  // CoverAlbum 形状に詰め直す（tracks は代表1曲のみ）。
+  const [listeningAlbums, anniversaryAlbumGroups] = await Promise.all([
+    attachTrackCounts(randomCovers),
+    Promise.all(
+      anniversaryCoverGroups.map(async (group) => ({
+        ...group,
+        albums: await attachTrackCounts(group.covers)
+      }))
+    )
   ]);
 
   return (
@@ -143,7 +172,7 @@ export default async function HomePage({
         <div className="mb-4 flex items-center gap-2">
           <Search className="size-5 text-[color:var(--aqua-deep)]" aria-hidden="true" />
           <div>
-            <h2 className="font-semibold">歌唱記録を検索</h2>
+            <h2 className="font-semibold">お探しの一枚を</h2>
             <p className="text-sm text-slate">楽曲名・活動者名・原曲アーティスト名で探せます。</p>
           </div>
         </div>
@@ -159,25 +188,40 @@ export default async function HomePage({
       </section>
 
       <section className="grid gap-4 sm:grid-cols-3">
-        <StatCard icon={Database} label="歌唱記録" value={stats.coverCount} />
+        <StatCard icon={Database} label="在庫" value={stats.coverCount} />
         <StatCard icon={Users} label="活動者" value={stats.performerCount} />
         <StatCard icon={Music} label="楽曲" value={stats.songCount} />
       </section>
 
-      <AnniversaryCoverSection groups={anniversaryCoverGroups} />
+      <AnniversaryCoverSection groups={anniversaryAlbumGroups} />
 
-      <HomeCoverSection
-        title="ランダム歌唱記録"
-        description="登録されている歌唱記録からランダムに表示しています。"
-        covers={randomCovers}
+      <ShelfSection
+        title="最新入荷"
+        description="最近登録された歌唱記録です。"
+        albums={newArrivalAlbums}
+        actionHref="/covers?sort=addedAtDesc"
+        actionLabel="すべて見る"
       />
 
-      <HomeCoverSection
-        title="新着歌唱記録"
-        description="歌唱日が新しい歌唱記録を表示しています。"
-        covers={latestCovers}
+      <ShelfSection
+        title="新譜"
+        description="歌唱日が新しい歌唱記録です。"
+        albums={newReleaseAlbums.items}
         actionHref="/covers"
         actionLabel="すべて見る"
+      />
+
+      <ShelfSection
+        title="試聴コーナー"
+        description="登録されている歌唱記録からランダムに表示しています。"
+        albums={listeningAlbums}
+        representativeOnly
+      />
+
+      <SpineShelf
+        title="バックナンバー"
+        description="古くから登録されている歌唱記録です。"
+        albums={backNumberAlbums.items}
       />
     </div>
   );
@@ -197,13 +241,15 @@ function StatCard({ icon: Icon, label, value }: { icon: typeof Database; label: 
   );
 }
 
-function AnniversaryCoverSection({ groups }: { groups: AnniversaryCoverGroup[] }) {
+type AnniversaryAlbumGroup = AnniversaryCoverGroup & { albums: CoverAlbum[] };
+
+function AnniversaryCoverSection({ groups }: { groups: AnniversaryAlbumGroup[] }) {
   return (
     <section className="space-y-4">
       <SectionHeading
         icon={<Sparkles className="size-5 text-primary" aria-hidden="true" />}
-        title="アニバーサリー歌唱記録"
-        description="今日がデビュー記念日・誕生日の活動者の歌唱記録を表示しています。"
+        title="本日の一枚"
+        description="今日がデビュー記念日・誕生日の活動者の歌唱記録です。"
       />
 
       {groups.length > 0 ? (
@@ -239,10 +285,10 @@ function AnniversaryCoverSection({ groups }: { groups: AnniversaryCoverGroup[] }
               </div>
 
               <div className="p-4">
-                {group.covers.length > 0 ? (
+                {group.albums.length > 0 ? (
                   <CoverCarousel itemLayout="single">
-                    {group.covers.map((cover) => (
-                      <CoverCard key={cover.id} cover={cover} />
+                    {group.albums.map((album) => (
+                      <CoverAlbumCard key={album.key} album={album} representativeOnly />
                     ))}
                   </CoverCarousel>
                 ) : (
@@ -260,73 +306,6 @@ function AnniversaryCoverSection({ groups }: { groups: AnniversaryCoverGroup[] }
         </div>
       )}
     </section>
-  );
-}
-
-function HomeCoverSection({
-  title,
-  description,
-  covers,
-  actionHref,
-  actionLabel
-}: {
-  title: string;
-  description: string;
-  covers: CoverListItem[];
-  actionHref?: string;
-  actionLabel?: string;
-}) {
-  return (
-    <section className="space-y-4">
-      <SectionHeading
-        title={title}
-        description={description}
-        action={
-          actionHref && actionLabel ? (
-            <Link href={actionHref} className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
-              {actionLabel}
-            </Link>
-          ) : null
-        }
-      />
-
-      {covers.length > 0 ? (
-        <CoverCarousel>
-          {covers.map((cover) => (
-            <CoverCard key={cover.id} cover={cover} />
-          ))}
-        </CoverCarousel>
-      ) : (
-        <div className="rounded-[4px] border border-rule bg-panel p-5 text-sm text-slate">
-          表示できる歌唱記録がありません。
-        </div>
-      )}
-    </section>
-  );
-}
-
-function SectionHeading({
-  icon,
-  title,
-  description,
-  action
-}: {
-  icon?: React.ReactNode;
-  title: string;
-  description: string;
-  action?: React.ReactNode;
-}) {
-  return (
-    <div className="flex flex-wrap items-end justify-between gap-3">
-      <div>
-        <div className="flex items-center gap-2">
-          {icon}
-          <h2 className="text-xl font-bold tracking-tight">{title}</h2>
-        </div>
-        <p className="mt-1 text-sm text-muted-foreground">{description}</p>
-      </div>
-      {action}
-    </div>
   );
 }
 

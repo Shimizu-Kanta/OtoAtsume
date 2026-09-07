@@ -346,6 +346,81 @@ export async function getApprovedCoverAlbums(
   return paginate(albums, totalCount, page, perPage);
 }
 
+// 「最新入荷」棚用の間引き。まとめて登録作業をした日は入荷棚が1人の活動者で
+// 埋まってしまうため、同一活動者は maxPerPerformer 枚までにして take 枚に絞る。
+// 活動者の判定は代表1人（tracks[0].performers[0]）で足りる（コラボも代表で数える）。
+// 並び順は入力のまま維持する。
+export function limitAlbumsPerPerformer(
+  albums: CoverAlbum[],
+  take: number,
+  maxPerPerformer = 2
+): CoverAlbum[] {
+  const countByPerformerId = new Map<string, number>();
+  const picked: CoverAlbum[] = [];
+
+  for (const album of albums) {
+    if (picked.length >= take) {
+      break;
+    }
+
+    const performerId = album.tracks[0]?.performers[0]?.performer.id;
+
+    // 活動者が紐づいていない記録は間引きの対象外（潰さずそのまま出す）。
+    if (performerId) {
+      const count = countByPerformerId.get(performerId) ?? 0;
+
+      if (count >= maxPerPerformer) {
+        continue;
+      }
+
+      countByPerformerId.set(performerId, count + 1);
+    }
+
+    picked.push(album);
+  }
+
+  return picked;
+}
+
+// CoverListItem の配列を、曲数バッジが機能するよう CoverAlbum 形状に詰め直す。
+// tracks はその1件のみなので、呼び出し側の表示は totalTrackCount > tracks.length の
+// 「代表1曲のみ」ケースになる（CoverAlbumCard 側で裏ジャケを開かない分岐に入る）。
+export async function attachTrackCounts(covers: CoverListItem[]): Promise<CoverAlbum[]> {
+  const videoIds = Array.from(
+    new Set(covers.map((cover) => cover.sourceVideoId).filter((id): id is string => Boolean(id)))
+  );
+
+  const trackCountRows =
+    videoIds.length > 0
+      ? await db.cover.groupBy({
+          by: ["sourceVideoId"],
+          where: { status: ContentStatus.APPROVED, sourceVideoId: { in: videoIds } },
+          _count: { _all: true }
+        })
+      : [];
+
+  const totalTrackCountByVideoId = new Map<string, number>();
+  for (const row of trackCountRows) {
+    if (row.sourceVideoId) {
+      totalTrackCountByVideoId.set(row.sourceVideoId, row._count._all);
+    }
+  }
+
+  return covers.map((cover) => ({
+    key: cover.sourceVideoId ?? cover.id,
+    sourceVideoId: cover.sourceVideoId,
+    sourceUrl: cover.sourceUrl,
+    sourceTitle: cover.sourceTitle,
+    coverType: cover.coverType,
+    performedAt: cover.performedAt,
+    lastAddedAt: cover.createdAt,
+    tracks: [cover],
+    totalTrackCount: cover.sourceVideoId
+      ? totalTrackCountByVideoId.get(cover.sourceVideoId) ?? 1
+      : 1
+  }));
+}
+
 export async function getAdminCovers(search: CoverSearch = {}, page = 1, perPage = 50) {
   const where = buildCoverWhere(search, false);
 

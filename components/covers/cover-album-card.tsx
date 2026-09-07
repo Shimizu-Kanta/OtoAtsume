@@ -13,7 +13,17 @@ import { getYouTubeThumbnailUrl } from "@/lib/youtube";
 // 裏ジャケに出す収録曲の最大件数。これを超えた分は「ほか N 曲」にまとめる。
 const MAX_VISIBLE_TRACKS = 6;
 
-export function CoverAlbumCard({ album }: { album: CoverAlbum }) {
+export function CoverAlbumCard({
+  album,
+  representativeOnly = false
+}: {
+  album: CoverAlbum;
+  // tracks が「検索で絞り込まれた結果」ではなく「代表1曲だけ」であることを呼び出し側が示す。
+  // attachTrackCounts を通したトップページの棚がこれに当たる。データだけでは
+  // 「検索で絞り込まれた」ケースと区別できない（どちらも tracks.length < totalTrackCount）ため、
+  // 明示的に受け取る。true のときは裏ジャケを開かず、詳細ページへの導線だけを出す。
+  representativeOnly?: boolean;
+}) {
   const [open, setOpen] = useState(false);
 
   const head = album.tracks[0];
@@ -21,10 +31,12 @@ export function CoverAlbumCard({ album }: { album: CoverAlbum }) {
   const thumbnailUrl = head.sourceImageUrl ?? getYouTubeThumbnailUrl(album.sourceUrl);
   const performers = head.performers.map(({ performer }) => performer);
   const artists = head.song.artists.map(({ artist }) => artist.name).join(", ");
+  // 収録曲を一覧できるのは、tracks がその動画の全曲を表しているときだけ。
+  const showSetlist = isAlbum && !representativeOnly;
   // 検索で絞り込まれている場合のみ「一致: ◯◯」を出す。これが無いと曲名で検索したときに
   // 「探した曲がどのアルバムに入っているか分からない」状態になる。
   const matchedCount = album.tracks.length;
-  const showMatch = isAlbum && matchedCount < album.totalTrackCount && matchedCount > 0;
+  const showMatch = showSetlist && matchedCount < album.totalTrackCount && matchedCount > 0;
   const visibleTracks = album.tracks.slice(0, MAX_VISIBLE_TRACKS);
   const hiddenTrackCount = album.tracks.length - visibleTracks.length;
 
@@ -54,7 +66,7 @@ export function CoverAlbumCard({ album }: { album: CoverAlbum }) {
 
           {/* 裏ジャケ（収録曲）。カードの高さを変えないよう、インライン展開せず
               ジャケット面に absolute で重ねる。PC はホバー、全デバイスでバッジ操作で開く。 */}
-          {isAlbum ? (
+          {showSetlist ? (
             <div
               className={cn(
                 "absolute inset-0 z-10 flex flex-col bg-foreground/[0.92] p-2.5 transition-opacity duration-200",
@@ -89,8 +101,9 @@ export function CoverAlbumCard({ album }: { album: CoverAlbum }) {
             </div>
           ) : null}
 
-          {/* 曲数バッジ。タップ/クリックで裏ジャケを開閉する。 */}
-          {isAlbum ? (
+          {/* 曲数バッジ。裏ジャケを持つときはタップ/クリックで開閉するボタン、
+              代表1曲のみのときは開く先が無いので静的なラベルにする。 */}
+          {showSetlist ? (
             <button
               type="button"
               onClick={() => setOpen((value) => !value)}
@@ -100,6 +113,10 @@ export function CoverAlbumCard({ album }: { album: CoverAlbum }) {
             >
               {album.totalTrackCount}曲
             </button>
+          ) : isAlbum ? (
+            <span className="absolute right-1.5 top-1.5 z-20 inline-flex items-center rounded-[3px] bg-foreground/85 px-1.5 py-0.5 font-mono text-[11px] tabular-nums text-background">
+              {album.totalTrackCount}曲
+            </span>
           ) : null}
         </div>
 
@@ -154,6 +171,14 @@ export function CoverAlbumCard({ album }: { album: CoverAlbum }) {
           <p className="truncate text-xs text-[color:var(--aqua-deep)]">
             一致: {head.song.title}
             {matchedCount > 1 ? ` ほか${matchedCount - 1}曲` : ""}
+          </p>
+        ) : null}
+
+        {/* 代表1曲のみのカードは裏ジャケを持たないので、全曲を見られる詳細ページへ誘導する。
+            カード全体が stretched link で詳細ページに繋がっているため、ここは文言だけでよい。 */}
+        {representativeOnly && isAlbum ? (
+          <p className="truncate text-xs text-[color:var(--aqua-deep)]">
+            この配信の全{album.totalTrackCount}曲を見る
           </p>
         ) : null}
 
