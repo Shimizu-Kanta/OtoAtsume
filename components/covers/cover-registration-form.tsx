@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, ClipboardList, LinkIcon, ListMusic, Music2, Send, Users } from "lucide-react";
+import { CheckCircle2, ListMusic, Send } from "lucide-react";
 
 import { TurnstileCaptcha } from "@/components/captcha/turnstile";
 import { DuplicateCandidateChecker } from "@/components/covers/duplicate-candidate-checker";
@@ -193,16 +193,30 @@ export function CoverRegistrationForm({
   }
 
   return (
-    <form id="cover-form" onSubmit={handleSubmit} className="space-y-6">
-      {error ? (
-        <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
-          {error}
-        </div>
-      ) : null}
+    // 持ち込み伝票（intake slip）。黒板の見出し帯 + 伝票番号の欄で、
+    // カウンターに出す用紙に見立てる。
+    <form
+      id="cover-form"
+      onSubmit={handleSubmit}
+      className="overflow-hidden rounded-[2px] border border-rule bg-panel shadow-lift"
+    >
+      <div className="flex flex-wrap items-baseline justify-between gap-2.5 bg-board px-4 py-3 sm:px-[18px]">
+        <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-board-ink">
+          intake slip
+        </p>
+        <p className="font-mono text-[11px] text-board-sub">no. ______</p>
+      </div>
+
+      <div className="flex flex-col gap-6 p-5 sm:p-[22px]">
+        {error ? (
+          <div className="rounded-[2px] border border-error bg-[#FBECEC] p-4 text-sm text-[color:var(--error)]">
+            {error}
+          </div>
+        ) : null}
 
       <FormSection
-        icon={<LinkIcon className="size-4" aria-hidden="true" />}
-        title="1. 情報元"
+        step="01"
+        title="情報元"
         description="動画・配信・ライブなど、歌唱記録の根拠になるURLを入力します。YouTube URLの場合は補助機能で一部項目を自動入力できます。"
       >
         <div className="space-y-2">
@@ -230,8 +244,8 @@ export function CoverRegistrationForm({
       </FormSection>
 
       <FormSection
-        icon={<Users className="size-4" aria-hidden="true" />}
-        title="2. 活動者と楽曲"
+        step="02"
+        title="活動者と楽曲"
         description="既存の活動者を選ぶか、未登録の活動者名を直接入力してください。歌枠・ライブ・メドレーは1つのURLに複数曲を登録できます。"
       >
         <div className="space-y-2">
@@ -306,8 +320,8 @@ export function CoverRegistrationForm({
       </FormSection>
 
       <FormSection
-        icon={<Music2 className="size-4" aria-hidden="true" />}
-        title="3. 歌唱情報"
+        step="03"
+        title="歌唱情報"
         description="歌唱日・動画タイトルなどを入力します。複数曲の場合、開始位置は曲ごとのタイムスタンプで登録します。"
       >
         <div className="grid gap-4 md:grid-cols-2">
@@ -366,13 +380,13 @@ export function CoverRegistrationForm({
       </FormSection>
 
       <FormSection
-        icon={<ClipboardList className="size-4" aria-hidden="true" />}
-        title="4. 登録前の確認"
+        step="04"
+        title="登録前の確認"
         description="重複候補を確認し、必要に応じてCAPTCHAを完了してから登録してください。"
       >
         <DuplicateCandidateChecker />
         {showCaptcha ? <TurnstileCaptcha siteKey={captchaSiteKey} required={captchaRequired} /> : null}
-        <div className="flex flex-col gap-3 rounded-3xl border border-primary/10 bg-primary/10 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 border-t border-dashed border-rule pt-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="font-semibold">内容を確認して登録</p>
             {mode === "public" ? (
@@ -384,7 +398,8 @@ export function CoverRegistrationForm({
             {isPending ? "登録中..." : "登録する"}
           </Button>
         </div>
-      </FormSection>
+        </FormSection>
+      </div>
     </form>
   );
 }

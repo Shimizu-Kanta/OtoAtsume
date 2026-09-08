@@ -1,29 +1,28 @@
 import type { ReactNode } from "react";
 
-// 歌唱記録登録フォームの各ステップを囲む共通のセクション枠。
+// 持ち込み伝票（intake slip）の1区画。
+// 見出し行の左に連番のスタンプを押し、下に細い罫線を引く＝伝票の記入欄の見立て。
 // overflow-hidden は付けない: 内部のオートコンプリート候補(絶対配置)が枠で切れるため。
-// 角丸は border-radius のみで表現でき、中身をクリップする必要はない。
 export function FormSection({
-  icon,
+  step,
   title,
   description,
   children
 }: {
-  icon: ReactNode;
+  // 伝票の連番（01 / 02 / 03…）。
+  step: string;
   title: string;
   description: string;
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-3xl border border-rule bg-panel p-5 shadow-sm">
-      <div className="mb-5 flex gap-3 border-b pb-4">
-        <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-          {icon}
+    <section className="flex flex-col gap-3">
+      <div className="flex flex-wrap items-baseline gap-3 border-b border-ink pb-1.5">
+        <span className="inline-flex size-[22px] shrink-0 items-center justify-center rounded-[2px] bg-stamp font-mono text-[11px] font-semibold text-white">
+          {step}
         </span>
-        <div>
-          <h2 className="text-lg font-bold tracking-tight">{title}</h2>
-          <p className="mt-1 text-sm leading-6 text-muted-foreground">{description}</p>
-        </div>
+        <h2 className="text-[15px] font-bold text-ink">{title}</h2>
+        <p className="ml-auto text-xs text-[color:var(--slate-light)]">{description}</p>
       </div>
       <div className="space-y-4">{children}</div>
     </section>

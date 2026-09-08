@@ -27,15 +27,17 @@ export default async function NewCoverPage({
   const performers = await getPerformerOptions();
 
   return (
-    <div className="space-y-6">
+    // 持ち込みカウンター。伝票の幅に合わせて本文カラムを絞る。
+    <div className="mx-auto max-w-[860px] space-y-5">
       <IntroModal variant="covers-new" />
       <PageHeading
-        title="歌唱記録登録"
+        eyebrow="bring in a record"
+        title="持ち込みカウンター"
         description="ログインなしで登録できます。投稿者名や投稿履歴は記録・表示しません。"
       />
 
       <InfoNote>
-        <p className="font-semibold text-ink">登録前の確認</p>
+        <p className="font-bold text-kraft-ink">お預かりできない一枚</p>
         <p className="mt-1 leading-6">
           メンバー限定配信、非公開コンテンツ、購入者以外に公開されていない有料配信内の情報など、権利者や配信者が公開していない情報の登録は避けてください。有料ライブであっても、公式サイト・公式SNS・ニュース記事などでセットリストが公開されている場合は登録できます。
         </p>
