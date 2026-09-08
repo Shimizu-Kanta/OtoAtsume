@@ -334,7 +334,9 @@ function AnniversaryCoverSection({ groups }: { groups: AnniversaryAlbumGroup[] }
           {groups.map((group) => (
             <section
               key={group.performer.id}
-              className="flex flex-col gap-3.5 rounded-[3px] border border-rule bg-panel p-[18px] shadow-lift"
+              // min-w-0: グリッドアイテムの既定は min-width:auto で min-content まで伸びる。
+              // 中身が正方形ジャケット（幅から高さが決まる）なので、これが無いと幅が循環する。
+              className="flex min-w-0 flex-col gap-3.5 rounded-[3px] border border-rule bg-panel p-[18px] shadow-lift"
               style={{
                 borderTopColor: group.performer.colorCode ?? undefined,
                 borderTopWidth: group.performer.colorCode ? 3 : undefined

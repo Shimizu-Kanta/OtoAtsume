@@ -47,7 +47,9 @@ export function CoverCarousel({ children, className, itemLayout = "responsive" }
   const snapClassName = itemLayout === "shelf" ? "snap-proximity" : "snap-mandatory";
 
   return (
-    <div className={cn("space-y-3", className)}>
+    // min-w-0 は必須。グリッド/フレックスの子は既定が min-width:auto で min-content まで
+    // 伸びるため、これが無いと中の正方形ジャケットと幅が循環して数千 px に膨張する。
+    <div className={cn("min-w-0 space-y-3", className)}>
       <div className="flex justify-end gap-2">
         <Button
           type="button"
@@ -79,7 +81,10 @@ export function CoverCarousel({ children, className, itemLayout = "responsive" }
           {items.map((item, index) => (
             <div
               key={index}
-              className={itemClassName}
+              // min-w-0 はレイアウト種別によらず必須。フレックスの子は既定が
+              // min-width:auto で min-content まで伸びるため、中の正方形ジャケット
+              // （幅から高さが決まる）と幅が循環して数千 px に膨張することがある。
+              className={cn("min-w-0", itemClassName)}
             >
               {item}
             </div>
