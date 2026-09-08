@@ -356,17 +356,13 @@ function AnniversaryCoverSection({ groups }: { groups: AnniversaryAlbumGroup[] }
                 </p>
               </div>
 
-              {group.albums.length > 0 ? (
-                <CoverCarousel itemLayout="single">
-                  {group.albums.map((album) => (
-                    <CoverAlbumCard key={album.key} album={album} representativeOnly />
-                  ))}
-                </CoverCarousel>
-              ) : (
-                <p className="rounded-[2px] border border-dashed border-rule p-4 text-sm text-slate">
-                  この活動者の歌唱記録はまだ登録されていません。
-                </p>
-              )}
+              {/* getTodayAnniversaryCoverGroups が歌唱記録0件の活動者を除外するので、
+                  ここに空のグループは来ない。 */}
+              <CoverCarousel itemLayout="single">
+                {group.albums.map((album) => (
+                  <CoverAlbumCard key={album.key} album={album} representativeOnly />
+                ))}
+              </CoverCarousel>
             </section>
           ))}
         </div>

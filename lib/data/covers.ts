@@ -722,7 +722,9 @@ export async function getTodayAnniversaryCoverGroups(takePerPerformer = 3) {
     })
   );
 
-  return groups;
+  // 歌唱記録が1件も無い活動者は返さない。誕生日・デビュー日が登録されているだけの
+  // 活動者を並べると「本日の一枚」が空カードで埋まり、ページ上部が空白になるため。
+  return groups.filter((group) => group.covers.length > 0);
 }
 
 function shuffleItems<T>(items: T[]) {
