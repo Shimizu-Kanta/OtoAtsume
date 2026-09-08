@@ -1,14 +1,14 @@
 "use client";
 
-import { LayoutGrid, List } from "lucide-react";
-
 import { cn } from "@/lib/utils";
 
 export type CoverViewMode = "card" | "list";
 
+// 値（card / list）は localStorage と URL クエリに保存済みのため変更しない。
+// ラベルだけを什器の呼び方（ジャケット / 在庫台帳）に合わせる。
 const viewModes = [
-  { value: "card", label: "カード", icon: LayoutGrid },
-  { value: "list", label: "リスト", icon: List }
+  { value: "card", label: "ジャケット" },
+  { value: "list", label: "在庫台帳" }
 ] as const;
 
 export function CoverViewToggle({
@@ -30,11 +30,14 @@ export function CoverViewToggle({
       : records;
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3">
-      <p className="font-mono text-xs tabular-nums text-slate">{countLabel}</p>
-      <div className="inline-flex rounded-[3px] border border-rule bg-panel" role="group" aria-label="表示形式">
+    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-rule pb-3">
+      <p className="font-mono text-[11px] tabular-nums text-slate">{countLabel}</p>
+      <div
+        className="inline-flex overflow-hidden rounded-[2px] border border-rule bg-panel"
+        role="group"
+        aria-label="表示形式"
+      >
         {viewModes.map((mode) => {
-          const Icon = mode.icon;
           const selected = value === mode.value;
 
           return (
@@ -44,11 +47,10 @@ export function CoverViewToggle({
               aria-pressed={selected}
               onClick={() => onValueChange(mode.value)}
               className={cn(
-                "inline-flex h-8 items-center justify-center gap-1.5 px-3 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring first:rounded-l-[2px] last:rounded-r-[2px]",
-                selected ? "bg-ink text-white" : "text-slate hover:bg-[#FAFCFD] hover:text-ink"
+                "inline-flex h-8 items-center justify-center px-3.5 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+                selected ? "bg-board text-board-ink" : "text-slate hover:bg-hover hover:text-ink"
               )}
             >
-              <Icon className="size-3.5" aria-hidden="true" />
               {mode.label}
             </button>
           );

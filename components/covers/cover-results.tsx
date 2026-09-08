@@ -97,13 +97,19 @@ export function CoverResults({
       {viewMode === "list" ? (
         <CoverList covers={covers} />
       ) : albums.length > 0 ? (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-          {albums.map((album) => (
-            <CoverAlbumCard key={album.key} album={album} />
-          ))}
+        // ジャケット表示は什器の面（panel）の上に並べ、下端に棚板を渡す。
+        // auto-fill を維持すること（狭い幅で列数が自然に減る）。
+        <div className="rounded-[3px] border border-rule bg-panel px-5 pt-5 shadow-lift">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-5 sm:grid-cols-[repeat(auto-fill,minmax(150px,1fr))]">
+            {albums.map((album) => (
+              <CoverAlbumCard key={album.key} album={album} />
+            ))}
+          </div>
+          {/* 棚板。負のマージンでカードの外枠まで伸ばし、什器の底板に見せる。 */}
+          <div aria-hidden="true" className="shelf-board -mx-5 -mb-px mt-5 rounded-b-[2px] rounded-t-none" />
         </div>
       ) : (
-        <div className="rounded-[4px] border border-rule bg-panel p-6 text-sm text-slate">
+        <div className="rounded-[3px] border border-rule bg-panel p-6 text-sm text-slate shadow-lift">
           条件に一致する歌唱記録はありません。
         </div>
       )}
