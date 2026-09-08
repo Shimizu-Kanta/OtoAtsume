@@ -1,9 +1,9 @@
 import Link from "next/link";
 
 const footerLinks = [
-  { href: "/about", label: "おとあつめについて" },
-  { href: "/rankings", label: "ランキング" },
-  { href: "/requests", label: "気になる曲ランキング" },
+  { href: "/about", label: "この店について" },
+  { href: "/rankings", label: "チャート" },
+  { href: "/requests", label: "入荷ベル" },
   { href: "/stats", label: "統計" },
   { href: "/guide", label: "使い方" },
   { href: "/terms", label: "利用規約" },
@@ -13,12 +13,12 @@ const footerLinks = [
 
 export function SiteFooter() {
   return (
-    <footer className="mt-12 border-t bg-card">
-      <div className="container-page flex flex-col gap-3 py-6 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-        <p>© おとあつめ</p>
-        <nav className="flex flex-wrap items-center gap-3">
+    <footer className="mt-12 border-t border-rule bg-panel-2">
+      <div className="container-page flex flex-col gap-3.5 py-[22px] text-[13px] text-slate sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <p className="font-mono text-[11px] tracking-[0.1em]">© おとあつめ</p>
+        <nav className="flex flex-wrap items-center gap-3.5">
           {footerLinks.map((item) => (
-            <Link key={item.href} href={item.href} className="hover:text-foreground hover:underline">
+            <Link key={item.href} href={item.href} className="text-slate hover:text-ink hover:underline">
               {item.label}
             </Link>
           ))}
