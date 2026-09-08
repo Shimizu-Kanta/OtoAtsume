@@ -2,11 +2,14 @@ import type { Metadata } from "next";
 import { JetBrains_Mono, Noto_Sans_JP, Zen_Kaku_Gothic_New } from "next/font/google";
 
 import "./globals.css";
+import { BasketBar } from "@/components/basket/basket-bar";
+import { BasketRail } from "@/components/basket/basket-rail";
 import { HelpButton } from "@/components/onboarding/help-button";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { AccessLogger } from "@/components/telemetry/access-logger";
 import { WatchlistWidget } from "@/components/watchlist/watchlist-widget";
+import { BasketProvider } from "@/lib/basket/context";
 import { siteUrl } from "@/lib/site-url";
 
 // 本文: Noto Sans JP / 見出し: Zen Kaku Gothic New / 数値・日付・件数: JetBrains Mono。
@@ -90,11 +93,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           />
         ) : null}
         <AccessLogger />
-        <SiteHeader />
-        <main className="container-page py-8">{children}</main>
-        <SiteFooter />
-        <WatchlistWidget />
-        <HelpButton />
+        <BasketProvider>
+          <SiteHeader />
+          {/* CDかごの右レールはレイアウトの1カラムとして流れに置く（sticky を効かせ、
+              position: fixed で広告ユニットに重ならないようにするため）。
+              lg 未満ではレールを畳み、下部の sticky バーに切り替える。 */}
+          <div className="container-page py-8 lg:grid lg:grid-cols-[minmax(0,1fr)_220px] lg:items-start lg:gap-6">
+            <main className="min-w-0">{children}</main>
+            <BasketRail />
+          </div>
+          <SiteFooter />
+          <BasketBar />
+          <WatchlistWidget />
+          <HelpButton />
+        </BasketProvider>
       </body>
     </html>
   );
