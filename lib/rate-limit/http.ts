@@ -15,7 +15,10 @@ export const rateLimitPresets = {
   duplicateCheck: { limit: 120, windowMs: 60 * 60 * 1000 },
   watchlistCheck: { limit: 60, windowMs: 60 * 60 * 1000 },
   // ウォッチリストは最大10件で、追加操作のたびに1回だけ呼ばれる。
-  songRequestLog: { limit: 30, windowMs: 60 * 60 * 1000 }
+  songRequestLog: { limit: 30, windowMs: 60 * 60 * 1000 },
+  // かごは描画のたびに解決するため、他より緩めに取る。
+  basketResolve: { limit: 240, windowMs: 60 * 60 * 1000 },
+  basketExpand: { limit: 120, windowMs: 60 * 60 * 1000 }
 } as const;
 
 // クライアント(IP+UA)を識別するハッシュ。scope ごとに異なる値になるため、
