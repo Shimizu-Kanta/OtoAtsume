@@ -271,7 +271,7 @@ export default async function PerformerDetailPage({ params }: { params: Promise<
       <section className="space-y-4">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div className="flex items-center gap-2">
-            <span className="inline-flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <span className="inline-flex size-9 items-center justify-center rounded-[2px] border border-rule bg-panel text-stamp">
               <Music2 className="size-4" aria-hidden="true" />
             </span>
             <div>
@@ -332,7 +332,7 @@ export default async function PerformerDetailPage({ params }: { params: Promise<
       {coPerformers.length > 0 ? (
         <section className="space-y-4">
           <div className="flex items-center gap-2">
-            <span className="inline-flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <span className="inline-flex size-9 items-center justify-center rounded-[2px] border border-rule bg-panel text-stamp">
               <Users className="size-4" aria-hidden="true" />
             </span>
             <div>
@@ -376,7 +376,7 @@ export default async function PerformerDetailPage({ params }: { params: Promise<
       {taggedMates.length > 0 ? (
         <section className="space-y-4">
           <div className="flex items-center gap-2">
-            <span className="inline-flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <span className="inline-flex size-9 items-center justify-center rounded-[2px] border border-rule bg-panel text-stamp">
               <Tag className="size-4" aria-hidden="true" />
             </span>
             <div>
@@ -401,7 +401,7 @@ export default async function PerformerDetailPage({ params }: { params: Promise<
         <section className="space-y-4">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div className="flex items-center gap-2">
-              <span className="inline-flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <span className="inline-flex size-9 items-center justify-center rounded-[2px] border border-rule bg-panel text-stamp">
                 <Users className="size-4" aria-hidden="true" />
               </span>
               <div>
@@ -465,7 +465,7 @@ function InfoItem({ icon, label, value }: { icon: React.ReactNode; label: string
   return (
     <div className="grid gap-2 sm:grid-cols-[140px_1fr]">
       <dt className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-        <span className="inline-flex size-7 items-center justify-center rounded-full bg-primary/10 text-primary">
+        <span className="inline-flex size-7 items-center justify-center rounded-[2px] border border-rule bg-panel text-stamp">
           {icon}
         </span>
         {label}

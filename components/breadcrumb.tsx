@@ -30,7 +30,7 @@ export function Breadcrumb({ items }: { items: BreadcrumbItem[] }) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
-      <ol className="flex flex-wrap items-center gap-1.5 font-mono text-xs tracking-tight text-[color:var(--slate-light)]">
+      <ol className="flex flex-wrap items-center gap-[7px] font-mono text-[11px] tracking-tight text-[color:var(--slate-light)]">
         {items.map((item, index) => {
           const isLast = index === items.length - 1;
 
@@ -44,7 +44,7 @@ export function Breadcrumb({ items }: { items: BreadcrumbItem[] }) {
                 <>
                   <Link
                     href={item.href}
-                    className="shrink-0 underline-offset-4 hover:text-[color:var(--aqua-deep)] hover:underline"
+                    className="shrink-0 underline-offset-4 hover:text-stamp hover:underline"
                   >
                     {item.name}
                   </Link>

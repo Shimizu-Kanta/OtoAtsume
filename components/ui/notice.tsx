@@ -3,16 +3,16 @@ import { AlertTriangle, Info } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-// info-note（情報提供・非ブロッキング）: paper 背景 + hairline border。
+// info-note（情報提供・非ブロッキング）: 店内の張り紙に見立てたクラフトの破線枠。
 export function InfoNote({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <div
       className={cn(
-        "flex gap-2 rounded-[3px] border border-rule bg-[color:var(--paper)] p-3 text-sm text-slate",
+        "flex gap-2 rounded-[2px] border border-dashed border-wood-dark bg-panel p-4 text-sm leading-[1.9] text-slate",
         className
       )}
     >
-      <Info className="mt-0.5 size-4 shrink-0 text-[color:var(--slate-light)]" aria-hidden="true" />
+      <Info className="mt-0.5 size-4 shrink-0 text-wood-dark" aria-hidden="true" />
       <div className="min-w-0 leading-6">{children}</div>
     </div>
   );

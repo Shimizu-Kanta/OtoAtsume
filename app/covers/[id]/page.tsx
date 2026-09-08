@@ -1,15 +1,18 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ExternalLink, Flag, Music2, Play, Radio, Timer, Users } from "lucide-react";
+import { ExternalLink, Music2 } from "lucide-react";
 
 import { Breadcrumb } from "@/components/breadcrumb";
+import { CoverJacket } from "@/components/covers/cover-jacket";
 import { CoverList } from "@/components/covers/cover-list";
-import { CoverThumbnail } from "@/components/covers/cover-thumbnail";
 import { LatestCoversFallback } from "@/components/covers/latest-covers-fallback";
 import { SetlistDisclosure } from "@/components/covers/setlist-disclosure";
 import { PerformerColorChip } from "@/components/performers/performer-color-chip";
 import { ShareButton } from "@/components/share-button";
+import { AddToWatchlistButton } from "@/components/watchlist/add-to-watchlist-button";
 import { buttonVariants } from "@/components/ui/button";
+import { buildObiText } from "@/lib/covers/obi";
+import { clampPerformerColor } from "@/lib/performer-color";
 import { coverTypeLabel } from "@/lib/constants";
 import {
   getCoverById,
@@ -134,21 +137,60 @@ export default async function CoverDetailPage({ params, searchParams }: CoverDet
     sameAs: cover.sourceUrl
   };
 
+  // 収録曲（TRACKS）はこの情報元に紐づく全曲。getOtherCoversBySourceVideoId は
+  // 表示中の記録を除外して返すので、自分自身を差し戻してタイムスタンプ順に並べ直す。
+  // ライナーノーツは「この一枚に何が入っているか」を通しで見せる面なので、
+  // 表示中の曲も1トラックとして列に並ぶ（従来の「他の歌唱記録」より情報が増える）。
+  const trackEntries = [
+    {
+      id: cover.id,
+      title: cover.song.title,
+      artists: cover.song.artists.map(({ artist }) => artist.name).join(", "),
+      performerNames: performers.map((performer) => performer.name).join(", "),
+      timestampSeconds: cover.timestampSeconds,
+      isCurrent: true
+    },
+    ...sameSourceCovers.map((sourceCover) => ({
+      id: sourceCover.id,
+      title: sourceCover.song.title,
+      artists: sourceCover.song.artists.map(({ artist }) => artist.name).join(", "),
+      performerNames: sourceCover.performers.map(({ performer }) => performer.name).join(", "),
+      timestampSeconds: sourceCover.timestampSeconds,
+      isCurrent: false
+    }))
+  ].sort((a, b) => {
+    // タイムスタンプ未設定は末尾へ（DB 側の nulls: "last" と同じ扱い）。
+    if (a.timestampSeconds == null) {
+      return b.timestampSeconds == null ? 0 : 1;
+    }
+    if (b.timestampSeconds == null) {
+      return -1;
+    }
+    return a.timestampSeconds - b.timestampSeconds;
+  });
+  const isAlbum = trackEntries.length > 1;
+  const obiText = buildObiText({
+    trackCount: trackEntries.length,
+    coverType: cover.coverType,
+    performedAt: cover.performedAt
+  });
+
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-[18px]">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
       <Breadcrumb
         items={[
-          { name: "ホーム", href: "/" },
-          { name: "歌唱記録", href: "/covers" },
+          { name: "店頭", href: "/" },
+          { name: "棚", href: "/covers" },
           { name: cover.song.title, href: `/covers/${cover.id}` }
         ]}
       />
+
       {created ? (
-        <div className="flex flex-col gap-3 rounded-3xl border border-secondary/40 bg-secondary/20 p-4 text-sm font-medium text-secondary-foreground shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 rounded-[2px] border border-dashed border-wood-dark bg-kraft p-4 text-sm font-bold text-kraft-ink sm:flex-row sm:items-center sm:justify-between">
           <span>歌唱記録を登録しました。</span>
           <Link
             href={buildContinueRegistrationHref(cover)}
@@ -160,210 +202,216 @@ export default async function CoverDetailPage({ params, searchParams }: CoverDet
         </div>
       ) : null}
       {reported ? (
-        <div className="rounded-3xl border border-secondary/40 bg-secondary/20 p-4 text-sm font-medium text-secondary-foreground shadow-sm">
+        <div className="rounded-[2px] border border-dashed border-wood-dark bg-kraft p-4 text-sm font-bold text-kraft-ink">
           通報を受け付けました。
         </div>
       ) : null}
 
-      <section
-        className="overflow-hidden rounded-[4px] border border-rule bg-panel"
-        style={{
-          borderTopColor: accentColor ?? undefined,
-          borderTopWidth: accentColor ? 3 : undefined
-        }}
+      {/* ライナーノーツ本体。上辺の太い線が綴じ側で、活動者カラーがあればそれを使う。 */}
+      <article
+        className="rounded-[2px] border border-rule bg-panel p-5 shadow-lift sm:px-9 sm:pb-7 sm:pt-8"
+        style={{ borderTopWidth: 4, borderTopColor: accentColor ?? "var(--stamp)" }}
       >
-        <div className="grid gap-0 lg:grid-cols-[1.08fr_0.92fr]">
+        <div className="grid items-start gap-6 border-b-2 border-ink pb-6 lg:grid-cols-[minmax(0,1fr)_210px] lg:gap-[34px]">
+          <div className="min-w-0">
+            <p className="eyebrow tracking-[0.26em]">liner notes</p>
+            <h1 className="mt-3.5 text-3xl font-bold leading-[1.18] tracking-[-0.015em] text-ink sm:text-[40px]">
+              {cover.song.title}
+            </h1>
+            <p className="mt-3.5 text-[15px] leading-[1.7] text-slate">
+              原曲 <span className="font-bold text-ink">{artists}</span>
+            </p>
+
+            <div className="mt-4 flex flex-wrap gap-2">
+              {performers.map((performer) => (
+                <Link
+                  key={performer.id}
+                  href={`/performers/${performer.id}`}
+                  className="inline-flex max-w-full underline-offset-4 hover:underline"
+                >
+                  <PerformerColorChip
+                    name={`${performer.name}${performer.group ? ` / ${performer.group.name}` : ""}`}
+                    colorCode={performer.colorCode}
+                  />
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* 一枚のジャケット。クリックで情報元へ飛ぶ導線も兼ねる。 */}
           <a
             href={sourceUrlWithTimestamp}
             target="_blank"
             rel="noreferrer"
-            className="group relative block aspect-video overflow-hidden bg-muted"
+            aria-label="情報元を開く"
+            className="mx-auto block w-[210px] max-w-full rounded-[2px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 lg:mx-0"
           >
-            <CoverThumbnail
+            <CoverJacket
               src={thumbnailUrl}
               alt={`${cover.song.title} のサムネイル`}
               coverType={cover.coverType}
-              sizes="(min-width: 1024px) 55vw, 100vw"
+              obiText={obiText}
+              obiColor={accentColor ?? undefined}
+              sizes="210px"
               priority
-              imageClassName="object-cover"
-              iconClassName="size-12"
+              iconClassName="size-10"
             />
-            <span className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-[3px] border border-rule bg-panel px-3 py-1.5 text-xs font-semibold text-[color:var(--aqua-deep)]">
-              <Play className="size-3.5" aria-hidden="true" />
-              情報元を開く
-            </span>
           </a>
+        </div>
 
-          <div className="flex flex-col justify-between gap-6 p-5 sm:p-7">
+        {/* 値がある項目だけを枠ごと表示し、残りの項目で自然に詰める。 */}
+        <dl className="grid grid-cols-2 border-b border-rule sm:grid-cols-4">
+          <MetaCell label="date" value={formatDate(cover.performedAt)} mono />
+          <MetaCell label="type" value={coverTypeLabel(cover.coverType)} />
+          {hasTimestamp ? (
+            <MetaCell label="timestamp" value={formatSeconds(cover.timestampSeconds)} mono />
+          ) : null}
+          <MetaCell label="tracks" value={String(trackEntries.length).padStart(2, "0")} mono />
+          <MetaCell
+            label="source"
+            mono
+            value={
+              <a
+                href={sourceUrlWithTimestamp}
+                target="_blank"
+                rel="noreferrer"
+                className="text-stamp underline-offset-4 hover:underline"
+              >
+                {sourceHostLabel(cover.sourceUrl)}
+              </a>
+            }
+          />
+        </dl>
+
+        <div className="mt-6 grid items-start gap-8 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,0.75fr)] lg:gap-[38px]">
+          <section className="min-w-0">
+            <h2 className="border-b border-board pb-[7px] text-[15px] font-bold tracking-[0.02em] text-ink">
+              収録曲 / TRACKS
+            </h2>
+            <SetlistDisclosure initialCount={8}>
+              {trackEntries.map((track, index) => (
+                <div
+                  key={track.id}
+                  className={cn(
+                    "grid grid-cols-[30px_minmax(0,1fr)_66px] items-baseline gap-3 px-3 py-2.5",
+                    track.isCurrent && "bg-hover"
+                  )}
+                >
+                  <span className="font-mono text-xs tabular-nums text-[color:var(--slate-light)]">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <span className="min-w-0">
+                    {track.isCurrent ? (
+                      <span aria-current="true" className="text-[15px] font-bold text-ink">
+                        {track.title}
+                      </span>
+                    ) : (
+                      <Link
+                        href={`/covers/${track.id}`}
+                        className="text-[15px] font-bold text-ink underline-offset-4 hover:text-stamp hover:underline"
+                      >
+                        {track.title}
+                      </Link>
+                    )}
+                    <span className="mt-0.5 block truncate text-xs text-[color:var(--slate-light)]">
+                      {[track.artists, track.performerNames].filter(Boolean).join(" ／ ")}
+                    </span>
+                  </span>
+                  <span className="text-right font-mono text-xs tabular-nums text-slate">
+                    {track.timestampSeconds != null ? formatSeconds(track.timestampSeconds) : "-"}
+                  </span>
+                </div>
+              ))}
+            </SetlistDisclosure>
+            <p className="mt-3.5 text-[13px] leading-[1.95] text-slate">
+              {isAlbum
+                ? "この一枚は、1本の配信アーカイブに複数曲が紐づいた記録です。曲ごとのタイムスタンプはユーザが登録したもので、情報元を開くとその位置から再生されます。収録曲はそれぞれ独立した歌唱記録として棚にも並んでいます。"
+                : "この一枚には1曲が紐づいています。情報元を開くと、登録されたタイムスタンプの位置から再生されます。"}
+            </p>
+          </section>
+
+          <aside className="flex min-w-0 flex-col gap-6">
             <div>
-              <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--slate-light)]">
-                Cover Detail
-              </p>
-              <h1 className="mt-3 text-3xl font-bold tracking-tight text-ink sm:text-4xl">
-                {cover.song.title}
-              </h1>
-              <p className="mt-3 text-sm leading-6 text-slate">
-                原曲: <span className="text-ink">{artists}</span>
-              </p>
-
+              <h2 className="border-b border-board pb-[7px] text-[13px] font-bold tracking-[0.02em] text-ink">
+                情報元 / SOURCE
+              </h2>
               {sourceTitle ? (
+                <p className="mt-2.5 text-[13px] leading-[1.8] text-slate">{sourceTitle}</p>
+              ) : null}
+              <div className="mt-3 flex flex-col gap-[7px]">
                 <a
                   href={sourceUrlWithTimestamp}
                   target="_blank"
                   rel="noreferrer"
-                  className="mt-4 block rounded-[3px] border border-rule bg-[color:var(--paper)] p-3 text-sm text-[color:var(--aqua-deep)] underline-offset-4 hover:underline"
+                  className={cn(buttonVariants(), "h-[42px] w-full")}
                 >
-                  {sourceTitle}
+                  <ExternalLink className="size-4" aria-hidden="true" />
+                  情報元で聴く
                 </a>
-              ) : null}
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <a href={sourceUrlWithTimestamp} target="_blank" rel="noreferrer" className={cn(buttonVariants())}>
-                <ExternalLink className="size-4" aria-hidden="true" />
-                情報元URL
-              </a>
-              <Link href={`/covers/${cover.id}/report`} className={cn(buttonVariants({ variant: "outline" }))}>
-                <Flag className="size-4" aria-hidden="true" />
-                通報
-              </Link>
-              <ShareButton
-                url={`${siteUrl}/covers/${cover.id}`}
-                title={`${cover.song.title} / ${performers.map((performer) => performer.name).join(", ")} | おとあつめ`}
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 値がある項目だけを枠ごと表示し、残りの項目で自然に詰める。 */}
-      <dl className="flex flex-col divide-y divide-rule overflow-hidden rounded-[4px] border border-rule bg-panel sm:flex-row sm:divide-x sm:divide-y-0">
-        <div className="flex-1 p-4">
-          <dt className="kv-label">DATE</dt>
-          <dd className="mt-1.5 font-mono text-sm tabular-nums text-ink">{formatDate(cover.performedAt)}</dd>
-        </div>
-        <div className="flex-1 p-4">
-          <dt className="kv-label">TYPE</dt>
-          <dd className="mt-1.5 text-sm text-ink">{coverTypeLabel(cover.coverType)}</dd>
-        </div>
-        {hasTimestamp ? (
-          <div className="flex-1 p-4">
-            <dt className="kv-label">TIMESTAMP</dt>
-            <dd className="mt-1.5 font-mono text-sm tabular-nums text-ink">
-              {formatSeconds(cover.timestampSeconds)}
-            </dd>
-          </div>
-        ) : null}
-        <div className="min-w-0 flex-1 p-4">
-          <dt className="kv-label">SOURCE</dt>
-          <dd className="mt-1.5 truncate text-sm">
-            <a
-              href={sourceUrlWithTimestamp}
-              target="_blank"
-              rel="noreferrer"
-              className="text-[color:var(--aqua-deep)] underline-offset-4 hover:underline"
-            >
-              {sourceHostLabel(cover.sourceUrl)}
-            </a>
-          </dd>
-        </div>
-      </dl>
-
-      <section className="rounded-[4px] border border-rule bg-panel p-5">
-        <div className="flex items-center gap-2">
-          <span className="inline-flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
-            <Users className="size-4" aria-hidden="true" />
-          </span>
-          <div>
-            <h2 className="text-lg font-bold tracking-tight">歌唱した活動者</h2>
-            <p className="mt-1 text-sm text-muted-foreground">この記録に紐づく活動者です。</p>
-          </div>
-        </div>
-
-        <div className="mt-4 flex flex-wrap gap-2">
-          {performers.map((performer) => (
-            <Link
-              key={performer.id}
-              href={`/performers/${performer.id}`}
-              className="inline-flex max-w-full underline-offset-4 hover:underline"
-            >
-              <PerformerColorChip
-                name={`${performer.name}${performer.group ? ` / ${performer.group.name}` : ""}`}
-                colorCode={performer.colorCode}
-              />
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      {sameSourceCovers.length > 0 ? (
-        <section className="rounded-[4px] border border-rule bg-panel p-5">
-          <div className="flex items-center gap-2">
-            <span className="inline-flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <Radio className="size-4" aria-hidden="true" />
-            </span>
-            <div>
-              <h2 className="text-lg font-bold tracking-tight">この配信・ライブの他の歌唱記録</h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                上部に表示している配信・ライブから登録されている他の歌唱記録を、タイムスタンプ順のセットリストとして並べています。
-              </p>
-            </div>
-          </div>
-
-          <SetlistDisclosure initialCount={4}>
-            {sameSourceCovers.map((sourceCover) => {
-              const sourceArtists = sourceCover.song.artists
-                .map(({ artist }) => artist.name)
-                .join(", ");
-
-              return (
-                <div key={sourceCover.id} className="flex items-start gap-3 p-3">
-                  <span className="mt-0.5 inline-flex shrink-0 items-center gap-1 rounded-[2px] border border-rule px-1.5 py-0.5 font-mono text-xs tabular-nums text-slate">
-                    <Timer className="size-3" aria-hidden="true" />
-                    {sourceCover.timestampSeconds != null
-                      ? formatSeconds(sourceCover.timestampSeconds)
-                      : "-"}
-                  </span>
-                  <div className="min-w-0">
-                    <Link
-                      href={`/covers/${sourceCover.id}`}
-                      className="font-semibold text-ink underline-offset-4 hover:text-[color:var(--aqua-deep)] hover:underline"
-                    >
-                      {sourceCover.song.title}
-                    </Link>
-                    <p className="mt-0.5 text-sm text-slate">
-                      {sourceArtists ? `${sourceArtists} ／ ` : ""}
-                      {sourceCover.performers.map(({ performer }) => performer.name).join(", ")}
-                    </p>
-                  </div>
+                {/* ShareButton は display:contents なので、各ボタンがこのグリッドの
+                    セルとして 2 列に並ぶ。 */}
+                <div className="grid grid-cols-2 gap-[7px] [&_a]:h-9 [&_a]:text-xs [&_button]:h-9 [&_button]:text-xs">
+                  <ShareButton
+                    url={`${siteUrl}/covers/${cover.id}`}
+                    title={`${cover.song.title} / ${performers.map((performer) => performer.name).join(", ")} | おとあつめ`}
+                  />
                 </div>
-              );
-            })}
-          </SetlistDisclosure>
-        </section>
-      ) : null}
+                <Link
+                  href={`/covers/${cover.id}/report`}
+                  className="inline-flex h-8 items-center justify-center text-xs text-slate underline-offset-4 hover:text-ink hover:underline"
+                >
+                  記載内容を通報する
+                </Link>
+              </div>
+            </div>
+
+            {otherSongCovers.length > 0 ? (
+              <div>
+                <h2 className="border-b border-board pb-[7px] text-[13px] font-bold tracking-[0.02em] text-ink">
+                  同じ曲の一枚 / RELATED
+                </h2>
+                <div className="mt-3 flex flex-col gap-2.5">
+                  {otherSongCovers.slice(0, 4).map((related) => (
+                    <RelatedSpineRow key={related.id} cover={related} />
+                  ))}
+                </div>
+                <Link
+                  href={`/songs/${cover.songId}`}
+                  className="mt-3 inline-flex text-[13px] font-bold text-stamp underline-offset-4 hover:underline"
+                >
+                  楽曲ページを見る →
+                </Link>
+              </div>
+            ) : null}
+
+            {/* 入荷ベル（気になる曲）。この曲に新しい記録が増えたら知らせる。 */}
+            <div className="rounded-[2px] border border-dashed border-wood-dark bg-panel p-3.5">
+              <p className="font-mono text-[9.5px] font-semibold uppercase tracking-[0.16em] text-wood-dark">
+                ring the bell
+              </p>
+              <p className="mt-2 text-xs leading-[1.8] text-slate">
+                この曲に新しい歌唱記録が増えたら知らせます。
+              </p>
+              <div className="mt-2.5">
+                <AddToWatchlistButton
+                  songId={cover.songId}
+                  songName={cover.song.title}
+                  artistName={cover.song.artists.map(({ artist }) => artist.name).join(", ") || null}
+                  label="入荷ベルを鳴らす"
+                  className="h-9 w-full border-wood-dark bg-kraft text-[13px] text-kraft-ink hover:brightness-105"
+                />
+              </div>
+            </div>
+          </aside>
+        </div>
+      </article>
 
       {otherPerformerCovers.length > 0 ? (
         <RelatedCoversSection
+          eyebrow="same performer"
           title="同じ活動者の他の歌唱記録"
           description="この記録の活動者による他の歌唱記録です。"
           covers={otherPerformerCovers}
-        />
-      ) : null}
-
-      {otherSongCovers.length > 0 ? (
-        <RelatedCoversSection
-          title="同じ楽曲の他の歌唱記録"
-          description="同じ楽曲を歌った他の活動者の歌唱記録です。"
-          covers={otherSongCovers}
-          action={
-            <Link
-              href={`/songs/${cover.songId}`}
-              className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-            >
-              楽曲ページを見る
-            </Link>
-          }
         />
       ) : null}
 
@@ -376,28 +424,74 @@ export default async function CoverDetailPage({ params, searchParams }: CoverDet
   );
 }
 
+// ライナーノーツのメタ4分割。値の無い項目は呼び出し側で落とす。
+function MetaCell({
+  label,
+  value,
+  mono = false
+}: {
+  label: string;
+  value: React.ReactNode;
+  mono?: boolean;
+}) {
+  return (
+    <div className="min-w-0 border-l border-rule px-4 py-3.5 first:border-l-0 sm:first:border-l">
+      <dt className="kv-label">{label}</dt>
+      <dd className={cn("mt-1.5 truncate text-sm text-ink", mono && "font-mono tabular-nums")}>
+        {value}
+      </dd>
+    </div>
+  );
+}
+
+// サイドバーの関連。左に活動者カラーの背表紙を立てる。
+function RelatedSpineRow({ cover }: { cover: CoverListItem }) {
+  const spineColor = clampPerformerColor(
+    cover.performers.find(({ performer }) => performer.colorCode)?.performer.colorCode
+  );
+
+  return (
+    <Link
+      href={`/covers/${cover.id}`}
+      className="grid grid-cols-[18px_minmax(0,1fr)] items-center gap-2.5 text-ink"
+    >
+      <span
+        aria-hidden="true"
+        className="h-[30px] w-[18px] rounded-[1px] shadow-spine"
+        style={{ backgroundColor: spineColor ?? "var(--slate-light)" }}
+      />
+      <span className="min-w-0">
+        <span className="block truncate text-[13px] font-bold underline-offset-4 hover:underline">
+          {cover.song.title}
+        </span>
+        <span className="block truncate font-mono text-[10px] text-[color:var(--slate-light)]">
+          {cover.performers.map(({ performer }) => performer.name).join(", ")}
+        </span>
+      </span>
+    </Link>
+  );
+}
+
 function RelatedCoversSection({
+  eyebrow,
   title,
   description,
   covers,
   action
 }: {
+  eyebrow: string;
   title: string;
   description: string;
   covers: CoverListItem[];
   action?: React.ReactNode;
 }) {
   return (
-    <section className="space-y-4">
+    <section className="flex flex-col gap-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <span className="inline-flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
-            <Music2 className="size-4" aria-hidden="true" />
-          </span>
-          <div>
-            <h2 className="text-xl font-bold tracking-tight">{title}</h2>
-            <p className="mt-1 text-sm text-muted-foreground">{description}</p>
-          </div>
+        <div className="min-w-0">
+          <p className="eyebrow-muted">{eyebrow}</p>
+          <h2 className="mt-1.5 text-xl font-bold tracking-tight text-ink">{title}</h2>
+          <p className="mt-1 text-[13px] text-slate">{description}</p>
         </div>
         {action}
       </div>
@@ -436,4 +530,3 @@ function buildContinueRegistrationHref(cover: {
   }
   return `/covers/new?${params.toString()}`;
 }
-

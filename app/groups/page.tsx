@@ -1,10 +1,7 @@
-import Link from "next/link";
-import { Users } from "lucide-react";
-
+import { IndexSearchBar, IndexTable } from "@/components/index-table";
 import { PageHeading } from "@/components/page-heading";
 import { Pagination } from "@/components/pagination";
 import { buttonVariants } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { getGroups, type GroupSort } from "@/lib/data/groups";
 import { cn, getSearchParam, isFilteredListing, parsePageParam } from "@/lib/utils";
@@ -60,52 +57,41 @@ export default async function GroupsPage({
   return (
     <div className="space-y-6">
       <PageHeading
-        title="グループ"
+        eyebrow="group index"
+        title="グループ棚"
         description="活動者が所属するグループの一覧です。グループごとの歌唱記録や所属活動者を確認できます。"
       />
 
-      <form action="/groups" className="overflow-hidden rounded-[4px] border border-rule bg-panel p-5">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div className="grid gap-4 sm:grid-cols-[220px_auto] sm:items-end">
-            <div className="space-y-2">
-              <Label htmlFor="group-sort">並び替え</Label>
-              <Select id="group-sort" name="sort" defaultValue={sort}>
-                <option value="nameAsc">グループ名 昇順</option>
-                <option value="performerCountDesc">所属活動者が多い順</option>
-              </Select>
-            </div>
-            <button type="submit" className={cn(buttonVariants(), "w-full sm:w-auto")}>
-              適用
-            </button>
+      <form action="/groups">
+        <IndexSearchBar countLabel={`${totalCount.toLocaleString("ja-JP")} groups`}>
+          <div className="flex flex-[0_1_220px] flex-col gap-2">
+            <label htmlFor="group-sort" className="eyebrow-muted">
+              order
+            </label>
+            <Select id="group-sort" name="sort" defaultValue={sort} className="h-[42px] text-[13px]">
+              <option value="nameAsc">グループ名 昇順</option>
+              <option value="performerCountDesc">所属活動者が多い順</option>
+            </Select>
           </div>
-          <p className="font-mono text-xs tabular-nums text-slate">{totalCount.toLocaleString("ja-JP")} groups</p>
-        </div>
+          <button type="submit" className={cn(buttonVariants({ variant: "board" }), "h-[42px] px-6")}>
+            適用
+          </button>
+        </IndexSearchBar>
       </form>
 
       {groups.length > 0 ? (
-        <div className="overflow-hidden rounded-[4px] border border-rule bg-panel">
-          <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 border-b border-rule px-4 py-2">
-            <span className="col-head">GROUP</span>
-            <span className="col-head text-right">MEMBERS</span>
-          </div>
-          <div className="divide-y divide-rule">
-            {groups.map((group) => (
-              <Link
-                key={group.id}
-                href={`/groups/${group.id}`}
-                className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 transition-colors hover:bg-[#FAFCFD]"
-              >
-                <span className="truncate font-bold text-ink">{group.name}</span>
-                <span className="flex items-center gap-1.5 font-mono text-sm tabular-nums text-slate">
-                  <Users className="size-3.5 text-[color:var(--slate-light)]" aria-hidden="true" />
-                  {group._count.performers.toLocaleString("ja-JP")}
-                </span>
-              </Link>
-            ))}
-          </div>
-        </div>
+        <IndexTable
+          colA="group"
+          colB="members"
+          rows={groups.map((group) => ({
+            key: group.id,
+            href: `/groups/${group.id}`,
+            name: group.name,
+            count: group._count.performers
+          }))}
+        />
       ) : (
-        <div className="rounded-[4px] border border-rule bg-panel p-6 text-sm text-slate">
+        <div className="rounded-[3px] border border-rule bg-panel p-6 text-sm text-slate shadow-lift">
           表示できるグループはまだ登録されていません。
         </div>
       )}

@@ -45,8 +45,9 @@ export default async function RequestsPage({
   return (
     <div className="space-y-6">
       <PageHeading
-        title="気になる曲ランキング"
-        description="直近7日間に「気になる曲」として追加された楽曲を匿名で集計しています。多くの人が歌ってほしいと思っている楽曲がわかります。8日以上前の記録は自動的に対象から外れます。"
+        eyebrow="restock requests"
+        title="入荷リクエスト"
+        description="直近7日間に「入荷ベル」に追加された楽曲を匿名で集計しています。多くの人が歌ってほしいと思っている楽曲がわかります。8日以上前の記録は自動的に対象から外れます。"
       />
 
       <RankingTabs active="requests" />
@@ -57,7 +58,7 @@ export default async function RequestsPage({
       </div>
 
       {ranking.length > 0 ? (
-        <ol className="overflow-hidden rounded-[4px] border border-rule bg-panel divide-y divide-rule">
+        <ol className="overflow-hidden rounded-[3px] border border-rule bg-panel shadow-lift">
           {ranking.map((item, index) => {
             const rank = index + 1;
             const top3 = rank <= 3;
@@ -65,13 +66,13 @@ export default async function RequestsPage({
             return (
               <li
                 key={item.key}
-                className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+                className="flex flex-col gap-3 border-t border-rule px-4 py-3 first:border-t-0 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="flex min-w-0 items-center gap-4">
                   <span
                     className={cn(
-                      "w-8 shrink-0 text-center font-mono text-xl font-semibold tabular-nums",
-                      top3 ? "text-[color:var(--aqua-deep)]" : "text-[color:var(--slate-light)]"
+                      "w-10 shrink-0 text-center font-mono text-2xl font-semibold tabular-nums",
+                      top3 ? "text-stamp" : "text-[color:var(--slate-light)]"
                     )}
                   >
                     {rank}
@@ -81,21 +82,21 @@ export default async function RequestsPage({
                       {item.songId ? (
                         <Link
                           href={`/songs/${item.songId}`}
-                          className="font-semibold text-ink underline-offset-4 hover:text-[color:var(--aqua-deep)] hover:underline"
+                          className="font-bold text-ink underline-offset-4 hover:text-stamp hover:underline"
                         >
                           {item.songName}
                         </Link>
                       ) : (
                         <span className="font-semibold text-ink">{item.songName}</span>
                       )}
-                      {item.songId ? null : <Badge variant="accent">まだ登録されていません</Badge>}
+                      {item.songId ? null : <Badge variant="accent">まだ入荷していません</Badge>}
                     </div>
                     {item.artistName ? (
                       <p className="truncate text-sm text-[color:var(--slate-light)]">{item.artistName}</p>
                     ) : null}
                     {item.songId ? (
-                      <p className="mt-0.5 text-xs text-slate">
-                        歌唱記録 {(item.coverCount ?? 0).toLocaleString("ja-JP")}件
+                      <p className="mt-0.5 font-mono text-[11px] tabular-nums text-slate">
+                        在庫 {(item.coverCount ?? 0).toLocaleString("ja-JP")}件
                       </p>
                     ) : null}
                   </div>
@@ -103,7 +104,7 @@ export default async function RequestsPage({
 
                 <div className="flex shrink-0 flex-wrap items-center gap-3 pl-12 sm:pl-0">
                   <span className="font-mono text-sm font-semibold tabular-nums text-ink">
-                    {item.requestCount.toLocaleString("ja-JP")}人が追加
+                    {item.requestCount.toLocaleString("ja-JP")}人がベルを鳴らしました
                   </span>
                   {item.songId ? (
                     <AddToWatchlistButton
@@ -128,12 +129,12 @@ export default async function RequestsPage({
           })}
         </ol>
       ) : (
-        <div className="flex items-start gap-2 rounded-[4px] border border-rule bg-panel p-6 text-sm text-slate">
+        <div className="flex items-start gap-2 rounded-[3px] border border-rule bg-panel p-6 text-sm text-slate shadow-lift">
           <Sparkles className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
           <p>
             {filter === "unregistered"
-              ? "直近7日間で、未登録の曲が「気になる曲」に追加された記録はまだありません。"
-              : "直近7日間で「気になる曲」に追加された記録はまだありません。"}
+              ? "直近7日間で、未登録の曲が「入荷ベル」に追加された記録はまだありません。"
+              : "直近7日間で「入荷ベル」に追加された記録はまだありません。"}
           </p>
         </div>
       )}
@@ -157,10 +158,10 @@ function FilterLink({
       href={value === "all" ? "/requests" : `/requests?filter=${value}`}
       aria-current={active ? "true" : undefined}
       className={cn(
-        "rounded-[3px] border px-3 py-1.5 text-sm font-medium transition-colors",
+        "divider-tab border px-3 py-1.5 text-[13px] font-semibold transition-colors",
         active
-          ? "border-ink bg-ink text-white"
-          : "border-rule bg-transparent text-slate hover:bg-[#FAFCFD] hover:text-ink"
+          ? "border-board bg-board text-board-ink"
+          : "border-rule bg-panel-2 text-slate hover:bg-panel hover:text-ink"
       )}
     >
       {label}

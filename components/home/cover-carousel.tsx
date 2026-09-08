@@ -53,6 +53,7 @@ export function CoverCarousel({ children, className, itemLayout = "responsive" }
           type="button"
           variant="outline"
           size="sm"
+          className="size-[34px] bg-panel p-0"
           onClick={() => scroll("prev")}
           aria-label="前の歌唱記録を表示"
         >
@@ -62,6 +63,7 @@ export function CoverCarousel({ children, className, itemLayout = "responsive" }
           type="button"
           variant="outline"
           size="sm"
+          className="size-[34px] bg-panel p-0"
           onClick={() => scroll("next")}
           aria-label="次の歌唱記録を表示"
         >
@@ -71,7 +73,7 @@ export function CoverCarousel({ children, className, itemLayout = "responsive" }
 
       <div
         ref={viewportRef}
-        className="-mx-4 overflow-x-auto scroll-smooth px-4 pb-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+        className="scroll-rail -mx-4 overflow-x-auto scroll-smooth px-4 pb-2 pt-1"
       >
         <div className={cn("flex snap-x gap-4", snapClassName)}>
           {items.map((item, index) => (

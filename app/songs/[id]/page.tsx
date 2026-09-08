@@ -196,7 +196,7 @@ export default async function SongDetailPage({ params }: { params: Promise<{ id:
       <section className="space-y-4">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div className="flex items-center gap-2">
-            <span className="inline-flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <span className="inline-flex size-9 items-center justify-center rounded-[2px] border border-rule bg-panel text-stamp">
               <Music2 className="size-4" aria-hidden="true" />
             </span>
             <div>
@@ -221,7 +221,7 @@ export default async function SongDetailPage({ params }: { params: Promise<{ id:
                           <Link
                             key={performer.id}
                             href={`/performers/${performer.id}`}
-                            className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-sm font-semibold text-primary underline-offset-4 hover:underline"
+                            className="inline-flex items-center gap-1 rounded-[2px] border border-rule bg-panel px-2.5 py-1 text-sm font-bold text-stamp underline-offset-4 hover:underline"
                           >
                             {performer.name}
                           </Link>
@@ -266,7 +266,7 @@ export default async function SongDetailPage({ params }: { params: Promise<{ id:
       {relatedSongs.length > 0 ? (
         <section className="space-y-4">
           <div className="flex items-center gap-2">
-            <span className="inline-flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <span className="inline-flex size-9 items-center justify-center rounded-[2px] border border-rule bg-panel text-stamp">
               <Disc3 className="size-4" aria-hidden="true" />
             </span>
             <div>
@@ -288,7 +288,7 @@ export default async function SongDetailPage({ params }: { params: Promise<{ id:
       {coOccurringSongs.length > 0 ? (
         <section className="space-y-4">
           <div className="flex items-center gap-2">
-            <span className="inline-flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <span className="inline-flex size-9 items-center justify-center rounded-[2px] border border-rule bg-panel text-stamp">
               <Music2 className="size-4" aria-hidden="true" />
             </span>
             <div>
@@ -391,7 +391,7 @@ function InfoCard({ icon, label, value }: { icon: React.ReactNode; label: string
   return (
     <div className="rounded-3xl border border-rule bg-panel p-5 shadow-sm">
       <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-        <span className="inline-flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+        <span className="inline-flex size-9 items-center justify-center rounded-[2px] border border-rule bg-panel text-stamp">
           {icon}
         </span>
         {label}

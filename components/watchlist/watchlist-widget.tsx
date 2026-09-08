@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Bookmark, Trash2, X } from "lucide-react";
+import { Trash2, X } from "lucide-react";
 
 import { WATCHLIST_CHANGED_EVENT } from "@/components/watchlist/events";
 import {
@@ -109,16 +109,40 @@ export function WatchlistWidget() {
 
   return (
     <>
+      {/* 入荷ベル。カウンターに置かれた真鍮のベルを CSS（div の重ね）で描く。
+          SVG に置き換える場合も、真鍮色のグラデーションと台座の比率は保つこと。 */}
       <button
         type="button"
         onClick={handleToggle}
-        aria-label="気になる曲"
-        title="気になる曲"
-        className="fixed bottom-20 right-4 z-40 inline-flex size-11 items-center justify-center rounded-full border border-rule bg-ink text-white transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:bottom-24 sm:right-6"
+        aria-label="入荷ベル（気になる曲）"
+        title="入荷ベル（気になる曲）"
+        className="fixed bottom-20 right-4 z-40 h-[60px] w-14 border-0 bg-transparent p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:bottom-24 sm:right-6"
       >
-        <Bookmark className="size-5" aria-hidden="true" />
+        {/* 押しボタン（頭頂部の小さな円） */}
+        <span
+          aria-hidden="true"
+          className="absolute left-6 top-px size-2 rounded-full bg-[#B08A4E] shadow-[inset_0_1px_0_rgba(255,255,255,.5)]"
+        />
+        {/* ドーム（本体） */}
+        <span
+          aria-hidden="true"
+          className="absolute left-[5px] top-[7px] h-7 w-[46px] rounded-[23px_23px_3px_3px] bg-[linear-gradient(150deg,#F2E6C8_10%,#DCC192_45%,#B0894C_100%)] shadow-[0_2px_6px_rgba(22,33,43,.28)]"
+        />
+        {/* ハイライト */}
+        <span
+          aria-hidden="true"
+          className="absolute left-[14px] top-3 h-[15px] w-2 rounded-[6px] bg-white/55 blur-[.4px]"
+        />
+        {/* 台座 */}
+        <span
+          aria-hidden="true"
+          className="absolute left-0.5 top-[33px] h-[7px] w-[52px] rounded-[2px_2px_3px_3px] bg-[linear-gradient(#C8A968,#9C7A44)] shadow-[0_2px_5px_rgba(22,33,43,.26)]"
+        />
+        <span className="absolute inset-x-0 bottom-[5px] font-mono text-[10px] font-semibold tracking-[0.1em] text-slate">
+          BELL
+        </span>
         {unreadCount > 0 ? (
-          <span className="absolute -right-1 -top-1 inline-flex size-5 items-center justify-center rounded-full bg-[color:var(--signal)] text-[10px] font-bold text-ink">
+          <span className="absolute -right-1 top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-stamp px-1 font-mono text-[11px] font-semibold text-white">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         ) : null}
@@ -150,7 +174,7 @@ function WatchlistPanel({
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-end justify-end bg-[#16212b]/70 p-4 sm:items-center sm:pr-6"
+      className="fixed inset-0 z-[100] flex items-end justify-end bg-[#16212b]/[0.55] p-4 sm:items-center sm:pr-6"
       onClick={onClose}
     >
       <div
@@ -158,14 +182,18 @@ function WatchlistPanel({
         aria-modal="true"
         aria-labelledby="watchlist-panel-title"
         onClick={(event) => event.stopPropagation()}
-        className="max-h-[75vh] w-full max-w-sm overflow-y-auto rounded-[4px] border border-rule bg-panel p-5 shadow-none"
+        className="max-h-[78vh] w-full max-w-[380px] overflow-y-auto rounded-[2px] border border-wood-dark bg-panel shadow-modal"
       >
-        <div className="flex items-start justify-between gap-4">
+        {/* ヘッダーはクラフト紙。下辺の破線は伝票の切り取り線の見立て。 */}
+        <div className="flex items-start justify-between gap-3 border-b border-dashed border-wood-dark bg-kraft px-[18px] py-4">
           <div>
-            <h2 id="watchlist-panel-title" className="text-lg font-bold tracking-tight text-ink">
-              気になる曲
+            <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-wood-dark">
+              counter bell
+            </p>
+            <h2 id="watchlist-panel-title" className="mt-1.5 text-[17px] font-bold text-kraft-ink">
+              入荷ベル
             </h2>
-            <p className="mt-1 text-sm text-slate">
+            <p className="mt-1 text-xs leading-[1.7] text-slate">
               新しいカバーが増えたり、まだ登録されていない曲が登録されたりしたら教えます。
             </p>
           </div>
@@ -173,22 +201,22 @@ function WatchlistPanel({
             type="button"
             onClick={onClose}
             aria-label="閉じる"
-            className="shrink-0 rounded-[3px] p-1 text-slate transition-colors hover:bg-[#FAFCFD] hover:text-ink"
+            className="shrink-0 rounded-[2px] p-1 text-wood-dark transition-colors hover:bg-panel hover:text-ink"
           >
             <X className="size-5" aria-hidden="true" />
           </button>
         </div>
 
-        <div className="mt-4 space-y-2">
+        <div className="px-[18px] pb-[18px] pt-3.5">
           {items.length === 0 ? (
-            <p className="rounded-[3px] border border-rule bg-[color:var(--paper)] p-3 text-sm text-slate">
+            <p className="rounded-[2px] border border-dashed border-rule p-3 text-sm text-slate">
               まだ何も追加されていません。楽曲ページや、検索結果が0件のページから追加できます。
             </p>
           ) : (
             items.map((item) => (
               <div
                 key={item.id}
-                className="flex items-start justify-between gap-3 rounded-[3px] border border-rule p-3"
+                className="flex items-start justify-between gap-3 border-b border-dashed border-[#CDBBA0] py-3"
               >
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
@@ -204,7 +232,7 @@ function WatchlistPanel({
                       <span className="truncate font-semibold text-ink">{item.songName}</span>
                     )}
                     {item.hasUpdate ? (
-                      <span className="shrink-0 rounded-[3px] border border-[color:var(--signal)] px-1.5 py-0.5 text-[10px] font-bold text-[color:var(--signal)]">
+                      <span className="shrink-0 rounded-[2px] border border-stamp px-1.5 py-0.5 font-mono text-[9px] font-semibold text-stamp">
                         NEW
                       </span>
                     ) : null}
@@ -212,23 +240,29 @@ function WatchlistPanel({
                   {item.artistName ? (
                     <p className="truncate text-xs text-[color:var(--slate-light)]">{item.artistName}</p>
                   ) : null}
-                  <p className="mt-1 text-xs text-slate">
+                  <p className="mt-1 font-mono text-[10px] tabular-nums text-slate">
                     {item.songId
-                      ? `歌唱記録 ${item.knownCoverCount.toLocaleString("ja-JP")}件`
-                      : "まだ登録されていません"}
+                      ? `在庫 ${item.knownCoverCount.toLocaleString("ja-JP")}件`
+                      : "まだ入荷していません"}
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => onRemove(item.id)}
-                  aria-label={`${item.songName}を気になる曲から削除`}
-                  className="shrink-0 rounded-[3px] p-1.5 text-slate transition-colors hover:bg-[#FAFCFD] hover:text-[color:var(--error)]"
+                  aria-label={`${item.songName}を入荷ベルから取り下げる`}
+                  className="shrink-0 rounded-[2px] p-1.5 text-[color:var(--slate-light)] transition-colors hover:bg-hover hover:text-[color:var(--error)]"
                 >
                   <Trash2 className="size-4" aria-hidden="true" />
                 </button>
               </div>
             ))
           )}
+
+          <p className="mt-3.5 text-center font-mono text-[10px] leading-[1.9] tracking-[0.04em] text-[color:var(--slate-light)]">
+            *** 会員登録は不要です ***
+            <br />
+            THANK YOU
+          </p>
         </div>
       </div>
     </div>

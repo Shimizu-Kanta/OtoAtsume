@@ -152,7 +152,7 @@ function StatCard({ icon: Icon, label, value }: { icon: typeof Database; label: 
   return (
     <div className="rounded-3xl border border-rule bg-panel p-5 shadow-sm">
       <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-        <span className="inline-flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+        <span className="inline-flex size-9 items-center justify-center rounded-[2px] border border-rule bg-panel text-stamp">
           <Icon className="size-4" aria-hidden="true" />
         </span>
         {label}
