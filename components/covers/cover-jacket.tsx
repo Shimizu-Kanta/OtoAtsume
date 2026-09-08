@@ -88,7 +88,9 @@ export function CoverJacket({
         <div
           className={cn(
             "absolute inset-y-0 left-0 z-10 flex items-center justify-center overflow-hidden",
-            compact ? "w-[17px]" : "w-[34px]"
+            // スマホでは棚のカードが 140px 程度になるため、固定 34px だと帯が
+            // ジャケットの 1/4 を覆ってしまう。狭い幅では細くする。
+            compact ? "w-[17px]" : "w-6 sm:w-[34px]"
           )}
           style={{ backgroundColor: obiColor || "var(--stamp)" }}
           aria-hidden="true"
@@ -96,7 +98,7 @@ export function CoverJacket({
           <span
             className={cn(
               "h-full py-[5px] text-left font-mono font-semibold leading-[1.55] tracking-normal text-white [writing-mode:vertical-rl]",
-              compact ? "text-[9px]" : "text-[9.5px]"
+              compact ? "text-[9px]" : "text-[8.5px] sm:text-[9.5px]"
             )}
             style={{ wordBreak: "keep-all", overflowWrap: "normal" }}
           >
