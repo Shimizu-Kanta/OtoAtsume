@@ -3,37 +3,66 @@
 @tailwind utilities;
 
 :root {
-  /* --- 新デザイントークン(hex) --- */
-  --paper: #f3f7f8;
-  --panel: #ffffff;
-  --ink: #16212b;
-  --slate: #51606b;
-  --slate-light: #8b99a2;
-  --aqua: #4caecd;
-  --aqua-deep: #2e7891;
-  --rule: #d7e1e4;
+  /* --- デザイントークン(hex) ---
+     中古CDショップの店内に見立てた配色。紙(paper)と什器(panel)の上に、
+     黒板(board)・木の棚板(wood)・クラフト紙(kraft)・スタンプの赤(stamp)を置く。 */
+  --paper: #ede6db; /* ページ背景 = 店の床 */
+  --panel: #fbf7f1; /* カード・什器の面 */
+  --panel-2: #f3ece1; /* フッター・非アクティブタブ・棚の内側 */
+  --hover: #f6f0e5; /* 行ホバー */
+  --ink: #16212b; /* 本文 */
+  --slate: #5c4b38; /* 副次テキスト */
+  --slate-light: #8c7a62; /* 三次テキスト・英字ラベル */
+  --rule: #c2ae93; /* 罫線・枠線 */
+
+  /* アクセント(スタンプの赤)。プライマリボタン・帯・アクティブ強調。 */
+  --stamp: #a32a22;
+  --stamp-deep: #71190f; /* 赤ボタンの 0 2px 0 の影 */
+
+  /* 黒板(ヘッダー帯・テーブル見出し・アクティブタブ) */
+  --board: #1d2a24;
+  --board-deep: #0f1712;
+  --board-ink: #fbf7f1;
+  --board-sub: #a9c0af;
+
+  /* 棚板の木目 */
+  --wood: #a97f52;
+  --wood-light: #c9a578;
+  --wood-dark: #7a5837;
+  --wood-deep: #8a6743;
+  --wood-shadow: #6a4a2e;
+
+  --kraft: #e4d4bc; /* クラフト紙(入荷ベルのヘッダー・ボタン) */
+  --kraft-ink: #3e3122; /* クラフト紙の上の文字 */
+
   --error: #c24545;
-  --signal: #f0a11a; /* 既存 --accent 相当。非ブロッキングな注意喚起(重複警告)に限定して使用 */
+  --signal: #f0a11a; /* 非ブロッキングな注意喚起(重複警告)に限定して使用 */
+
+  /* 旧トークン名の別名。既存クラス(text-[color:var(--aqua-deep)] など)を
+     一括置換せずにスタンプの赤へ寄せるための後方互換エイリアス。
+     新しく書くコードでは --stamp を使うこと。 */
+  --aqua: var(--stamp);
+  --aqua-deep: var(--stamp);
 
   /* --- shadcn 互換トークン(既存クラスをそのまま再スキンするため hex を HSL に写像) --- */
-  --background: 192 26% 96%; /* paper */
+  --background: 37 33% 89%; /* paper */
   --foreground: 209 32% 13%; /* ink */
-  --card: 0 0% 100%; /* panel */
+  --card: 36 56% 96%; /* panel */
   --card-foreground: 209 32% 13%;
-  --primary: 194 56% 55%; /* aqua(リンク・強調・ブランド) */
+  --primary: 4 65% 39%; /* stamp */
   --primary-foreground: 0 0% 100%;
-  --secondary: 194 40% 92%;
-  --secondary-foreground: 195 52% 32%;
-  --muted: 194 22% 93%;
-  --muted-foreground: 205 14% 37%; /* slate */
+  --secondary: 36 43% 82%; /* kraft */
+  --secondary-foreground: 32 29% 19%; /* kraft-ink */
+  --muted: 37 43% 92%; /* panel-2 */
+  --muted-foreground: 32 24% 29%; /* slate */
   --accent: 38 88% 52%; /* signal */
   --accent-foreground: 209 32% 13%;
   --destructive: 0 51% 52%; /* error */
   --destructive-foreground: 0 0% 100%;
-  --border: 194 19% 87%; /* rule */
-  --input: 194 19% 87%;
-  --ring: 194 56% 55%; /* aqua */
-  --radius: 0.25rem; /* カード 4px */
+  --border: 35 28% 67%; /* rule */
+  --input: 35 28% 67%;
+  --ring: 4 65% 39%; /* stamp */
+  --radius: 3px; /* 什器カード。全体に角丸は極小 */
 }
 
 * {
@@ -82,8 +111,108 @@ a {
     @apply font-mono text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-[color:var(--slate-light)];
   }
 
+  /* 黒板の上に置くカラムヘッダー。.col-head と同じ字面で色だけ反転させる。 */
+  .col-head-board {
+    @apply font-mono text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-[color:var(--board-sub)];
+  }
+
   /* key-value パネルのラベル(英語・大文字・mono・小さめ) */
   .kv-label {
-    @apply font-mono text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-[color:var(--slate-light)];
+    @apply font-mono text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[color:var(--slate-light)];
+  }
+
+  /* セクションの上に置く英字キャッチ。値札・伝票の印字に見立てた等幅。
+     JetBrains Mono の使い方がこのデザインの性格を決めているので、
+     ここを普通のサンセリフに戻すとコンセプトが崩れる。 */
+  .eyebrow {
+    @apply font-mono text-[10px] font-semibold uppercase tracking-[0.22em] text-[color:var(--stamp)];
+  }
+
+  .eyebrow-muted {
+    @apply font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-[color:var(--slate-light)];
+  }
+
+  .eyebrow-board {
+    @apply font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-[color:var(--board-sub)];
+  }
+
+  /* 仕切り板のタブ形状。右上だけ大きく丸めて、レコード棚の仕切りに見せる。 */
+  .divider-tab {
+    @apply rounded-[2px_8px_0_0];
+  }
+
+  .nav-tab {
+    @apply rounded-[2px_12px_0_0];
+  }
+
+  /* 棚板。木口のグラデーションに木目のストライプを重ね、下に厚み(0 3px 0)を出す。
+     このデザインの一番の要なので、木目とグラデーションの比率は変えないこと。 */
+  .shelf-board {
+    height: 16px;
+    border-radius: 2px;
+    background:
+      linear-gradient(var(--wood-light), var(--wood) 62%, var(--wood-deep)),
+      repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.05) 0 2px, transparent 2px 15px);
+    box-shadow: 0 3px 0 var(--wood-shadow);
+  }
+
+  /* 棚が宙に浮いて見えるよう落ち影を足したもの(トップページの横スクロール棚)。 */
+  .shelf-board-float {
+    box-shadow:
+      0 3px 0 var(--wood-shadow),
+      0 12px 20px -10px rgba(22, 33, 43, 0.5);
+  }
+
+  .shelf-board-thin {
+    height: 14px;
+  }
+
+  /* ジャケットのグレア(CDケースのプラスチック反射)。 */
+  .jacket-glare {
+    background: linear-gradient(
+      102deg,
+      rgba(255, 255, 255, 0.55) 0 4%,
+      rgba(255, 255, 255, 0) 7% 44%,
+      rgba(255, 255, 255, 0.3) 47% 51%,
+      rgba(255, 255, 255, 0) 55%
+    );
+  }
+
+  /* CD 盤面。ジャケットの右後ろから覗かせる装飾。 */
+  .cd-disc {
+    background: conic-gradient(
+      from 200deg,
+      #dbe4e7,
+      #f2f7f8,
+      #cbd9dd,
+      #e9f0f2,
+      #d3dee1,
+      #f0f5f6,
+      #dbe4e7
+    );
+    box-shadow: inset 0 0 0 1px rgba(22, 33, 43, 0.1);
+  }
+
+  .cd-disc-hole {
+    background: #f3f7f8;
+    box-shadow:
+      inset 0 0 0 1px rgba(22, 33, 43, 0.14),
+      0 0 0 6px rgba(255, 255, 255, 0.55);
+  }
+
+  /* 横スクロールの棚・仕切り。スクロールバーは店の見た目に不要なので隠す。 */
+  .scroll-rail {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .scroll-rail::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* プライマリボタンの押し込み。box-shadow の厚みを 1px 減らして沈ませる。 */
+  .press-button:active {
+    transform: translateY(1px);
+    box-shadow: 0 1px 0 var(--stamp-deep);
   }
 }

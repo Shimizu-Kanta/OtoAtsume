@@ -180,10 +180,11 @@ function TagGroupAccordion({
                 onClick={() => onToggle(tag.id)}
                 aria-pressed={isSelected}
                 className={cn(
-                  "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
+                  // タグも仕切り板の形（右上だけ大きく丸める）で統一する。
+                  "divider-tab inline-flex items-center gap-2 border px-2.5 py-1 text-[11px] font-semibold transition-colors",
                   isSelected
-                    ? "border-primary/40 bg-primary/15 text-primary shadow-sm"
-                    : "border-border bg-background/80 text-muted-foreground hover:border-primary/30 hover:bg-primary/10 hover:text-primary"
+                    ? "border-board bg-board text-board-ink"
+                    : "border-rule bg-panel-2 text-slate hover:bg-panel hover:text-ink"
                 )}
               >
                 {tag.name}

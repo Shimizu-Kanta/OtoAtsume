@@ -179,7 +179,7 @@ export function IntroModal({
             type="button"
             onClick={close}
             aria-label="閉じる"
-            className="shrink-0 rounded-[3px] p-1 text-slate transition-colors hover:bg-[#FAFCFD] hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="shrink-0 rounded-[3px] p-1 text-slate transition-colors hover:bg-hover hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             <X className="size-5" aria-hidden="true" />
           </button>

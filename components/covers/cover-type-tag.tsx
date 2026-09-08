@@ -7,7 +7,7 @@ export function CoverTypeTag({ type, className }: { type: string; className?: st
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-[2px] border border-rule px-1.5 py-0.5 text-xs text-[color:var(--slate-light)]",
+        "inline-flex items-center rounded-[2px] border border-rule bg-panel px-1.5 py-0.5 text-xs text-slate",
         className
       )}
     >

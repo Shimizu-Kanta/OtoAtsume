@@ -137,7 +137,7 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
 
       <section className="space-y-4">
         <div className="flex items-center gap-2">
-          <span className="inline-flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+          <span className="inline-flex size-9 items-center justify-center rounded-[2px] border border-rule bg-panel text-stamp">
             <Users className="size-4" aria-hidden="true" />
           </span>
           <div>
@@ -180,7 +180,7 @@ function GroupCoverSection({
   return (
     <section className="space-y-4">
       <div className="flex items-center gap-2">
-        <span className="inline-flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+        <span className="inline-flex size-9 items-center justify-center rounded-[2px] border border-rule bg-panel text-stamp">
           {icon}
         </span>
         <div>

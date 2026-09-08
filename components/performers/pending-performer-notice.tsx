@@ -17,7 +17,7 @@ export function PendingPerformerNotice({ name }: { name: string }) {
       />
 
       <section className="flex flex-col items-center gap-4 rounded-[2rem] border border-rule bg-panel p-10 text-center shadow-sm">
-        <span className="inline-flex size-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+        <span className="inline-flex size-16 items-center justify-center rounded-[2px] border border-rule bg-panel text-stamp">
           <Clock className="size-8" aria-hidden="true" />
         </span>
         <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">

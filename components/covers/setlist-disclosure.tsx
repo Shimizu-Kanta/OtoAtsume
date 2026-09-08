@@ -28,7 +28,7 @@ export function SetlistDisclosure({
           type="button"
           onClick={() => setExpanded((value) => !value)}
           aria-expanded={expanded}
-          className="flex w-full items-center justify-center gap-1.5 rounded-[3px] border border-rule bg-panel px-3 py-2 text-sm font-medium text-[color:var(--aqua-deep)] transition-colors hover:bg-[#FAFCFD]"
+          className="flex w-full items-center justify-center gap-1.5 rounded-[3px] border border-rule bg-panel px-3 py-2 text-sm font-medium text-[color:var(--aqua-deep)] transition-colors hover:bg-hover"
         >
           {expanded ? (
             <>
