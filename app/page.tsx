@@ -324,7 +324,7 @@ function AnniversaryCoverSection({ groups }: { groups: AnniversaryAlbumGroup[] }
   return (
     <section className="flex flex-col gap-3.5">
       <SectionHeading
-        en="staff pick"
+        en="today's pick"
         title="本日の一枚"
         description="今日がデビュー記念日・誕生日の活動者の歌唱記録です。"
       />
