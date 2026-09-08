@@ -324,7 +324,7 @@ function AnniversaryCoverSection({ groups }: { groups: AnniversaryAlbumGroup[] }
   return (
     <section className="flex flex-col gap-3.5">
       <SectionHeading
-        en="staff pick"
+        en="today's pick"
         title="本日の一枚"
         description="今日がデビュー記念日・誕生日の活動者の歌唱記録です。"
       />
@@ -334,7 +334,9 @@ function AnniversaryCoverSection({ groups }: { groups: AnniversaryAlbumGroup[] }
           {groups.map((group) => (
             <section
               key={group.performer.id}
-              className="flex flex-col gap-3.5 rounded-[3px] border border-rule bg-panel p-[18px] shadow-lift"
+              // min-w-0: グリッドアイテムの既定は min-width:auto で min-content まで伸びる。
+              // 中身が正方形ジャケット（幅から高さが決まる）なので、これが無いと幅が循環する。
+              className="flex min-w-0 flex-col gap-3.5 rounded-[3px] border border-rule bg-panel p-[18px] shadow-lift"
               style={{
                 borderTopColor: group.performer.colorCode ?? undefined,
                 borderTopWidth: group.performer.colorCode ? 3 : undefined
@@ -354,17 +356,13 @@ function AnniversaryCoverSection({ groups }: { groups: AnniversaryAlbumGroup[] }
                 </p>
               </div>
 
-              {group.albums.length > 0 ? (
-                <CoverCarousel itemLayout="single">
-                  {group.albums.map((album) => (
-                    <CoverAlbumCard key={album.key} album={album} representativeOnly />
-                  ))}
-                </CoverCarousel>
-              ) : (
-                <p className="rounded-[2px] border border-dashed border-rule p-4 text-sm text-slate">
-                  この活動者の歌唱記録はまだ登録されていません。
-                </p>
-              )}
+              {/* getTodayAnniversaryCoverGroups が歌唱記録0件の活動者を除外するので、
+                  ここに空のグループは来ない。 */}
+              <CoverCarousel itemLayout="single">
+                {group.albums.map((album) => (
+                  <CoverAlbumCard key={album.key} album={album} representativeOnly />
+                ))}
+              </CoverCarousel>
             </section>
           ))}
         </div>

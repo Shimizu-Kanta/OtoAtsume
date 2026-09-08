@@ -73,7 +73,9 @@ export function CoverAlbumCard({
         {showSetlist ? (
           <div
             className={cn(
-              "absolute inset-0 z-30 flex flex-col bg-[color:var(--board)]/[0.94] p-2.5 transition-opacity duration-200",
+              // 裏ジャケは不透明にする。実物の CD でも裏ジャケは印刷面で透けないし、
+              // 収録曲が読めることを最優先する。
+              "absolute inset-0 z-30 flex flex-col bg-board p-2.5 transition-opacity duration-200",
               open
                 ? "opacity-100"
                 : "pointer-events-none opacity-0 [@media(hover:hover)]:group-hover:pointer-events-auto [@media(hover:hover)]:group-hover:opacity-100"
@@ -84,7 +86,7 @@ export function CoverAlbumCard({
             </p>
             <ol className="min-h-0 flex-1 space-y-0.5 overflow-hidden">
               {visibleTracks.map((track, index) => (
-                <li key={track.id} className="flex gap-1.5 text-[11px] leading-4 text-board-ink">
+                <li key={track.id} className="flex gap-1.5 text-xs leading-5 text-board-ink">
                   <span className="shrink-0 font-mono tabular-nums text-board-sub">{index + 1}.</span>
                   <Link
                     href={`/covers/${track.id}`}
@@ -96,7 +98,7 @@ export function CoverAlbumCard({
               ))}
             </ol>
             {hiddenTrackCount > 0 ? (
-              <p className="mt-1 shrink-0 text-[11px] leading-4 text-board-sub">
+              <p className="mt-1 shrink-0 text-xs leading-5 text-board-sub">
                 ほか{hiddenTrackCount}曲
               </p>
             ) : null}

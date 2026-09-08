@@ -64,7 +64,8 @@ const config: Config = {
           deep: "var(--aqua-deep)"
         },
         board: {
-          DEFAULT: "var(--board)",
+          // 不透明度修飾子(bg-board/90)を使えるようチャンネル値から組み立てる。
+          DEFAULT: "rgb(var(--board-rgb) / <alpha-value>)",
           deep: "var(--board-deep)",
           ink: "var(--board-ink)",
           sub: "var(--board-sub)"

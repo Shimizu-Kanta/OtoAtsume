@@ -81,8 +81,9 @@ export default async function CoversPage({
         }
       />
 
-      {/* 左は仕切り板（絞り込み）、右は棚。狭い画面では1カラムに落とす。 */}
-      <div className="grid items-start gap-6 lg:grid-cols-[236px_minmax(0,1fr)]">
+      {/* 仕切り板（絞り込み）を棚の上に置く。サイドバーに縦積みすると
+          パネルだけで1画面を使ってしまい、検索結果が折り返しの下に隠れるため。 */}
+      <div className="flex flex-col gap-6">
         <CoverFilterPanel
           search={search}
           sort={sort}
