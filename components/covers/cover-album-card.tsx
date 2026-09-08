@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 
+import { AddToBasketButton } from "@/components/basket/add-to-basket-button";
 import { CoverJacket } from "@/components/covers/cover-jacket";
 import { buildObiText } from "@/lib/covers/obi";
 import { clampPerformerColor } from "@/lib/performer-color";
@@ -108,6 +109,17 @@ export function CoverAlbumCard({
         {/* 曲数バッジ。裏ジャケを持つときはタップ/クリックで開閉するボタン。
             左端は帯、右上は CD 盤の覗く側なので、右下に置く。
             代表1曲のみのときは帯に曲数が刷ってあるので、バッジは出さない。 */}
+        {/* かごに入れる。左端は帯（w-6 / sm:34px）が占めるのでその外側に置き、
+            裏ジャケ(z-30)・曲数バッジ(z-40)と重ならないよう z-40 にする。
+            アルバムは代表1曲しか手元に無いので、動画IDから全曲に展開して入れる。 */}
+        <div className="absolute bottom-1.5 left-[28px] z-40 sm:left-[38px]">
+          <AddToBasketButton
+            coverIds={[head.id]}
+            expandVideoId={isAlbum ? album.sourceVideoId : null}
+            label={isAlbum ? `この一枚（全${album.totalTrackCount}曲）をかごに入れる` : "かごに入れる"}
+          />
+        </div>
+
         {showSetlist ? (
           <button
             type="button"
