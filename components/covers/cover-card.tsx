@@ -40,7 +40,7 @@ export function CoverCard({ cover }: { cover: CoverListItem }) {
             条件レンダリングにはせず DOM に常在させて CSS の opacity で出し入れする。
             スマホではホバーが無く表示されないが、同じ情報は詳細ページにある。 */}
         {cover.sourceTitle ? (
-          <div className="absolute inset-x-0 bottom-0 z-30 bg-[color:var(--board)]/[0.9] px-2 py-1.5 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+          <div className="absolute inset-x-0 bottom-0 z-30 bg-board/90 px-2 py-1.5 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
             <span className="line-clamp-2 text-[11px] leading-4 text-board-ink">
               {cover.sourceTitle}
             </span>

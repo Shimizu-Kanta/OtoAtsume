@@ -21,6 +21,11 @@
 
   /* 黒板(ヘッダー帯・テーブル見出し・アクティブタブ) */
   --board: #1d2a24;
+  /* Tailwind の不透明度修飾子(bg-board/90 など)を効かせるためのチャンネル値。
+     hex を入れた --board を色として渡すと <alpha-value> を差し込めず、
+     bg-board/90 のような指定が丸ごと無効になる。--board 自体は
+     shadow-board や .shelf-board 系から参照しているので消さないこと。 */
+  --board-rgb: 29 42 36;
   --board-deep: #0f1712;
   --board-ink: #fbf7f1;
   --board-sub: #a9c0af;
