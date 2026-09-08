@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ExternalLink, Music2 } from "lucide-react";
 
+import { AddToBasketButton } from "@/components/basket/add-to-basket-button";
 import { Breadcrumb } from "@/components/breadcrumb";
 import { CoverJacket } from "@/components/covers/cover-jacket";
 import { CoverList } from "@/components/covers/cover-list";
@@ -9,7 +10,6 @@ import { LatestCoversFallback } from "@/components/covers/latest-covers-fallback
 import { SetlistDisclosure } from "@/components/covers/setlist-disclosure";
 import { PerformerColorChip } from "@/components/performers/performer-color-chip";
 import { ShareButton } from "@/components/share-button";
-import { AddToWatchlistButton } from "@/components/watchlist/add-to-watchlist-button";
 import { buttonVariants } from "@/components/ui/button";
 import { buildObiText } from "@/lib/covers/obi";
 import { clampPerformerColor } from "@/lib/performer-color";
@@ -384,22 +384,32 @@ export default async function CoverDetailPage({ params, searchParams }: CoverDet
               </div>
             ) : null}
 
-            {/* 入荷ベル（気になる曲）。この曲に新しい記録が増えたら知らせる。 */}
+            {/* CDかご。歌唱記録（曲）を集めるのはこちら。まだ無いものを待つ入荷ベルは
+                楽曲ページ側に置いており、ここには出さない。 */}
             <div className="rounded-[2px] border border-dashed border-wood-dark bg-panel p-3.5">
               <p className="font-mono text-[9.5px] font-semibold uppercase tracking-[0.16em] text-wood-dark">
-                ring the bell
+                cd basket
               </p>
               <p className="mt-2 text-xs leading-[1.8] text-slate">
-                この曲に新しい歌唱記録が増えたら知らせます。
+                かごに入れると、あとで1曲ずつ試聴したりYouTubeでまとめて聴けます。
               </p>
-              <div className="mt-2.5">
-                <AddToWatchlistButton
-                  songId={cover.songId}
-                  songName={cover.song.title}
-                  artistName={cover.song.artists.map(({ artist }) => artist.name).join(", ") || null}
-                  label="入荷ベルを鳴らす"
-                  className="h-9 w-full border-wood-dark bg-kraft text-[13px] text-kraft-ink hover:brightness-105"
+              <div className="mt-2.5 flex flex-col gap-2">
+                <AddToBasketButton
+                  coverIds={[cover.id]}
+                  label="この曲をかごに入れる"
+                  variant="button"
+                  className="w-full"
                 />
+                {isAlbum && cover.sourceVideoId ? (
+                  <AddToBasketButton
+                    coverIds={trackEntries.map((track) => track.id)}
+                    label={`この配信の全${trackEntries.length}曲をかごに入れる`}
+                    addedLabel={`この配信の全${trackEntries.length}曲をかごから出す`}
+                    matchMode="all"
+                    variant="button"
+                    className="w-full border border-rule bg-panel text-ink shadow-none hover:bg-hover"
+                  />
+                ) : null}
               </div>
             </div>
           </aside>
