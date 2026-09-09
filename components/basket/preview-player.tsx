@@ -116,6 +116,10 @@ export function PreviewPlayer({
   const endSecondsRef = useRef<number | null>(null);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<{ message: string; removable: boolean } | null>(null);
+  // 再生ボタンが一度でも押されたか。押されるまで iframe を生成しないことで、
+  // かごを開いただけで YouTube への通信・意図しない再生カウントが起きるのを防ぐ。
+  // 一度 true になったら iframe を保持し続け、以降は loadVideoById で曲を切り替える。
+  const [activated, setActivated] = useState(false);
 
   const stopGuard = useCallback(() => {
     if (guardRef.current !== null) {
@@ -145,7 +149,20 @@ export function PreviewPlayer({
     }, END_GUARD_INTERVAL_MS);
   }, [stopGuard]);
 
+  // 最初の一枚が掛かった時点で「起動済み」にする。以降は item が一時的に null に
+  // なっても（再生中の曲をかごから出した等）iframe は保持したままにする。
   useEffect(() => {
+    if (item) {
+      setActivated(true);
+    }
+  }, [item]);
+
+  // iframe（YT.Player）は起動後に一度だけ生成する。起動前は生成しない。
+  useEffect(() => {
+    if (!activated) {
+      return;
+    }
+
     let cancelled = false;
 
     loadIframeApi()
@@ -195,15 +212,23 @@ export function PreviewPlayer({
       stopGuard();
       playerRef.current?.destroy();
       playerRef.current = null;
+      setReady(false);
     };
-  }, [startGuard, stopGuard]);
+  }, [activated, startGuard, stopGuard]);
 
   // 掛ける一枚が変わったら読み込み直す。
   useEffect(() => {
     setError(null);
     endSecondsRef.current = item?.endSeconds ?? null;
 
-    if (!item?.sourceVideoId || !ready || !playerRef.current) {
+    if (!ready || !playerRef.current) {
+      return;
+    }
+
+    // 再生中の曲がかごから外れたら音を止める（案内文が iframe を覆う）。
+    if (!item?.sourceVideoId) {
+      playerRef.current.stopVideo();
+      stopGuard();
       return;
     }
 
@@ -214,7 +239,7 @@ export function PreviewPlayer({
       // 保険は startGuard 側。
       ...(item.endSeconds != null ? { endSeconds: item.endSeconds } : {})
     });
-  }, [item, ready]);
+  }, [item, ready, stopGuard]);
 
   const watchUrl = item ? withTimestamp(item.sourceUrl, item.startSeconds) : null;
 
@@ -222,11 +247,14 @@ export function PreviewPlayer({
     <div className="flex flex-col gap-2">
       {/* プレイヤーはパネル幅いっぱいの 16:9 で出す。極端に縮めたり隠したりしない。 */}
       <div className="relative aspect-video w-full overflow-hidden rounded-[2px] bg-board">
-        <div ref={containerRef} className="absolute inset-0 size-full" />
+        {/* iframe は起動後だけ描画する。起動前は下の案内文だけを 16:9 枠に出す。 */}
+        {activated ? <div ref={containerRef} className="absolute inset-0 size-full" /> : null}
 
+        {/* 案内文は bg-board で不透明にし、item が外れて iframe が残っていても覆い隠す。 */}
         {!item ? (
-          <div className="absolute inset-0 flex items-center justify-center px-3 text-center text-xs text-board-sub">
-            再生ボタンを押すと、ここで1曲ずつ試聴できます。
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-board px-3 text-center text-xs leading-5 text-board-sub">
+            <p>再生ボタンを押すと、1曲ずつ試聴できます。</p>
+            <p>まとめて聴くときは下の「通して聴く」からYouTubeへ。</p>
           </div>
         ) : null}
 

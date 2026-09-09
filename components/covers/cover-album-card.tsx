@@ -109,10 +109,11 @@ export function CoverAlbumCard({
         {/* 曲数バッジ。裏ジャケを持つときはタップ/クリックで開閉するボタン。
             左端は帯、右上は CD 盤の覗く側なので、右下に置く。
             代表1曲のみのときは帯に曲数が刷ってあるので、バッジは出さない。 */}
-        {/* かごに入れる。左端は帯（w-6 / sm:34px）が占めるのでその外側に置き、
+        {/* かごに入れる。左端は帯（w-[24px] / sm:w-[34px]）が占めるので、帯幅＋余白4px
+            だけ右に逃がして帯の文字（曲数・種別・日付）に重ねない。帯幅を変えたらここも合わせる。
             裏ジャケ(z-30)・曲数バッジ(z-40)と重ならないよう z-40 にする。
             アルバムは代表1曲しか手元に無いので、動画IDから全曲に展開して入れる。 */}
-        <div className="absolute bottom-1.5 left-[28px] z-40 sm:left-[38px]">
+        <div className="absolute bottom-1.5 left-[28px] sm:left-[38px] z-40">
           <AddToBasketButton
             coverIds={[head.id]}
             expandVideoId={isAlbum ? album.sourceVideoId : null}
