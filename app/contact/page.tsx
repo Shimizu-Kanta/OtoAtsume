@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 const contactFormUrl =
-  "https://docs.google.com/forms/d/e/1FAIpQLSe7WTPSDoUO9zvVuwFFftXTW0ZWiG4k-2ow9bcnKmTx4BW0gw/viewform";
+  "https://forms.gle/D2unPXxbtqy1B7GY8";
 
 export default function ContactPage() {
   return (
