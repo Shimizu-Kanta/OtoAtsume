@@ -38,7 +38,10 @@ export function CoverCarousel({ children, className, itemLayout = "responsive" }
   // shelf は正方形ジャケットを棚に並べる用途。画面幅に応じて3〜7枚が見える。
   const itemClassName =
     itemLayout === "single"
-      ? "w-full shrink-0 snap-start"
+      ? // single はアニバーサリー枠（その活動者の歌唱記録）で使う。aspect-square 化で
+        // w-full だと高さ＝幅になり 1 枚がビューポートをほぼ占めるため、上限幅を掛けて
+        // 他の棚（170px 前後）と同程度に揃える。コンテナは左寄せのままでよい。
+        "w-full min-w-0 max-w-[220px] shrink-0 snap-start"
       : itemLayout === "shelf"
         ? "w-[38%] shrink-0 snap-start sm:w-[22%] lg:w-[16%] xl:w-[13%]"
         : "w-[85%] shrink-0 snap-start sm:w-[calc((100%_-_1rem)/2)] xl:w-[calc((100%_-_2rem)/3)]";

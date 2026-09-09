@@ -89,11 +89,14 @@ export function AddToBasketButton({
         aria-pressed={inBasket}
         aria-label={inBasket ? addedLabel : label}
         title={error ?? (inBasket ? addedLabel : label)}
+        // 追加済み・未追加で要素も位置も同じにし、アイコンと配色だけを差し替える
+        // （条件分岐で別要素を出すと位置指定が二重管理になりズレが再発する）。
+        // 170px のジャケットで邪魔にならないよう 24px 角に抑える。
         className={cn(
-          "inline-flex size-7 items-center justify-center rounded-[2px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60",
+          "inline-flex size-6 items-center justify-center rounded-[2px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60",
           inBasket
             ? "bg-stamp text-white hover:brightness-110"
-            : "bg-board/90 text-board-ink hover:bg-board",
+            : "bg-board/80 text-board-ink hover:bg-board",
           className
         )}
       >
