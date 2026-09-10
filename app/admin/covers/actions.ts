@@ -32,6 +32,14 @@ export async function deleteCoverAction(formData: FormData) {
   const result = await deleteAdminCover(id);
 
   if (!result.ok) {
+    if (result.reason === "inUse") {
+      redirect(
+        `/admin/covers?error=${encodeURIComponent(
+          `この歌唱記録は特集 ${result.featureCount} 件で紹介されているため削除できません。先に特集から外してください。`
+        )}`
+      );
+    }
+
     redirect(`/admin/covers?error=${encodeURIComponent("歌唱記録が見つかりません。")}`);
   }
 

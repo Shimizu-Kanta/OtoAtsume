@@ -168,6 +168,7 @@ model Cover {
   userAgentHash    String?
   performers       CoverPerformer[]
   reports          Report[]
+  featureItems     FeatureItem[]
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 
@@ -223,6 +224,44 @@ model PerformerApplication {
   @@index([groupId])
   @@index([status])
   @@map("performer_applications")
+}
+
+// スタッフのおすすめPOP（特集記事）。人手で書いた文章をサイトに供給する唯一の枠。
+// status は既存の ContentStatus を再利用するが、実質 PENDING（下書き）と APPROVED（公開）の
+// 2値運用。管理者しか作らないので審査フローは無い。
+model Feature {
+  id          String        @id @default(uuid())
+  slug        String        @unique
+  title       String
+  lead        String        @db.Text
+  outro       String?       @db.Text
+  // 記事末尾のリンクリスト（FeatureLink[]）。保存前に zod で検証する。
+  links       Json?
+  status      ContentStatus @default(PENDING)
+  publishedAt DateTime?
+  items       FeatureItem[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([status, publishedAt])
+  @@map("features")
+}
+
+// 特集で紹介する1件の歌唱記録とそのコメント。見出し（曲名・歌唱者名）は保存せず
+// Cover から都度生成する。onDelete: Restrict なので、紹介中の歌唱記録は削除できない。
+model FeatureItem {
+  id        String  @id @default(uuid())
+  featureId String
+  coverId   String
+  comment   String  @db.Text
+  position  Int
+  feature   Feature @relation(fields: [featureId], references: [id], onDelete: Cascade)
+  cover     Cover   @relation(fields: [coverId], references: [id], onDelete: Restrict)
+
+  @@unique([featureId, coverId])
+  @@index([featureId, position])
+  @@index([coverId])
+  @@map("feature_items")
 }
 
 model RateLimitBucket {

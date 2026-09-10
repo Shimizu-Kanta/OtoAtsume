@@ -657,12 +657,28 @@ export async function deleteAdminCover(id: string) {
         select: {
           title: true
         }
+      },
+      _count: {
+        select: {
+          featureItems: true
+        }
       }
     }
   });
 
   if (!cover) {
     return { ok: false as const, reason: "notFound" as const };
+  }
+
+  // 特集で紹介中の歌唱記録を消すと記事が壊れるため、削除できないようにする
+  // （DB 側も FeatureItem.cover が onDelete: Restrict）。
+  if (cover._count.featureItems > 0) {
+    return {
+      ok: false as const,
+      reason: "inUse" as const,
+      title: cover.song.title,
+      featureCount: cover._count.featureItems
+    };
   }
 
   await db.cover.delete({
