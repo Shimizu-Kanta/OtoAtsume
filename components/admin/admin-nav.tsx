@@ -17,6 +17,7 @@ import {
   LogOut,
   Menu,
   Music,
+  Newspaper,
   Search,
   Sparkles,
   Tags,
@@ -44,6 +45,10 @@ const adminNavSections = [
       { href: "/admin/reports", label: "通報", icon: Flag },
       { href: "/admin/performers?status=PENDING", label: "確認待ち活動者", icon: UserCheck }
     ]
+  },
+  {
+    title: "編集",
+    items: [{ href: "/admin/features", label: "特集", icon: Newspaper }]
   },
   {
     title: "マスタ",
