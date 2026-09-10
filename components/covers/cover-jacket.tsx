@@ -21,6 +21,7 @@ export function CoverJacket({
   obiColor,
   compact = false,
   showDisc = false,
+  plain = false,
   sizes,
   priority = false,
   className,
@@ -34,6 +35,9 @@ export function CoverJacket({
   obiColor?: string | null;
   compact?: boolean;
   showDisc?: boolean;
+  // 記事本文など、什器の装飾（帯・CD盤・グレア・縁）を出さず素の正方形サムネイルとして
+  // 見せたい場面で true にする。showDisc / obiText より優先し、装飾を一切描かない。
+  plain?: boolean;
   sizes?: string;
   priority?: boolean;
   className?: string;
@@ -83,8 +87,8 @@ export function CoverJacket({
         />
       </div>
 
-      {/* 帯（obi）: 左端の縦組み。曲数・歌唱種別・歌唱日を印字する。 */}
-      {obiText ? (
+      {/* 帯（obi）: 左端の縦組み。曲数・歌唱種別・歌唱日を印字する。plain では出さない。 */}
+      {obiText && !plain ? (
         <div
           className={cn(
             "absolute inset-y-0 left-0 z-10 flex items-center justify-center overflow-hidden",
@@ -109,16 +113,20 @@ export function CoverJacket({
 
       {children}
 
-      {/* グレア（CDケースのプラスチック反射）と、内側 1px の縁。 */}
-      <span aria-hidden="true" className="jacket-glare pointer-events-none absolute inset-0 z-20" />
-      <span
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 z-20 rounded-[2px] shadow-[inset_0_0_0_1px_rgba(22,33,43,.14)]"
-      />
+      {/* グレア（CDケースのプラスチック反射）と、内側 1px の縁。plain では描かない。 */}
+      {!plain ? (
+        <>
+          <span aria-hidden="true" className="jacket-glare pointer-events-none absolute inset-0 z-20" />
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 z-20 rounded-[2px] shadow-[inset_0_0_0_1px_rgba(22,33,43,.14)]"
+          />
+        </>
+      ) : null}
     </div>
   );
 
-  if (!showDisc) {
+  if (!showDisc || plain) {
     return square;
   }
 

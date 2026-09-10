@@ -4,6 +4,7 @@ import { CalendarDays, Disc3, ExternalLink, Music2, Users } from "lucide-react";
 
 import { Breadcrumb } from "@/components/breadcrumb";
 import { LatestCoversFallback } from "@/components/covers/latest-covers-fallback";
+import { RelatedFeatures } from "@/components/features/related-features";
 import { ShareButton } from "@/components/share-button";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -18,6 +19,7 @@ import {
   getSongStats,
   type SongListItem
 } from "@/lib/data/songs";
+import { getFeaturesForSong } from "@/lib/data/features";
 import { siteUrl } from "@/lib/site-url";
 import { cn, formatDate } from "@/lib/utils";
 import type { Metadata } from "next";
@@ -78,13 +80,14 @@ export default async function SongDetailPage({ params }: { params: Promise<{ id:
   }
 
   const artists = song.artists.map(({ artist }) => artist.name).join(", ") || "アーティスト未設定";
-  const [relatedSongs, stats, coOccurringSongs] = await Promise.all([
+  const [relatedSongs, stats, coOccurringSongs, relatedFeatures] = await Promise.all([
     getRelatedSongsByArtist(
       song.artists.map(({ artist }) => artist.id),
       song.id
     ),
     getSongStats(song.id),
-    getCoOccurringSongs(song.id, 6)
+    getCoOccurringSongs(song.id, 6),
+    getFeaturesForSong(song.id)
   ]);
   const summary = buildSongSummary(song.title, artists, stats);
 
@@ -262,6 +265,12 @@ export default async function SongDetailPage({ params }: { params: Promise<{ id:
           )}
         </div>
       </section>
+
+      <RelatedFeatures
+        features={relatedFeatures}
+        title="この曲が登場する特集"
+        description="この楽曲の歌唱記録を紹介しているスタッフの特集です。"
+      />
 
       {relatedSongs.length > 0 ? (
         <section className="space-y-4">

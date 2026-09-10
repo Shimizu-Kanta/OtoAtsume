@@ -7,6 +7,7 @@ import {
   evaluateSongQuality
 } from "@/lib/content-quality";
 import { getIndexableCoverSitemapEntries } from "@/lib/data/covers";
+import { getPublishedFeatureSitemapEntries } from "@/lib/data/features";
 import { db } from "@/lib/db";
 import { siteUrl } from "@/lib/site-url";
 
@@ -19,7 +20,7 @@ const approvedCoverCount = {
 } as const;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [covers, performers, songs, groups] = await Promise.all([
+  const [covers, performers, songs, groups, features] = await Promise.all([
     getIndexableCoverSitemapEntries(),
     db.performer.findMany({
       where: { status: MasterDataStatus.APPROVED },
@@ -58,7 +59,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           }
         }
       }
-    })
+    }),
+    getPublishedFeatureSitemapEntries()
   ]);
 
   const staticEntries: MetadataRoute.Sitemap = [
@@ -66,6 +68,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${siteUrl}/covers`, changeFrequency: "daily", priority: 0.8 },
     { url: `${siteUrl}/songs`, changeFrequency: "daily", priority: 0.8 },
     { url: `${siteUrl}/performers`, changeFrequency: "daily", priority: 0.8 },
+    { url: `${siteUrl}/features`, changeFrequency: "monthly", priority: 0.7 },
     { url: `${siteUrl}/groups`, changeFrequency: "weekly", priority: 0.8 },
     { url: `${siteUrl}/rankings`, changeFrequency: "daily", priority: 0.7 },
     { url: `${siteUrl}/stats`, changeFrequency: "daily", priority: 0.7 },
@@ -110,5 +113,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.6
     }));
 
-  return [...staticEntries, ...coverEntries, ...performerEntries, ...songEntries, ...groupEntries];
+  // 公開済み特集。人手で書いた記事なので薄いページの心配はなく、全件掲載する。
+  const featureEntries: MetadataRoute.Sitemap = features.map((feature) => ({
+    url: `${siteUrl}/features/${feature.slug}`,
+    lastModified: feature.updatedAt,
+    changeFrequency: "monthly",
+    priority: 0.7
+  }));
+
+  return [
+    ...staticEntries,
+    ...coverEntries,
+    ...performerEntries,
+    ...songEntries,
+    ...groupEntries,
+    ...featureEntries
+  ];
 }
