@@ -7,6 +7,7 @@ import { ListeningStation } from "@/components/home/listening-station";
 import { SectionHeading } from "@/components/home/section-heading";
 import { ShelfSection } from "@/components/home/shelf-section";
 import { SpineShelf } from "@/components/home/spine-shelf";
+import { StaffPicksShelf } from "@/components/home/staff-picks-shelf";
 import { IntroModal } from "@/components/onboarding/intro-modal";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +20,7 @@ import {
   type AnniversaryCoverGroup,
   type CoverAlbum
 } from "@/lib/data/covers";
+import { getLatestPublishedFeatures } from "@/lib/data/features";
 import { getPublicStats } from "@/lib/data/stats";
 import { absoluteUrl, siteUrl } from "@/lib/site-url";
 import { cn, formatDateInput } from "@/lib/utils";
@@ -86,6 +88,7 @@ export default async function HomePage({
     backNumberAlbums,
     randomCovers,
     anniversaryCoverGroups,
+    staffPicks,
     stats
   ] = await Promise.all([
     getApprovedCoverAlbums({ sort: "addedAtDesc" }, 1, 24),
@@ -93,6 +96,7 @@ export default async function HomePage({
     getApprovedCoverAlbums({ sort: "performedAtAsc" }, 1, 30),
     getRandomCovers(12),
     getTodayAnniversaryCoverGroups(3),
+    getLatestPublishedFeatures(3),
     getPublicStats()
   ]);
 
@@ -246,6 +250,10 @@ export default async function HomePage({
       </section>
 
       <AnniversaryCoverSection groups={anniversaryAlbumGroups} />
+
+      {/* スタッフのおすすめ（特集）。0本なら StaffPicksShelf 側で非表示。
+          店に入って最初に目に入る位置として、本日の一枚の直後・最新入荷の前に置く。 */}
+      <StaffPicksShelf features={staffPicks} />
 
       <ShelfSection
         en="new arrivals"

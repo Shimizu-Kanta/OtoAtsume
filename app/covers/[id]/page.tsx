@@ -8,6 +8,7 @@ import { CoverJacket } from "@/components/covers/cover-jacket";
 import { CoverList } from "@/components/covers/cover-list";
 import { LatestCoversFallback } from "@/components/covers/latest-covers-fallback";
 import { SetlistDisclosure } from "@/components/covers/setlist-disclosure";
+import { RelatedFeatures } from "@/components/features/related-features";
 import { PerformerColorChip } from "@/components/performers/performer-color-chip";
 import { ShareButton } from "@/components/share-button";
 import { buttonVariants } from "@/components/ui/button";
@@ -22,6 +23,7 @@ import {
   getOtherCoversBySourceVideoId,
   type CoverListItem
 } from "@/lib/data/covers";
+import { getFeaturesForCover } from "@/lib/data/features";
 import { evaluateCoverQuality } from "@/lib/content-quality";
 import { cn, formatDate, formatDateInput, formatSeconds, withTimestamp } from "@/lib/utils";
 import { absoluteUrl, siteUrl } from "@/lib/site-url";
@@ -102,14 +104,16 @@ export default async function CoverDetailPage({ params, searchParams }: CoverDet
   // 保存済みの値を優先し、未設定の古いレコードは sourceUrl から導出する。
   const sourceVideoId = cover.sourceVideoId ?? extractYouTubeVideoId(cover.sourceUrl);
 
-  const [otherPerformerCovers, otherSongCovers, sameSourceCovers] = await Promise.all([
-    getOtherCoversByPerformers(
-      performers.map((performer) => performer.id),
-      cover.id
-    ),
-    getOtherCoversBySong(cover.songId, cover.id),
-    sourceVideoId ? getOtherCoversBySourceVideoId(sourceVideoId, cover.id) : Promise.resolve([])
-  ]);
+  const [otherPerformerCovers, otherSongCovers, sameSourceCovers, relatedFeatures] =
+    await Promise.all([
+      getOtherCoversByPerformers(
+        performers.map((performer) => performer.id),
+        cover.id
+      ),
+      getOtherCoversBySong(cover.songId, cover.id),
+      sourceVideoId ? getOtherCoversBySourceVideoId(sourceVideoId, cover.id) : Promise.resolve([]),
+      getFeaturesForCover(cover.id)
+    ]);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -415,6 +419,12 @@ export default async function CoverDetailPage({ params, searchParams }: CoverDet
           </aside>
         </div>
       </article>
+
+      <RelatedFeatures
+        features={relatedFeatures}
+        title="この歌唱記録が登場する特集"
+        description="スタッフがこの一枚を紹介している特集です。"
+      />
 
       {otherPerformerCovers.length > 0 ? (
         <RelatedCoversSection
