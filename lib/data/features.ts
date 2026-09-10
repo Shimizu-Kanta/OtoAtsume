@@ -140,6 +140,114 @@ export async function unpublishFeature(id: string) {
   });
 }
 
+// 一覧・トップの棚・記事ページで共通の、公開特集を読む include。
+// 先頭1件の cover はサムネイル（OGP・カード）に使う。
+export const featurePublicInclude = {
+  _count: { select: { items: true } },
+  items: {
+    orderBy: { position: "asc" },
+    include: {
+      cover: {
+        include: coverListInclude
+      }
+    }
+  }
+} satisfies Prisma.FeatureInclude;
+
+export type FeaturePublicDetail = Prisma.FeatureGetPayload<{
+  include: typeof featurePublicInclude;
+}>;
+
+// 一覧・トップの棚用の軽量版（先頭1件の cover だけ持つ）。
+export const featureCardInclude = {
+  _count: { select: { items: true } },
+  items: {
+    orderBy: { position: "asc" },
+    take: 1,
+    include: {
+      cover: {
+        include: coverListInclude
+      }
+    }
+  }
+} satisfies Prisma.FeatureInclude;
+
+export type FeatureCard = Prisma.FeatureGetPayload<{
+  include: typeof featureCardInclude;
+}>;
+
+export async function listPublishedFeatures(): Promise<FeatureCard[]> {
+  return db.feature.findMany({
+    where: { status: ContentStatus.APPROVED },
+    orderBy: [{ publishedAt: "desc" }],
+    include: featureCardInclude
+  });
+}
+
+// トップの「スタッフのおすすめ」棚。公開済みの最新 take 本。
+export async function getLatestPublishedFeatures(take = 3): Promise<FeatureCard[]> {
+  return db.feature.findMany({
+    where: { status: ContentStatus.APPROVED },
+    orderBy: [{ publishedAt: "desc" }],
+    take,
+    include: featureCardInclude
+  });
+}
+
+// 公開記事の本体。未公開（PENDING 等）や存在しない slug は null を返し、ページ側で 404 にする。
+export async function getPublishedFeatureBySlug(slug: string): Promise<FeaturePublicDetail | null> {
+  return db.feature.findFirst({
+    where: { slug, status: ContentStatus.APPROVED },
+    include: featurePublicInclude
+  });
+}
+
+export type FeatureLinkRef = { slug: string; title: string };
+
+// この歌唱記録を紹介している公開特集。/covers/[id] の内部リンク用。
+export async function getFeaturesForCover(coverId: string): Promise<FeatureLinkRef[]> {
+  return db.feature.findMany({
+    where: {
+      status: ContentStatus.APPROVED,
+      items: { some: { coverId } }
+    },
+    orderBy: [{ publishedAt: "desc" }],
+    select: { slug: true, title: true }
+  });
+}
+
+// この楽曲の歌唱記録が1件でも登場する公開特集。/songs/[id] 用。
+export async function getFeaturesForSong(songId: string): Promise<FeatureLinkRef[]> {
+  return db.feature.findMany({
+    where: {
+      status: ContentStatus.APPROVED,
+      items: { some: { cover: { songId } } }
+    },
+    orderBy: [{ publishedAt: "desc" }],
+    select: { slug: true, title: true }
+  });
+}
+
+// この活動者の歌唱記録が登場する公開特集。/performers/[id] 用。
+export async function getFeaturesForPerformer(performerId: string): Promise<FeatureLinkRef[]> {
+  return db.feature.findMany({
+    where: {
+      status: ContentStatus.APPROVED,
+      items: { some: { cover: { performers: { some: { performerId } } } } }
+    },
+    orderBy: [{ publishedAt: "desc" }],
+    select: { slug: true, title: true }
+  });
+}
+
+// sitemap 用。公開済み特集の slug と更新日時。
+export async function getPublishedFeatureSitemapEntries() {
+  return db.feature.findMany({
+    where: { status: ContentStatus.APPROVED },
+    select: { slug: true, updatedAt: true }
+  });
+}
+
 export type CoverPickerResult = {
   id: string;
   songTitle: string;

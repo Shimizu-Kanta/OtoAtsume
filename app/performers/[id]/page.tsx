@@ -6,6 +6,7 @@ import { MasterDataStatus } from "@prisma/client";
 
 import { Breadcrumb } from "@/components/breadcrumb";
 import { LatestCoversFallback } from "@/components/covers/latest-covers-fallback";
+import { RelatedFeatures } from "@/components/features/related-features";
 import { PerformerColorDot } from "@/components/performers/performer-color-dot";
 import { PendingPerformerNotice } from "@/components/performers/pending-performer-notice";
 import { PerformerCard } from "@/components/performers/performer-card";
@@ -20,6 +21,7 @@ import {
   getPerformerStats,
   getPerformersWithSharedTags
 } from "@/lib/data/performers";
+import { getFeaturesForPerformer } from "@/lib/data/features";
 import { evaluatePerformerQuality } from "@/lib/content-quality";
 import { formatCoverTypeBreakdown, formatDateJp } from "@/lib/content-summary";
 import { siteUrl } from "@/lib/site-url";
@@ -106,9 +108,10 @@ export default async function PerformerDetailPage({ params }: { params: Promise<
         take: 6
       })
     : [];
-  const [stats, coPerformers] = await Promise.all([
+  const [stats, coPerformers, relatedFeatures] = await Promise.all([
     getPerformerStats(performer.id),
-    getCoPerformers(performer.id, 6)
+    getCoPerformers(performer.id, 6),
+    getFeaturesForPerformer(performer.id)
   ]);
   const summary = buildPerformerSummary(performer.name, stats);
 
@@ -372,6 +375,12 @@ export default async function PerformerDetailPage({ params }: { params: Promise<
           </div>
         </section>
       ) : null}
+
+      <RelatedFeatures
+        features={relatedFeatures}
+        title="この活動者が登場する特集"
+        description="この活動者の歌唱記録を紹介しているスタッフの特集です。"
+      />
 
       {taggedMates.length > 0 ? (
         <section className="space-y-4">
