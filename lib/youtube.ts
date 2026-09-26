@@ -9,8 +9,10 @@ function normalizeVideoId(value: string | null | undefined) {
   return YOUTUBE_VIDEO_ID_PATTERN.test(videoId) ? videoId : null;
 }
 
+// lib/youtube/url.ts（URL補助）と同じホストを受け付ける。ここで music.youtube.com を
+// 弾くと、補助では取得できたのに sourceVideoId・サムネイルが無い記録になってしまう。
 function isYouTubeHost(hostname: string) {
-  return hostname === "youtube.com" || hostname === "m.youtube.com";
+  return hostname === "youtube.com" || hostname === "m.youtube.com" || hostname === "music.youtube.com";
 }
 
 export function extractYouTubeVideoId(url: string | null | undefined): string | null {

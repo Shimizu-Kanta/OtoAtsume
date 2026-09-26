@@ -3,9 +3,12 @@ import { ZodError } from "zod";
 
 import { errorMessage, logAppError } from "@/lib/data/app-error-log";
 
-export async function readJson(request: Request) {
+// 本文が JSON として壊れている場合や、null・数値などオブジェクト以外の場合は {} を返す
+// （呼び出し側で body.url のようにプロパティを読んでも TypeError にならないようにする）。
+export async function readJson(request: Request): Promise<Record<string, unknown>> {
   try {
-    return await request.json();
+    const body: unknown = await request.json();
+    return typeof body === "object" && body !== null ? (body as Record<string, unknown>) : {};
   } catch {
     return {};
   }

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { readJson, validationError } from "@/lib/api/response";
 import { requireAdminApi } from "@/lib/auth/admin";
-import { getCoverById, updateAdminCover, updateCover } from "@/lib/data/covers";
+import { getAdminCoverById, updateAdminCover, updateCover } from "@/lib/data/covers";
 import { adminCoverEditSchema, coverUpdateSchema } from "@/lib/validations/cover";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +17,7 @@ export async function GET(
   }
 
   const { id } = await context.params;
-  const cover = await getCoverById(id, true);
+  const cover = await getAdminCoverById(id);
 
   if (!cover) {
     return NextResponse.json({ error: "歌唱記録が見つかりません。" }, { status: 404 });

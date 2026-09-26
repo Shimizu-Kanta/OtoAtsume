@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 
-import { createPerformerApplication } from "@/lib/data/applications";
+import { createPerformerApplication, PerformerApplicationError } from "@/lib/data/applications";
 import { checkServerActionRateLimit, rateLimitPresets } from "@/lib/rate-limit/http";
 import { verifyCaptchaToken } from "@/lib/security/captcha";
 import { performerApplicationCreateSchema } from "@/lib/validations/performer-application";
@@ -53,9 +53,13 @@ export async function createPerformerApplicationAction(formData: FormData) {
   try {
     await createPerformerApplication(parsed.data);
   } catch (error) {
+    if (error instanceof PerformerApplicationError) {
+      errorRedirect(error.message);
+    }
+
+    // 想定外の例外（DBエラー等）の文言は内部情報を含みうるため、URL に載せない。
     console.error("createPerformerApplicationAction create failed", error);
-    const message = error instanceof Error ? error.message : "申請の送信に失敗しました。時間をおいて再試行してください。";
-    errorRedirect(message);
+    errorRedirect("申請の送信に失敗しました。時間をおいて再試行してください。");
   }
 
   redirect("/?application=1");

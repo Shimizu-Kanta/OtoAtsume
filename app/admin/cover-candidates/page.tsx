@@ -17,6 +17,7 @@ import { getPerformerOptions } from "@/lib/data/performers";
 import { MAX_PENDING_CANDIDATES } from "@/lib/crawl/cover-candidates";
 import { countCoversByVideoIds } from "@/lib/crawl/candidate-status";
 import { db } from "@/lib/db";
+import { buildCandidateBulkHandoffParams } from "@/lib/crawl/candidate-handoff";
 import { cn, formatDate, getSearchParam, parsePageParam } from "@/lib/utils";
 import { CompleteCandidateButton } from "./complete-candidate-button";
 import { CrawlControls } from "./crawl-controls";
@@ -29,13 +30,10 @@ function bulkHandoffHref(candidate: {
   detectedType: string;
   sourcePerformer: { id: string } | null;
 }) {
-  const params = new URLSearchParams();
-  params.set("sourceUrl", candidate.videoUrl);
-  params.set("performedAt", candidate.publishedAt.toISOString().slice(0, 10));
-  params.set("coverType", candidate.detectedType === "MEDLEY" ? "MEDLEY" : "KARAOKE_STREAM");
-  if (candidate.sourcePerformer) {
-    params.append("performerIds", candidate.sourcePerformer.id);
-  }
+  const params = buildCandidateBulkHandoffParams(
+    { ...candidate, sourcePerformerId: candidate.sourcePerformer?.id ?? null },
+    candidate.detectedType === "MEDLEY" ? "MEDLEY" : "KARAOKE_STREAM"
+  );
   return `/admin/covers/bulk-new?${params.toString()}`;
 }
 

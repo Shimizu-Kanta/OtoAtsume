@@ -2,14 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 
-import { createBulkCovers, createCover } from "@/lib/data/covers";
+import { CoverInputError, createBulkCovers, createCover } from "@/lib/data/covers";
 import { multiSongCoverTypes } from "@/lib/constants";
 import { parseBulkCoverRowsFromFormData } from "@/lib/covers/bulk-rows";
 import type { CoverSubmitResult } from "@/lib/covers/submit-result";
 import { checkServerActionRateLimit, rateLimitPresets } from "@/lib/rate-limit/http";
 import { verifyCaptchaToken } from "@/lib/security/captcha";
 import { normalizeNames } from "@/lib/utils";
-import { coverCreateSchema } from "@/lib/validations/cover";
+import { coverCreateSchema, multiSongCoverCommonSchema } from "@/lib/validations/cover";
 
 export async function createCoverAction(formData: FormData): Promise<CoverSubmitResult> {
   let rateLimit;
@@ -89,31 +89,22 @@ export async function createCoverAction(formData: FormData): Promise<CoverSubmit
 
 // 歌枠・ライブ・メドレー：1つのURLから複数曲をまとめて登録する。
 async function createMultiSongCover(formData: FormData, coverType: string): Promise<CoverSubmitResult> {
-  const sourceUrl = String(formData.get("sourceUrl") ?? "").trim();
-  const sourceTitle = String(formData.get("sourceTitle") ?? "").trim();
-  const sourceImageUrl = String(formData.get("sourceImageUrl") ?? "").trim();
-  const performedAt = String(formData.get("performedAt") ?? "").trim();
+  const common = multiSongCoverCommonSchema.safeParse({
+    sourceUrl: formData.get("sourceUrl"),
+    sourceTitle: formData.get("sourceTitle"),
+    sourceImageUrl: formData.get("sourceImageUrl"),
+    performedAt: formData.get("performedAt")
+  });
+
+  if (!common.success) {
+    return { ok: false, error: common.error.issues[0]?.message ?? "入力内容を確認してください。" };
+  }
+
   const commonPerformerIds = formData.getAll("performerIds").map(String).filter(Boolean);
   const commonPerformerNames = String(formData.get("performerNames") ?? "").trim();
 
-  if (!sourceUrl) {
-    return { ok: false, error: "情報元URLを入力してください。" };
-  }
-
-  try {
-    // URL として妥当か（単曲側の zod と同等の最低限のチェック）。
-    new URL(sourceUrl);
-  } catch {
-    return { ok: false, error: "情報元URLの形式が正しくありません。" };
-  }
-
-  if (!performedAt) {
-    return { ok: false, error: "歌唱日を入力してください。" };
-  }
-
-  const performedAtDate = new Date(`${performedAt}T00:00:00.000Z`);
-  if (Number.isNaN(performedAtDate.getTime())) {
-    return { ok: false, error: "歌唱日の形式が正しくありません。" };
+  if (commonPerformerNames.length > 500) {
+    return { ok: false, error: "活動者名は500文字以内で入力してください。" };
   }
 
   const hasCommonPerformers =
@@ -132,10 +123,10 @@ async function createMultiSongCover(formData: FormData, coverType: string): Prom
   let created;
   try {
     created = await createBulkCovers({
-      sourceUrl,
-      sourceTitle: sourceTitle || undefined,
-      sourceImageUrl: sourceImageUrl || undefined,
-      performedAt: performedAtDate,
+      sourceUrl: common.data.sourceUrl,
+      sourceTitle: common.data.sourceTitle,
+      sourceImageUrl: common.data.sourceImageUrl,
+      performedAt: common.data.performedAt,
       coverType,
       commonPerformerIds,
       commonPerformerNames,
@@ -143,7 +134,8 @@ async function createMultiSongCover(formData: FormData, coverType: string): Prom
     });
   } catch (error) {
     console.error("createCoverAction bulk create failed", error);
-    const message = error instanceof Error ? error.message : "登録に失敗しました。時間をおいて再試行してください。";
+    const message =
+      error instanceof CoverInputError ? error.message : "登録に失敗しました。時間をおいて再試行してください。";
     return { ok: false, error: message };
   }
 

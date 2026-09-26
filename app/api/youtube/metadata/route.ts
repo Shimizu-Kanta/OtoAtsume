@@ -5,6 +5,7 @@ import { checkRouteRateLimit } from "@/lib/rate-limit/http";
 import { YouTubeMetadataError } from "@/lib/youtube/client";
 import { getCachedYouTubeVideoMetadata } from "@/lib/youtube/metadata-cache";
 import { findPerformerSuggestions, findSongSuggestions } from "@/lib/youtube/suggestions";
+import { toTokyoDateKey } from "@/lib/utils";
 import { parseYouTubeUrl } from "@/lib/youtube/url";
 
 export const dynamic = "force-dynamic";
@@ -58,7 +59,8 @@ export async function POST(request: Request) {
           sourceTitle: video.title,
           description: video.description,
           publishedAt: video.publishedAt,
-          publishedDate: video.publishedAt.slice(0, 10),
+          // 歌唱日の初期値に使うため、UTC ではなく日本時間の日付にする。
+          publishedDate: toTokyoDateKey(video.publishedAt),
           channelId: video.channelId,
           channelTitle: video.channelTitle,
           thumbnailUrl: video.thumbnailUrl,
@@ -86,16 +88,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const message =
-      error instanceof Error
-        ? error.message
-        : "YouTube動画情報の取得に失敗しました。";
-
+    // 想定外の例外は内部情報（DBエラー文言など）を含みうるため、利用者には汎用文言だけ返す。
     return NextResponse.json(
-      {
-        error: message,
-        name: error instanceof Error ? error.name : "UnknownError"
-      },
+      { error: "YouTube動画情報の取得に失敗しました。" },
       { status: 500 }
     );
   }

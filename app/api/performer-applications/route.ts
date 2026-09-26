@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { readJson, serverError, validationError } from "@/lib/api/response";
-import { createPerformerApplication } from "@/lib/data/applications";
+import { createPerformerApplication, PerformerApplicationError } from "@/lib/data/applications";
 import { checkRouteRateLimit, rateLimitPresets } from "@/lib/rate-limit/http";
 import { captchaTokenFromBody, verifyCaptchaToken } from "@/lib/security/captcha";
 import { performerApplicationCreateSchema } from "@/lib/validations/performer-application";
@@ -39,6 +39,10 @@ export async function POST(request: Request) {
     const application = await createPerformerApplication(parsed.data);
     return NextResponse.json({ application }, { status: 201 });
   } catch (error) {
+    if (error instanceof PerformerApplicationError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+
     return serverError(error);
   }
 }

@@ -9,6 +9,7 @@ import {
 
 import { evaluateCoverQuality } from "@/lib/content-quality";
 import { syncCandidateStatusForVideo } from "@/lib/crawl/candidate-status";
+import { findSongByTitleAndArtists, findSongIdsByTitle } from "@/lib/data/song-identity";
 import { db } from "@/lib/db";
 import { pageSkip, paginate, type Paginated } from "@/lib/pagination";
 import { escapeLikePattern, normalizeNames } from "@/lib/utils";
@@ -90,6 +91,28 @@ export type CoverSearch = {
   sort?: CoverSort;
 };
 
+const coverTypeValues = new Set<string>(Object.values(CoverType));
+const contentStatusValues = new Set<string>(Object.values(ContentStatus));
+
+// URL クエリ由来の値をそのまま enum として Prisma に渡すと、不正値で検証エラー（500）になる。
+// 既知の値だけを通し、それ以外は「条件なし」として扱う。
+function parseCoverType(value: string | undefined) {
+  return value && coverTypeValues.has(value) ? (value as CoverType) : undefined;
+}
+
+function parseContentStatus(value: string | undefined) {
+  return value && contentStatusValues.has(value) ? (value as ContentStatus) : undefined;
+}
+
+// 入力内容の不備による想定内のエラー。メッセージは利用者にそのまま表示してよい。
+// それ以外の例外（DBエラー等）は内部情報を含みうるため、呼び出し側で汎用文言に置き換える。
+export class CoverInputError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "CoverInputError";
+  }
+}
+
 function insensitiveContains(value: string) {
   return { contains: escapeLikePattern(value), mode: Prisma.QueryMode.insensitive };
 }
@@ -117,8 +140,11 @@ function buildCoverWhere(search: CoverSearch = {}, onlyApproved = true): Prisma.
 
   if (onlyApproved) {
     and.push({ status: ContentStatus.APPROVED });
-  } else if (search.status) {
-    and.push({ status: search.status as ContentStatus });
+  } else {
+    const status = parseContentStatus(search.status);
+    if (status) {
+      and.push({ status });
+    }
   }
 
   if (search.performer) {
@@ -163,8 +189,9 @@ function buildCoverWhere(search: CoverSearch = {}, onlyApproved = true): Prisma.
     });
   }
 
-  if (search.coverType) {
-    and.push({ coverType: search.coverType as CoverType });
+  const coverType = parseCoverType(search.coverType);
+  if (coverType) {
+    and.push({ coverType });
   }
 
   // 指定タグのいずれかを持つ活動者が歌っている歌唱記録（活動者一覧側と同じ OR 挙動）。
@@ -438,12 +465,19 @@ export async function getAdminCovers(search: CoverSearch = {}, page = 1, perPage
   return paginate(items, totalCount, page, perPage);
 }
 
-export async function getCoverById(id: string, includeHidden = false) {
+// 公開側用。通報（reports: memo・ipHash を含む）は公開APIやページに渡さないため、
+// coverDetailInclude ではなく coverListInclude で読む。
+export async function getCoverById(id: string) {
   return db.cover.findFirst({
-    where: {
-      id,
-      ...(includeHidden ? {} : { status: ContentStatus.APPROVED })
-    },
+    where: { id, status: ContentStatus.APPROVED },
+    include: coverListInclude
+  });
+}
+
+// 管理画面用。非公開の記録と通報も含めて返す。
+export async function getAdminCoverById(id: string) {
+  return db.cover.findUnique({
+    where: { id },
     include: coverDetailInclude
   });
 }
@@ -766,10 +800,14 @@ async function ensureArtist(client: DbClient, name: string) {
   });
 }
 
+// 楽曲名 + 原曲アーティストで既存楽曲を探し、無ければ作成する。
+// 同名でもアーティストが異なれば別の楽曲として扱い、既存楽曲にアーティストを追加しない。
 async function ensureSong(client: DbClient, title: string, artistNames: string[]) {
-  const existing = await client.song.findFirst({
-    where: { title: { equals: escapeLikePattern(title), mode: Prisma.QueryMode.insensitive } }
-  });
+  const existing = await findSongByTitleAndArtists(client, title, artistNames);
+
+  if (existing && !existing.needsArtists) {
+    return existing;
+  }
 
   const song =
     existing ??
@@ -836,7 +874,7 @@ function initialCoverStatus() {
 
 export async function findPotentialDuplicateCovers(input: {
   sourceUrl: string;
-  songId: string;
+  songIds: string[];
   performerIds: string[];
   performedAt: Date;
   timestampSeconds?: number;
@@ -851,7 +889,7 @@ export async function findPotentialDuplicateCovers(input: {
   const candidates = await db.cover.findMany({
     where: {
       ...sourceMatch,
-      songId: input.songId,
+      songId: { in: input.songIds },
       performedAt: input.performedAt,
       ...(input.timestampSeconds == null ? {} : { timestampSeconds: input.timestampSeconds }),
       performers: {
@@ -904,12 +942,10 @@ async function findExistingPerformerIds(performerIds: string[], performerNames: 
 }
 
 export async function findPotentialDuplicateCoversForInput(input: DuplicateCandidateInput) {
-  const song = await db.song.findFirst({
-    where: { title: { equals: escapeLikePattern(input.songTitle), mode: Prisma.QueryMode.insensitive } },
-    select: { id: true }
-  });
+  // 重複警告は安全側に倒し、同名楽曲（アーティスト違いを含む）すべてを対象にする。
+  const songIds = await findSongIdsByTitle(db, input.songTitle);
 
-  if (!song) {
+  if (songIds.length === 0) {
     return [];
   }
 
@@ -924,7 +960,7 @@ export async function findPotentialDuplicateCoversForInput(input: DuplicateCandi
 
   return findPotentialDuplicateCovers({
     sourceUrl: input.sourceUrl,
-    songId: song.id,
+    songIds,
     performerIds,
     performedAt: input.performedAt,
     timestampSeconds: input.timestampSeconds
@@ -935,21 +971,31 @@ export async function findPotentialDuplicateCoversForInput(input: DuplicateCandi
 // 楽曲 + 活動者 + 歌唱日が一致し、sourceUrl だけが異なる記録を検出する
 // （アーカイブと切り抜きなど、同じ歌唱がURL違いで二重登録される事故の保険）。
 export async function findSameSingingCandidates(params: {
-  songId: string;
+  songIds: string[];
   performerIds: string[];
   performedAt: Date;
   excludeSourceUrl: string;
 }) {
-  if (params.performerIds.length === 0) {
+  if (params.performerIds.length === 0 || params.songIds.length === 0) {
     return [];
   }
 
+  // 保存済みの sourceUrl は正規化されているため、比較側も同じ規則で正規化する。
+  // YouTube は videoId で比較し、t=・si= 等の違いで同一動画を「別URL」と誤判定しない。
+  const excludeSourceUrl = normalizeYouTubeSourceUrl(params.excludeSourceUrl);
+  const excludeVideoId = extractYouTubeVideoId(excludeSourceUrl);
+  const excludeSource: Prisma.CoverWhereInput = excludeVideoId
+    ? {
+        OR: [{ sourceVideoId: null, sourceUrl: { not: excludeSourceUrl } }, { sourceVideoId: { not: excludeVideoId } }]
+      }
+    : { sourceUrl: { not: excludeSourceUrl } };
+
   return db.cover.findMany({
     where: {
-      songId: params.songId,
+      songId: { in: params.songIds },
       performedAt: params.performedAt,
       performers: { some: { performerId: { in: params.performerIds } } },
-      sourceUrl: { not: params.excludeSourceUrl }
+      ...excludeSource
     },
     include: coverListInclude,
     take: 3
@@ -964,12 +1010,9 @@ export async function findSameSingingCandidatesForInput(input: {
   performedAt: Date;
   sourceUrl: string;
 }) {
-  const song = await db.song.findFirst({
-    where: { title: { equals: escapeLikePattern(input.songTitle), mode: Prisma.QueryMode.insensitive } },
-    select: { id: true }
-  });
+  const songIds = await findSongIdsByTitle(db, input.songTitle);
 
-  if (!song) {
+  if (songIds.length === 0) {
     return [];
   }
 
@@ -983,7 +1026,7 @@ export async function findSameSingingCandidatesForInput(input: {
   }
 
   return findSameSingingCandidates({
-    songId: song.id,
+    songIds,
     performerIds,
     performedAt: input.performedAt,
     excludeSourceUrl: input.sourceUrl
@@ -995,7 +1038,7 @@ export async function createCover(input: CoverCreateInput, status?: ContentStatu
   const performerNames = normalizeNames(input.performerNames);
 
   if (artistNames.length === 0) {
-    throw new Error("原曲アーティストを指定してください。");
+    throw new CoverInputError("原曲アーティストを指定してください。");
   }
 
   // 保存直前に sourceUrl を正規化し、内部一致判定用の sourceVideoId を同じ値から導出する。
@@ -1007,7 +1050,7 @@ export async function createCover(input: CoverCreateInput, status?: ContentStatu
     const performers = await ensurePerformers(client, input.performerIds, performerNames);
 
     if (performers.length === 0) {
-      throw new Error("活動者を指定してください。");
+      throw new CoverInputError("活動者を指定してください。");
     }
 
     const cover = await client.cover.create({
@@ -1063,7 +1106,7 @@ export type BulkCoverInput = {
 // 各行は共通の活動者を使うが、行ごとに上書き（performerIds/Names）もできる。
 export async function createBulkCovers(input: BulkCoverInput) {
   if (input.rows.length === 0) {
-    throw new Error("登録する曲を1行以上入力してください。");
+    throw new CoverInputError("登録する曲を1行以上入力してください。");
   }
 
   // 保存直前に sourceUrl を正規化し、内部一致判定用の sourceVideoId を同じ値から導出する。
@@ -1080,7 +1123,7 @@ export async function createBulkCovers(input: BulkCoverInput) {
       const rowPerformerNames = normalizeNames(row.performerNames);
 
       if (artistNames.length === 0) {
-        throw new Error(`${index + 1}曲目: 原曲アーティストを指定してください。`);
+        throw new CoverInputError(`${index + 1}曲目: 原曲アーティストを指定してください。`);
       }
 
       const song = await ensureSong(client, row.songTitle, artistNames);
@@ -1092,7 +1135,7 @@ export async function createBulkCovers(input: BulkCoverInput) {
       const performers = await ensurePerformers(client, rowPerformerIds, performerNames);
 
       if (performers.length === 0) {
-        throw new Error(`${index + 1}曲目: 活動者を指定してください。`);
+        throw new CoverInputError(`${index + 1}曲目: 活動者を指定してください。`);
       }
 
       const cover = await client.cover.create({
@@ -1140,7 +1183,7 @@ export async function updateAdminCover(id: string, input: AdminCoverEditInput) {
   const performerNames = normalizeNames(input.performerNames);
 
   if (artistNames.length === 0) {
-    throw new Error("原曲アーティストを指定してください。");
+    throw new CoverInputError("原曲アーティストを指定してください。");
   }
 
   // 管理画面での編集でも sourceUrl を正規化し、sourceVideoId を同期する。
@@ -1152,8 +1195,17 @@ export async function updateAdminCover(id: string, input: AdminCoverEditInput) {
     const performers = await ensurePerformers(client, input.performerIds, performerNames);
 
     if (performers.length === 0) {
-      throw new Error("活動者を指定してください。");
+      throw new CoverInputError("活動者を指定してください。");
     }
+
+    const current = await client.cover.findUniqueOrThrow({
+      where: { id },
+      select: { sourceUrl: true, sourceVideoId: true }
+    });
+    // 情報元の動画が変わった場合、旧動画のサムネイルURLは使えないため破棄する
+    // （表示側は sourceUrl から YouTube サムネイルを導出するフォールバックに切り替わる）。
+    const sourceChanged =
+      current.sourceVideoId !== sourceVideoId || (!sourceVideoId && current.sourceUrl !== sourceUrl);
 
     await client.cover.update({
       where: { id },
@@ -1165,9 +1217,14 @@ export async function updateAdminCover(id: string, input: AdminCoverEditInput) {
         sourceVideoId,
         sourceTitle: input.sourceTitle ?? null,
         timestampSeconds: input.timestampSeconds ?? null,
-        status: input.status as ContentStatus
+        status: input.status as ContentStatus,
+        ...(sourceChanged ? { sourceImageUrl: null } : {})
       }
     });
+
+    if (sourceChanged) {
+      await syncCandidateStatusForVideo(client, sourceUrl, id);
+    }
 
     await client.coverPerformer.deleteMany({
       where: { coverId: id }
@@ -1188,7 +1245,24 @@ export async function updateAdminCover(id: string, input: AdminCoverEditInput) {
   });
 }
 
+export class CoverNotFoundError extends Error {
+  constructor() {
+    super("歌唱記録が見つかりません。");
+    this.name = "CoverNotFoundError";
+  }
+}
+
 export async function createReport(coverId: string, input: ReportCreateInput) {
+  // 存在しない・非公開の記録への通報は FK エラー（500）にせず、見つからない扱いにする。
+  const cover = await db.cover.findFirst({
+    where: { id: coverId, status: ContentStatus.APPROVED },
+    select: { id: true }
+  });
+
+  if (!cover) {
+    throw new CoverNotFoundError();
+  }
+
   return db.report.create({
     data: {
       coverId,

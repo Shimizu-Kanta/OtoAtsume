@@ -8,15 +8,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
 import { StandaloneSongPicker } from "@/components/standalone-song-picker";
 import { Textarea } from "@/components/ui/textarea";
-import { coverTypeOptions } from "@/lib/constants";
+import { buildCandidateBulkHandoffParams } from "@/lib/crawl/candidate-handoff";
 import { requireAdminPage } from "@/lib/auth/admin";
 import { getCoverCandidate } from "@/lib/data/cover-candidates";
 import { getPerformerOptions } from "@/lib/data/performers";
 import { findPerformerSuggestions, findSongSuggestions } from "@/lib/youtube/suggestions";
-import { getSearchParam } from "@/lib/utils";
+import { getSearchParam, toTokyoDateKey } from "@/lib/utils";
+import { CandidateCoverTypeSelect } from "./cover-type-select";
 import { adoptCoverVideoCandidateAction } from "../actions";
 import { SongSuggestionButtons } from "./song-suggestion-buttons";
 
@@ -39,13 +39,10 @@ export default async function AdminCoverCandidateConfirmPage({
 
   // 歌枠・メドレーは1URL複数曲のため確定フォームの対象外。一括登録画面へ誘導する。
   if (candidate.detectedType === "KARAOKE_STREAM" || candidate.detectedType === "MEDLEY") {
-    const handoff = new URLSearchParams();
-    handoff.set("sourceUrl", candidate.videoUrl);
-    handoff.set("performedAt", candidate.publishedAt.toISOString().slice(0, 10));
-    handoff.set("coverType", candidate.detectedType === "MEDLEY" ? "MEDLEY" : "KARAOKE_STREAM");
-    if (candidate.sourcePerformerId) {
-      handoff.append("performerIds", candidate.sourcePerformerId);
-    }
+    const handoff = buildCandidateBulkHandoffParams(
+      candidate,
+      candidate.detectedType === "MEDLEY" ? "MEDLEY" : "KARAOKE_STREAM"
+    );
     redirect(`/admin/covers/bulk-new?${handoff.toString()}`);
   }
 
@@ -69,7 +66,7 @@ export default async function AdminCoverCandidateConfirmPage({
       ...performerSuggestions.map((suggestion) => suggestion.id)
     ])
   );
-  const publishedDate = candidate.publishedAt.toISOString().slice(0, 10);
+  const publishedDate = toTokyoDateKey(candidate.publishedAt);
   const topSong = songSuggestions[0];
 
   return (
@@ -123,18 +120,10 @@ export default async function AdminCoverCandidateConfirmPage({
             </div>
             <div className="space-y-2">
               <Label htmlFor="coverType">歌唱種別</Label>
-              <Select
-                id="coverType"
-                name="coverType"
-                required
+              <CandidateCoverTypeSelect
                 defaultValue={candidate.detectedType === "SHORT" ? "SHORT" : "COVER_VIDEO"}
-              >
-                {coverTypeOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </Select>
+                bulkHandoffQuery={buildCandidateBulkHandoffParams(candidate).toString()}
+              />
             </div>
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="sourceTitle">ソースタイトル</Label>

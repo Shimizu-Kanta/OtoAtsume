@@ -46,6 +46,13 @@ export function parseBulkCoverRowsFromFormData(
     if (!artistNames) {
       return { ok: false, error: `${i + 1}曲目: 原曲アーティスト名を入力してください。` };
     }
+    // 単曲登録（coverCreateSchema）と同じ長さ上限。
+    if (songTitle.length > 200) {
+      return { ok: false, error: `${i + 1}曲目: 楽曲名は200文字以内で入力してください。` };
+    }
+    if (artistNames.length > 500) {
+      return { ok: false, error: `${i + 1}曲目: 原曲アーティスト名は500文字以内で入力してください。` };
+    }
 
     let timestampSeconds: number | undefined;
     if (timestamp) {
