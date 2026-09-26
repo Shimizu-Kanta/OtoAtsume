@@ -761,7 +761,7 @@ export async function getTodayAnniversaryCoverGroups(takePerPerformer = 3) {
   return groups.filter((group) => group.covers.length > 0);
 }
 
-function shuffleItems<T>(items: T[]) {
+export function shuffleItems<T>(items: T[]) {
   const result = [...items];
 
   for (let index = result.length - 1; index > 0; index -= 1) {
