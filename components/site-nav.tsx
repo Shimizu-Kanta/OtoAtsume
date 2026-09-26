@@ -14,6 +14,7 @@ const navItems = [
   { href: "/groups", label: "グループ" },
   { href: "/songs", label: "楽曲" },
   { href: "/rankings", label: "チャート" },
+  { href: "/playlist", label: "おまかせ" },
   { href: "/covers/new", label: "持ち込み" }
 ];
 
