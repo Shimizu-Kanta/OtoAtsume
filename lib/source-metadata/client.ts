@@ -192,7 +192,10 @@ function isPrivateIpv4(address: string) {
   );
 }
 
-async function readLimitedText(response: Response, maxBytes: number) {
+// safeFetch のタイムアウトはレスポンスヘッダ受信までしか効かない（finally で解除される）ため、
+// 本文の読み込みにも別途タイムアウトを掛ける。少しずつしか送ってこない相手に接続を
+// 握られ続けないよう、期限を過ぎたら読み込みを打ち切る。
+async function readLimitedText(response: Response, maxBytes: number, timeoutMs = FETCH_TIMEOUT_MS) {
   if (!response.body) {
     return "";
   }
@@ -200,21 +203,43 @@ async function readLimitedText(response: Response, maxBytes: number) {
   const reader = response.body.getReader();
   const chunks: Uint8Array[] = [];
   let received = 0;
+  let timedOut = false;
+  const timeoutId = setTimeout(() => {
+    timedOut = true;
+    void reader.cancel().catch(() => undefined);
+  }, timeoutMs);
 
-  while (true) {
-    const { done, value } = await reader.read();
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
 
-    if (done) {
-      break;
+      if (timedOut) {
+        throw new SourceMetadataError("URLの取得がタイムアウトしました。");
+      }
+
+      if (done) {
+        break;
+      }
+
+      received += value.byteLength;
+
+      if (received > maxBytes) {
+        void reader.cancel().catch(() => undefined);
+        throw new SourceMetadataError("取得できるHTMLサイズを超えました。");
+      }
+
+      chunks.push(value);
+    }
+  } catch (error) {
+    if (error instanceof SourceMetadataError) {
+      throw error;
     }
 
-    received += value.byteLength;
-
-    if (received > maxBytes) {
-      throw new SourceMetadataError("取得できるHTMLサイズを超えました。");
-    }
-
-    chunks.push(value);
+    throw new SourceMetadataError(
+      timedOut ? "URLの取得がタイムアウトしました。" : "URLの取得に失敗しました。"
+    );
+  } finally {
+    clearTimeout(timeoutId);
   }
 
   const buffer = new Uint8Array(received);

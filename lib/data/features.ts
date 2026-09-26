@@ -130,21 +130,29 @@ export async function publishFeature(id: string) {
   });
 }
 
+// publishedAt は消さずに残す（再公開時に最初の公開日を保つため。publishFeature 参照）。
+// 公開側の取得はすべて status で絞り込むため、publishedAt が残っていても表示されない。
 export async function unpublishFeature(id: string) {
   return db.feature.update({
     where: { id },
     data: {
-      status: ContentStatus.PENDING,
-      publishedAt: null
+      status: ContentStatus.PENDING
     }
   });
 }
 
+// 公開側で表示する曲は、公開中（APPROVED）の歌唱記録に限る。特集に入れた後で
+// 記録が非公開にされた場合、特集からも自動的に外れる（リンク先が 404 になるのを防ぐ）。
+const publicFeatureItemWhere = {
+  cover: { status: ContentStatus.APPROVED }
+} satisfies Prisma.FeatureItemWhereInput;
+
 // 一覧・トップの棚・記事ページで共通の、公開特集を読む include。
 // 先頭1件の cover はサムネイル（OGP・カード）に使う。
 export const featurePublicInclude = {
-  _count: { select: { items: true } },
+  _count: { select: { items: { where: publicFeatureItemWhere } } },
   items: {
+    where: publicFeatureItemWhere,
     orderBy: { position: "asc" },
     include: {
       cover: {
@@ -160,8 +168,9 @@ export type FeaturePublicDetail = Prisma.FeatureGetPayload<{
 
 // 一覧・トップの棚用の軽量版（先頭1件の cover だけ持つ）。
 export const featureCardInclude = {
-  _count: { select: { items: true } },
+  _count: { select: { items: { where: publicFeatureItemWhere } } },
   items: {
+    where: publicFeatureItemWhere,
     orderBy: { position: "asc" },
     take: 1,
     include: {
@@ -209,7 +218,7 @@ export async function getFeaturesForCover(coverId: string): Promise<FeatureLinkR
   return db.feature.findMany({
     where: {
       status: ContentStatus.APPROVED,
-      items: { some: { coverId } }
+      items: { some: { coverId, ...publicFeatureItemWhere } }
     },
     orderBy: [{ publishedAt: "desc" }],
     select: { slug: true, title: true }
@@ -221,7 +230,7 @@ export async function getFeaturesForSong(songId: string): Promise<FeatureLinkRef
   return db.feature.findMany({
     where: {
       status: ContentStatus.APPROVED,
-      items: { some: { cover: { songId } } }
+      items: { some: { cover: { songId, status: ContentStatus.APPROVED } } }
     },
     orderBy: [{ publishedAt: "desc" }],
     select: { slug: true, title: true }
@@ -233,7 +242,9 @@ export async function getFeaturesForPerformer(performerId: string): Promise<Feat
   return db.feature.findMany({
     where: {
       status: ContentStatus.APPROVED,
-      items: { some: { cover: { performers: { some: { performerId } } } } }
+      items: {
+        some: { cover: { status: ContentStatus.APPROVED, performers: { some: { performerId } } } }
+      }
     },
     orderBy: [{ publishedAt: "desc" }],
     select: { slug: true, title: true }

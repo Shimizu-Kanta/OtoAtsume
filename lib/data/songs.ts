@@ -303,23 +303,33 @@ export async function getSongStats(songId: string) {
   };
 }
 
-// 同一 sourceUrl（同じ配信・ライブ）に紐づく別楽曲を共起数の多い順に返す。
+// 同じ配信・ライブ（同一動画）に紐づく別楽曲を共起数の多い順に返す。
 // 歌枠は1配信に複数曲が含まれるため、この共起データはこのサイト固有の付加価値になる。
+// 同一動画の判定は他の画面と同じく sourceVideoId で行い（URL 表記揺れに強い）、
+// videoId の無い記録（YouTube 以外）だけ sourceUrl で突き合わせる。
 export async function getCoOccurringSongs(songId: string, limit = 6) {
   const sourceRows = await db.cover.findMany({
     where: { songId, status: ContentStatus.APPROVED },
-    select: { sourceUrl: true }
+    select: { sourceUrl: true, sourceVideoId: true }
   });
-  const sourceUrls = Array.from(new Set(sourceRows.map((row) => row.sourceUrl)));
+  const videoIds = Array.from(
+    new Set(sourceRows.map((row) => row.sourceVideoId).filter((id): id is string => Boolean(id)))
+  );
+  const sourceUrls = Array.from(
+    new Set(sourceRows.filter((row) => !row.sourceVideoId).map((row) => row.sourceUrl))
+  );
 
-  if (sourceUrls.length === 0) {
+  if (videoIds.length === 0 && sourceUrls.length === 0) {
     return [];
   }
 
   const coOccurring = await db.cover.findMany({
     where: {
       status: ContentStatus.APPROVED,
-      sourceUrl: { in: sourceUrls },
+      OR: [
+        ...(videoIds.length > 0 ? [{ sourceVideoId: { in: videoIds } }] : []),
+        ...(sourceUrls.length > 0 ? [{ sourceVideoId: null, sourceUrl: { in: sourceUrls } }] : [])
+      ],
       songId: { not: songId }
     },
     select: {

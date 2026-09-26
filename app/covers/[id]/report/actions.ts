@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 
-import { createReport } from "@/lib/data/covers";
+import { CoverNotFoundError, createReport } from "@/lib/data/covers";
 import { checkServerActionRateLimit, rateLimitPresets } from "@/lib/rate-limit/http";
 import { verifyCaptchaToken } from "@/lib/security/captcha";
 import { reportCreateSchema } from "@/lib/validations/report";
@@ -51,6 +51,10 @@ export async function createReportAction(coverId: string, formData: FormData) {
   try {
     await createReport(coverId, parsed.data);
   } catch (error) {
+    if (error instanceof CoverNotFoundError) {
+      errorRedirect(coverId, error.message);
+    }
+
     console.error("createReportAction create failed", error);
     errorRedirect(coverId, "送信に失敗しました。時間をおいて再試行してください。");
   }

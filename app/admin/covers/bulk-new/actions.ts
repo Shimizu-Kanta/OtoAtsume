@@ -4,12 +4,12 @@ import { ContentStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
 import { requireAdminPage } from "@/lib/auth/admin";
-import { createBulkCovers, createCover } from "@/lib/data/covers";
+import { CoverInputError, createBulkCovers, createCover } from "@/lib/data/covers";
 import { multiSongCoverTypes } from "@/lib/constants";
 import { parseBulkCoverRowsFromFormData } from "@/lib/covers/bulk-rows";
 import type { CoverSubmitResult } from "@/lib/covers/submit-result";
 import { normalizeNames } from "@/lib/utils";
-import { coverCreateSchema } from "@/lib/validations/cover";
+import { coverCreateSchema, multiSongCoverCommonSchema } from "@/lib/validations/cover";
 
 const CREATABLE_STATUSES = new Set<string>(["PENDING", "APPROVED"]);
 
@@ -53,7 +53,7 @@ export async function createAdminCoverAction(formData: FormData): Promise<CoverS
     cover = await createCover(parsed.data, status);
   } catch (error) {
     console.error("createAdminCoverAction create failed", error);
-    const message = error instanceof Error ? error.message : "登録に失敗しました。";
+    const message = error instanceof CoverInputError ? error.message : "登録に失敗しました。";
     return { ok: false, error: message };
   }
 
@@ -82,30 +82,22 @@ async function createAdminMultiSongCover(
   coverType: string,
   status: ContentStatus
 ): Promise<CoverSubmitResult> {
-  const sourceUrl = String(formData.get("sourceUrl") ?? "").trim();
-  const sourceTitle = String(formData.get("sourceTitle") ?? "").trim();
-  const sourceImageUrl = String(formData.get("sourceImageUrl") ?? "").trim();
-  const performedAt = String(formData.get("performedAt") ?? "").trim();
+  const common = multiSongCoverCommonSchema.safeParse({
+    sourceUrl: formData.get("sourceUrl"),
+    sourceTitle: formData.get("sourceTitle"),
+    sourceImageUrl: formData.get("sourceImageUrl"),
+    performedAt: formData.get("performedAt")
+  });
+
+  if (!common.success) {
+    return { ok: false, error: common.error.issues[0]?.message ?? "入力内容を確認してください。" };
+  }
+
   const commonPerformerIds = formData.getAll("performerIds").map(String).filter(Boolean);
   const commonPerformerNames = String(formData.get("performerNames") ?? "").trim();
 
-  if (!sourceUrl) {
-    return { ok: false, error: "情報元URLを入力してください。" };
-  }
-
-  try {
-    new URL(sourceUrl);
-  } catch {
-    return { ok: false, error: "情報元URLの形式が正しくありません。" };
-  }
-
-  if (!performedAt) {
-    return { ok: false, error: "歌唱日を入力してください。" };
-  }
-
-  const performedAtDate = new Date(`${performedAt}T00:00:00.000Z`);
-  if (Number.isNaN(performedAtDate.getTime())) {
-    return { ok: false, error: "歌唱日の形式が正しくありません。" };
+  if (commonPerformerNames.length > 500) {
+    return { ok: false, error: "活動者名は500文字以内で入力してください。" };
   }
 
   const hasCommonPerformers =
@@ -123,10 +115,10 @@ async function createAdminMultiSongCover(
   let created;
   try {
     created = await createBulkCovers({
-      sourceUrl,
-      sourceTitle: sourceTitle || undefined,
-      sourceImageUrl: sourceImageUrl || undefined,
-      performedAt: performedAtDate,
+      sourceUrl: common.data.sourceUrl,
+      sourceTitle: common.data.sourceTitle,
+      sourceImageUrl: common.data.sourceImageUrl,
+      performedAt: common.data.performedAt,
       coverType,
       commonPerformerIds,
       commonPerformerNames,
@@ -135,7 +127,7 @@ async function createAdminMultiSongCover(
     });
   } catch (error) {
     console.error("createAdminCoverAction bulk create failed", error);
-    const message = error instanceof Error ? error.message : "一括登録に失敗しました。";
+    const message = error instanceof CoverInputError ? error.message : "一括登録に失敗しました。";
     return { ok: false, error: message };
   }
 

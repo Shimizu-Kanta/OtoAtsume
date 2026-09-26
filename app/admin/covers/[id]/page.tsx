@@ -16,7 +16,7 @@ import {
   coverTypeOptions
 } from "@/lib/constants";
 import { requireAdminPage } from "@/lib/auth/admin";
-import { getCoverById } from "@/lib/data/covers";
+import { getAdminCoverById } from "@/lib/data/covers";
 import { getPerformerOptions } from "@/lib/data/performers";
 import { formatDateInput, getSearchParam } from "@/lib/utils";
 import { updateAdminCoverAction } from "./actions";
@@ -33,7 +33,7 @@ export default async function AdminCoverEditPage({
   await requireAdminPage();
   const [{ id }, query] = await Promise.all([params, searchParams]);
   const [cover, performerOptions] = await Promise.all([
-    getCoverById(id, true),
+    getAdminCoverById(id),
     getPerformerOptions()
   ]);
 

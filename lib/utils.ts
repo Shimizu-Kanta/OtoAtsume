@@ -69,6 +69,50 @@ export function formatDateInput(value: Date | string) {
   return date.toISOString().slice(0, 10);
 }
 
+// 日付のみの値（歌唱日など）は UTC 0時の Date として保存している。
+// "YYYY-MM-DD" を厳密に解釈し、2月31日のような存在しない日付は繰り上げずに null を返す。
+export function parseDateOnly(value: string): Date | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
+
+  if (!match) {
+    return null;
+  }
+
+  const [, year, month, day] = match.map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+
+  if (
+    Number.isNaN(date.getTime()) ||
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() !== month - 1 ||
+    date.getUTCDate() !== day
+  ) {
+    return null;
+  }
+
+  return date;
+}
+
+// 日本時間（サイトの基準タイムゾーン）での日付を "YYYY-MM-DD" で返す。
+// toISOString().slice(0, 10) は UTC の日付になり、JST 0〜9時の日時が前日になってしまう。
+export function toTokyoDateKey(value: Date | string) {
+  const date = typeof value === "string" ? new Date(value) : value;
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Tokyo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).formatToParts(date);
+  const get = (type: string) => parts.find((part) => part.type === type)?.value ?? "";
+
+  return `${get("year")}-${get("month")}-${get("day")}`;
+}
+
 export function formatSeconds(value: number | null | undefined) {
   if (value == null) {
     return "-";

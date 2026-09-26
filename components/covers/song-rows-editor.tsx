@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type Dispatch, type SetStateAction } from "react";
 import { Plus, Sparkles, Trash2 } from "lucide-react";
 
 import { PerformerSelectorChips } from "@/components/performer-selector-chips";
@@ -50,7 +50,8 @@ export function SongRowsEditor({
   singleRow = false
 }: {
   rows: SongRow[];
-  onRowsChange: (rows: SongRow[]) => void;
+  // 親の useState のセッターをそのまま受け取る（関数形式の更新を使うため）。
+  onRowsChange: Dispatch<SetStateAction<SongRow[]>>;
   participants: Participant[];
   description?: string;
   maxRows?: number;
@@ -63,20 +64,25 @@ export function SongRowsEditor({
   const effectiveMaxRows = singleRow ? 1 : maxRows;
   const reachedLimit = effectiveMaxRows != null && rows.length >= effectiveMaxRows;
 
+  // 必ず関数形式で更新する。SongPicker で候補を選ぶと onTitleChange と onArtistNamesChange が
+  // 同じタイミングで続けて呼ばれるため、描画時点の rows を元に配列を作ると後の呼び出しが
+  // 前の更新を上書きし、楽曲名が消えてアーティスト名だけが反映されてしまう。
   function updateRow(key: number, patch: Partial<SongRow>) {
-    onRowsChange(rows.map((row) => (row.key === key ? { ...row, ...patch } : row)));
+    onRowsChange((current) => current.map((row) => (row.key === key ? { ...row, ...patch } : row)));
   }
 
   function addRow() {
     if (reachedLimit) {
       return;
     }
-    onRowsChange([...rows, createEmptyRow()]);
+    onRowsChange((current) => [...current, createEmptyRow()]);
   }
 
   function removeRow(key: number) {
-    const next = rows.filter((row) => row.key !== key);
-    onRowsChange(next.length > 0 ? next : [createEmptyRow()]);
+    onRowsChange((current) => {
+      const next = current.filter((row) => row.key !== key);
+      return next.length > 0 ? next : [createEmptyRow()];
+    });
   }
 
   function parseSetlist() {

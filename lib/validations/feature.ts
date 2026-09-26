@@ -21,7 +21,8 @@ const featureLinkUrl = z
   .min(1, "URLを入力してください。")
   .max(2000)
   .refine(
-    (value) => value.startsWith("/") || /^https:\/\//i.test(value),
+    // "//evil.example" はプロトコル相対URL（外部サイト）になるため、サイト内リンクとしては認めない。
+    (value) => (value.startsWith("/") && !value.startsWith("//") && !value.startsWith("/\\")) || /^https:\/\//i.test(value),
     "URLは https:// またはサイト内リンク（/ 始まり）のみ指定できます。"
   );
 

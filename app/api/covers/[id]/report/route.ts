@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { readJson, serverError, validationError } from "@/lib/api/response";
-import { createReport } from "@/lib/data/covers";
+import { CoverNotFoundError, createReport } from "@/lib/data/covers";
 import { checkRouteRateLimit, rateLimitPresets } from "@/lib/rate-limit/http";
 import { captchaTokenFromBody, verifyCaptchaToken } from "@/lib/security/captcha";
 import { reportCreateSchema } from "@/lib/validations/report";
@@ -39,6 +39,10 @@ export async function POST(
     const report = await createReport(id, parsed.data);
     return NextResponse.json({ report }, { status: 201 });
   } catch (error) {
+    if (error instanceof CoverNotFoundError) {
+      return NextResponse.json({ error: error.message }, { status: 404 });
+    }
+
     return serverError(error);
   }
 }

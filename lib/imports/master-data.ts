@@ -3,6 +3,7 @@ import { createHash } from "crypto";
 import { MasterDataStatus, Prisma, type PrismaClient } from "@prisma/client";
 import { z } from "zod";
 
+import { findSongByTitleAndArtists } from "@/lib/data/song-identity";
 import { db } from "@/lib/db";
 import { addPerformerTags } from "@/lib/data/tags";
 import {
@@ -564,13 +565,17 @@ async function buildRowPreview(normalized: NormalizedRows): Promise<ImportRowPre
     }));
   }
 
-  const existing = await findExistingSongs(normalized.rows.map((row) => row.title));
-  return normalized.rows.map((row) => ({
-    rowNumber: row.rowNumber,
-    name: row.title,
-    action: existing.has(row.title.toLowerCase()) ? "update" : "create",
-    errors: []
-  }));
+  const previews: ImportRowPreview[] = [];
+  for (const row of normalized.rows) {
+    const existing = await findSongByTitleAndArtists(db, row.title, row.artistNames);
+    previews.push({
+      rowNumber: row.rowNumber,
+      name: row.title,
+      action: existing ? "update" : "create",
+      errors: []
+    });
+  }
+  return previews;
 }
 
 async function executeValidatedRows(
@@ -723,9 +728,8 @@ async function executeSongImport(
       );
     }
 
-    const existing = await client.song.findFirst({
-      where: { title: { equals: escapeLikePattern(row.title), mode: Prisma.QueryMode.insensitive } }
-    });
+    // 楽曲の同一性は「楽曲名 + 原曲アーティスト」で判定する（公開フォームの登録と同じ規則）。
+    const existing = await findSongByTitleAndArtists(client, row.title, row.artistNames);
     const song =
       existing ??
       (await client.song.create({
@@ -797,23 +801,6 @@ async function findExistingPerformers(names: string[]) {
   });
 
   return new Set(performers.map((performer) => performer.name.toLowerCase()));
-}
-
-async function findExistingSongs(titles: string[]) {
-  if (titles.length === 0) {
-    return new Set<string>();
-  }
-
-  const songs = await db.song.findMany({
-    where: {
-      OR: titles.map((title) => ({
-        title: { equals: escapeLikePattern(title), mode: Prisma.QueryMode.insensitive }
-      }))
-    },
-    select: { title: true }
-  });
-
-  return new Set(songs.map((song) => song.title.toLowerCase()));
 }
 
 function summarizeRows(totalRows: number, rows: ImportRowPreview[]): ImportSummary {

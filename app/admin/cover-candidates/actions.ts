@@ -8,6 +8,8 @@ import { requireAdminPage } from "@/lib/auth/admin";
 import { getCoverCandidate, markCoverCandidateAdopted, setCoverCandidateStatus } from "@/lib/data/cover-candidates";
 import { createCover } from "@/lib/data/covers";
 import { runCoverCandidateCrawl, type CrawlMode, type CrawlResult } from "@/lib/crawl/cover-candidates";
+import { buildCandidateBulkHandoffParams } from "@/lib/crawl/candidate-handoff";
+import { multiSongCoverTypes } from "@/lib/constants";
 import { coverCreateSchema } from "@/lib/validations/cover";
 
 function revalidateCandidatePages() {
@@ -47,6 +49,13 @@ export async function adoptCoverVideoCandidateAction(candidateId: string, formDa
 
   if (candidate.status !== CoverCandidateStatus.PENDING) {
     redirect(`/admin/cover-candidates?error=${encodeURIComponent("この候補は既に処理済みです。")}`);
+  }
+
+  // 確定フォームは1曲用。歌枠・ライブ・メドレーは複数曲を入力できる一括登録画面で扱う
+  // （JS 無効時などで複数曲の種別のまま送信された場合もここで引き継ぐ）。
+  const coverType = String(formData.get("coverType") ?? "");
+  if (multiSongCoverTypes.has(coverType)) {
+    redirect(`/admin/covers/bulk-new?${buildCandidateBulkHandoffParams(candidate, coverType).toString()}`);
   }
 
   const parsed = coverCreateSchema.safeParse({
