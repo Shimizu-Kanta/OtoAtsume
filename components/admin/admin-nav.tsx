@@ -6,6 +6,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import {
   BarChart3,
   Database,
+  Download,
   FileText,
   Flag,
   Folder,
@@ -60,7 +61,8 @@ const adminNavSections = [
       { href: "/admin/songs", label: "楽曲", icon: Music },
       { href: "/admin/artists", label: "アーティスト", icon: Database },
       { href: "/admin/crawl-keywords", label: "巡回キーワード", icon: Search },
-      { href: "/admin/imports", label: "一括インポート", icon: Import }
+      { href: "/admin/imports", label: "一括インポート", icon: Import },
+      { href: "/admin/exports", label: "データエクスポート", icon: Download }
     ]
   }
 ] as const;
