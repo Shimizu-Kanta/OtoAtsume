@@ -2,11 +2,13 @@ import { Suspense } from "react";
 import Link from "next/link";
 
 import { SiteNav } from "@/components/site-nav";
+import { StickyHeader } from "@/components/sticky-header";
 import { StoreBar } from "@/components/store-bar";
 
 export function SiteHeader() {
   return (
-    <header>
+    // md 未満では StickyHeader がナビの行だけを画面上部に残す。
+    <StickyHeader>
       {/* 在庫の掲示は DB を引くので、ヘッダーの描画をブロックしないよう Suspense に包む。
           フォールバックは同じ高さの空の帯にして、読み込み後にレイアウトが飛ばないようにする。 */}
       <Suspense fallback={<div className="h-[29px] border-b border-board-deep bg-board" />}>
@@ -40,6 +42,6 @@ export function SiteHeader() {
           <SiteNav />
         </div>
       </div>
-    </header>
+    </StickyHeader>
   );
 }

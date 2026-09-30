@@ -117,7 +117,7 @@ export function SiteNav() {
   return (
     // md 未満は折り返さず1列にして横スクロールさせる。コンテナは container-page の
     // 左右余白ぶん画面端まで伸ばし、タブが途中で切れて見えないようにする。
-    <div className="relative -mx-4 -mb-px sm:-mx-6 sm:w-[calc(100%+3rem)] md:mx-0 md:w-auto">
+    <div data-site-nav className="relative -mx-4 -mb-px sm:-mx-6 sm:w-[calc(100%+3rem)] md:mx-0 md:w-auto">
       <nav
         ref={scrollerRef}
         aria-label="サイト内の棚"

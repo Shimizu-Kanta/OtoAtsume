@@ -95,6 +95,14 @@ a {
   text-underline-offset: 3px;
 }
 
+/* md 未満はヘッダーのナビが画面上部に貼り付く(components/sticky-header.tsx)。
+   ページ内リンクやフォーカス移動でスクロールしたとき、行き先がナビの下に隠れないようにする。 */
+@media (max-width: 767.98px) {
+  html {
+    scroll-padding-top: var(--header-sticky-h, 0px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
