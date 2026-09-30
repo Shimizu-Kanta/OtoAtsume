@@ -47,7 +47,8 @@ const config: Config = {
         paper: "var(--paper)",
         panel: {
           DEFAULT: "var(--panel)",
-          2: "var(--panel-2)"
+          // 横スクロールの端のフェード(from-panel-2 to-panel-2/0)で不透明度修飾子を使う。
+          2: "rgb(var(--panel-2-rgb) / <alpha-value>)"
         },
         ink: "var(--ink)",
         slate: {
