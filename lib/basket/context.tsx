@@ -141,7 +141,7 @@ export function BasketProvider({ children }: { children: ReactNode }) {
         <div
           role="status"
           aria-live="polite"
-          className="fixed inset-x-4 bottom-20 z-[110] mx-auto max-w-sm rounded-[2px] border border-[color:var(--error)] bg-panel px-4 py-3 text-sm text-[color:var(--error)] shadow-modal sm:bottom-24"
+          className="fixed inset-x-4 bottom-[calc(5rem+var(--mini-player-h,0px))] z-[110] mx-auto max-w-sm rounded-[2px] border border-[color:var(--error)] bg-panel px-4 py-3 text-sm text-[color:var(--error)] shadow-modal sm:bottom-[calc(6rem+var(--mini-player-h,0px))]"
         >
           {notice}
         </div>

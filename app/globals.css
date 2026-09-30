@@ -78,6 +78,9 @@
 
 body {
   min-height: 100vh;
+  /* 試聴中は画面下にミニプレイヤー(components/basket/mini-player.tsx)が固定で出る。
+     その高さぶん下に余白を足して、ページ末尾が隠れないようにする。 */
+  padding-bottom: var(--mini-player-h, 0px);
   background: hsl(var(--background));
   color: hsl(var(--foreground));
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;

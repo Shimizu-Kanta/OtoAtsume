@@ -37,7 +37,8 @@ export function BasketBar() {
 
   return (
     <>
-      <div className="sticky bottom-0 z-30 border-t border-rule bg-panel lg:hidden">
+      {/* 試聴中は画面下にミニプレイヤーが出るので、その上に積む。 */}
+      <div className="sticky bottom-[var(--mini-player-h,0px)] z-30 border-t border-rule bg-panel lg:hidden">
         <button
           type="button"
           onClick={() => setOpen(true)}
@@ -76,7 +77,7 @@ export function BasketBar() {
               </button>
             </div>
             <div className="px-4 pb-5 pt-3">
-              <BasketPanel onNavigate={() => setOpen(false)} />
+              <BasketPanel onNavigate={() => setOpen(false)} onPlay={() => setOpen(false)} />
             </div>
           </div>
         </div>

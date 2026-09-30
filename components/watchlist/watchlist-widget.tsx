@@ -116,7 +116,7 @@ export function WatchlistWidget() {
         onClick={handleToggle}
         aria-label="入荷ベル（気になる曲）"
         title="入荷ベル（気になる曲）"
-        className="fixed bottom-20 right-4 z-40 h-[60px] w-14 border-0 bg-transparent p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:bottom-24 sm:right-6"
+        className="fixed bottom-[calc(5rem+var(--mini-player-h,0px))] right-4 z-40 h-[60px] w-14 border-0 bg-transparent p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:bottom-[calc(6rem+var(--mini-player-h,0px))] sm:right-6"
       >
         {/* 押しボタン（頭頂部の小さな円） */}
         <span
