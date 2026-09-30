@@ -7,15 +7,22 @@ export const OG_SIZE = { width: 1200, height: 630 };
 const FONT_FAMILY = "Noto Sans JP";
 const FONT_FETCH_TIMEOUT_MS = 5_000;
 
-// globals.css の HSL 変数を hex に変換した値。OGP画像はTailwindを使えないため直接指定する。
+// globals.css のカラートークンと同じ値。OGP画像はTailwindを使えないため直接指定する。
 const COLORS = {
-  background: "#f2f9fb",
-  foreground: "#171c26",
-  muted: "#5a6472",
-  primary: "#4caecd",
-  primaryDark: "#22758f",
-  primaryLight: "#8fd0e4"
+  background: "#ede6db", // paper
+  foreground: "#16212b", // ink
+  muted: "#5c4b38", // slate
+  primary: "#a32a22", // stamp
+  primaryDark: "#71190f", // stamp-deep
+  board: "#1d2a24",
+  wood: "#a97f52",
+  woodShadow: "#6a4a2e"
 };
+
+// public/logo-mark.svg と同じ図形(Satori で描画するため data URI で埋め込む)。
+const LOGO_MARK_SVG =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="#1d2a24"/><circle cx="38" cy="31" r="14" fill="#e3ebed"/><circle cx="38" cy="31" r="5.5" fill="none" stroke="#b9c9ce" stroke-width="1"/><circle cx="38" cy="31" r="2.3" fill="#1d2a24"/><rect x="11" y="15" width="30" height="34" rx="1.2" fill="#a32a22"/><rect x="11" y="15" width="7" height="34" fill="#e4d4bc"/><rect x="7" y="49" width="50" height="5" rx="1" fill="#a97f52"/><rect x="7" y="53" width="50" height="1.6" fill="#6a4a2e"/></svg>';
+const LOGO_MARK_SRC = `data:image/svg+xml;base64,${Buffer.from(LOGO_MARK_SVG).toString("base64")}`;
 
 async function loadGoogleFontSubset(weight: 400 | 700, text: string) {
   const url = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(FONT_FAMILY)}:wght@${weight}&text=${encodeURIComponent(text)}`;
@@ -85,7 +92,7 @@ export async function createBrandOgImage({
           display: "flex",
           flexDirection: "column",
           backgroundColor: COLORS.background,
-          backgroundImage: `radial-gradient(circle at top left, ${COLORS.primary}33, transparent 60%)`,
+          backgroundImage: `radial-gradient(circle at top left, ${COLORS.primary}1f, transparent 60%)`,
           color: COLORS.foreground,
           fontFamily: `"${FONT_FAMILY}", sans-serif`,
           padding: "56px 72px",
@@ -100,21 +107,14 @@ export async function createBrandOgImage({
             width: 1200,
             height: 16,
             display: "flex",
-            background: `linear-gradient(90deg, ${COLORS.primary}, ${COLORS.primaryLight})`
+            backgroundColor: COLORS.wood,
+            borderBottom: `4px solid ${COLORS.woodShadow}`
           }}
         />
 
         <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
-          <div
-            style={{
-              width: 26,
-              height: 26,
-              borderRadius: 9999,
-              backgroundColor: COLORS.primary,
-              display: "flex"
-            }}
-          />
-          <div style={{ fontSize: 34, fontWeight: 700, color: COLORS.primaryDark }}>おとあつめ</div>
+          <img src={LOGO_MARK_SRC} width={56} height={56} alt="" />
+          <div style={{ fontSize: 36, fontWeight: 700, color: COLORS.board, letterSpacing: 2 }}>おとあつめ</div>
         </div>
 
         <div
