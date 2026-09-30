@@ -200,14 +200,14 @@ export default async function HomePage({
           className="flex flex-wrap items-end gap-2.5 rounded-[3px] border border-rule bg-panel p-5 shadow-lift"
         >
           <CounterField label="song title" htmlFor="home-song" grow="1 1 260px">
-            <Input id="home-song" name="song" placeholder="楽曲名" className="h-[46px] text-[15px]" />
+            <Input id="home-song" name="song" placeholder="楽曲名" className="h-[46px] text-base md:text-[15px]" />
           </CounterField>
           <CounterField label="performer" htmlFor="home-performer" grow="1 1 180px">
             <Input
               id="home-performer"
               name="performer"
               placeholder="活動者名"
-              className="h-[46px] text-[15px]"
+              className="h-[46px] text-base md:text-[15px]"
             />
           </CounterField>
           <CounterField label="original artist" htmlFor="home-artist" grow="1 1 180px">
@@ -215,7 +215,7 @@ export default async function HomePage({
               id="home-artist"
               name="artist"
               placeholder="原曲アーティスト名"
-              className="h-[46px] text-[15px]"
+              className="h-[46px] text-base md:text-[15px]"
             />
           </CounterField>
           <button
