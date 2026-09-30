@@ -69,7 +69,8 @@ export function CoverAlbumCard({
         iconClassName="size-9"
       >
         {/* 裏ジャケ（収録曲）。カードの高さを変えないよう、インライン展開せず
-            ジャケット面に absolute で重ねる。PC はホバー、全デバイスでバッジ操作で開く。
+            ジャケット面に absolute で重ねる。PC はホバー（hoverOnlyWhenSupported で
+            ホバー可能な端末に限定）、全デバイスでバッジ操作で開く。
             グレア（z-20）より上に出す必要があるので z-30。 */}
         {showSetlist ? (
           <div
@@ -79,7 +80,7 @@ export function CoverAlbumCard({
               "absolute inset-0 z-30 flex flex-col bg-board p-2.5 transition-opacity duration-200",
               open
                 ? "opacity-100"
-                : "pointer-events-none opacity-0 [@media(hover:hover)]:group-hover:pointer-events-auto [@media(hover:hover)]:group-hover:opacity-100"
+                : "pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100"
             )}
           >
             <p className="mb-1.5 shrink-0 font-mono text-[10px] uppercase tracking-[0.16em] text-board-sub">

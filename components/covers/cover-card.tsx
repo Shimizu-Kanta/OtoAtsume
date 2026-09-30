@@ -43,7 +43,7 @@ export function CoverCard({ cover }: { cover: CoverListItem }) {
 
           {/* 配信・動画名の帯。ホバー時のみ見せるが、クローラからテキストが消えないよう
               条件レンダリングにはせず DOM に常在させて CSS の opacity で出し入れする。
-              スマホではホバーが無く表示されないが、同じ情報は詳細ページにある。 */}
+              ホバーできない端末では、代わりにキャプションに1行で出す（下の no-hover:block）。 */}
           {cover.sourceTitle ? (
             <div className="absolute inset-x-0 bottom-0 z-30 bg-board/90 px-2 py-1.5 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
               <span className="line-clamp-2 text-[11px] leading-4 text-board-ink">
@@ -80,6 +80,13 @@ export function CoverCard({ cover }: { cover: CoverListItem }) {
           ) : null}
 
           {artists ? <p className="truncate text-xs text-slate">{artists}</p> : null}
+
+          {/* ホバーできない端末向けの配信・動画名。ジャケットの帯と同じ情報。 */}
+          {cover.sourceTitle ? (
+            <p className="hidden truncate text-[11px] text-[color:var(--slate-light)] no-hover:block">
+              {cover.sourceTitle}
+            </p>
+          ) : null}
         </div>
 
         <div className="mt-auto flex flex-wrap items-center gap-2 pt-1">

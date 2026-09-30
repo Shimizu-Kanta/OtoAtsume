@@ -1,6 +1,12 @@
 import type { Config } from "tailwindcss";
+import plugin from "tailwindcss/plugin";
 
 const config: Config = {
+  future: {
+    // hover: / group-hover: を @media (hover: hover) and (pointer: fine) の中だけで効かせる。
+    // タップ後にホバーの見た目が張り付いたままになるのを防ぐ。
+    hoverOnlyWhenSupported: true
+  },
   content: [
     "./app/**/*.{ts,tsx}",
     "./components/**/*.{ts,tsx}",
@@ -128,7 +134,13 @@ const config: Config = {
       }
     }
   },
-  plugins: []
+  plugins: [
+    // ホバーできない端末（タッチ）だけに効かせる variant。hoverOnlyWhenSupported と
+    // 同じ条件の否定なので、ホバーで出している情報の代わりを出すのに使う。
+    plugin(({ addVariant }) => {
+      addVariant("no-hover", "@media not all and (hover: hover) and (pointer: fine)");
+    })
+  ]
 };
 
 export default config;
