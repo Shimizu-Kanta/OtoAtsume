@@ -30,7 +30,7 @@ export function HelpButton() {
         onClick={() => setOpen(true)}
         aria-label="使い方を見る"
         title="使い方を見る"
-        className="fixed bottom-4 right-4 z-40 inline-flex size-11 items-center justify-center rounded-full border border-rule bg-ink text-white transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:bottom-6 sm:right-6"
+        className="fixed bottom-[calc(1rem+var(--mini-player-h,0px))] right-4 z-40 inline-flex size-11 items-center justify-center rounded-full border border-rule bg-ink text-white transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:bottom-[calc(1.5rem+var(--mini-player-h,0px))] sm:right-6"
       >
         <CircleHelp className="size-5" aria-hidden="true" />
       </button>

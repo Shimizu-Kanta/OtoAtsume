@@ -5,22 +5,29 @@ import { Copy, ExternalLink, GripVertical, Play, Trash2 } from "lucide-react";
 
 import { PreviewPlayer } from "@/components/basket/preview-player";
 import { useBasket } from "@/lib/basket/context";
+import { useIsRailLayout, usePreview } from "@/lib/basket/preview-context";
 import { buildTakeawayPlaylist, buildTrackListText } from "@/lib/basket/takeaway";
 import type { BasketItem } from "@/lib/basket/types";
 import { isPreviewable } from "@/lib/basket/types";
 import { cn, withTimestamp } from "@/lib/utils";
 
 // CDかごの中身。PC の右レールとスマホのボトムシートで同じものを使う。
-export function BasketPanel({ onNavigate }: { onNavigate?: () => void }) {
+//
+// 試聴中の曲は PreviewProvider（レイアウト直下）が持つ。試聴機そのものは lg 以上なら
+// このパネルの中、lg 未満なら画面下のミニプレイヤー（MiniPlayer）に出す。
+export function BasketPanel({
+  onNavigate,
+  onPlay
+}: {
+  onNavigate?: () => void;
+  // 試聴を始めたとき。ボトムシートはこれで閉じて、下のミニプレイヤーを見せる。
+  onPlay?: () => void;
+}) {
   const basket = useBasket();
-  const [nowPlayingId, setNowPlayingId] = useState<string | null>(null);
+  const { nowPlayingId, nowPlaying, play, stop } = usePreview();
+  const isRail = useIsRailLayout();
   const [copied, setCopied] = useState(false);
   const dragIndex = useRef<number | null>(null);
-
-  const nowPlaying = useMemo(
-    () => basket.items.find((item) => item.id === nowPlayingId) ?? null,
-    [basket.items, nowPlayingId]
-  );
 
   const takeaway = useMemo(() => buildTakeawayPlaylist(basket.items), [basket.items]);
 
@@ -37,9 +44,11 @@ export function BasketPanel({ onNavigate }: { onNavigate?: () => void }) {
   const handleRemove = useCallback(
     (id: string) => {
       basket.remove(id);
-      setNowPlayingId((current) => (current === id ? null : current));
+      if (id === nowPlayingId) {
+        stop();
+      }
     },
-    [basket]
+    [basket, nowPlayingId, stop]
   );
 
   if (basket.count === 0) {
@@ -58,7 +67,7 @@ export function BasketPanel({ onNavigate }: { onNavigate?: () => void }) {
     <div className="flex flex-col gap-3">
       <BasketHeading count={basket.count} />
 
-      <PreviewPlayer item={nowPlaying} onRemove={handleRemove} />
+      {isRail ? <PreviewPlayer item={nowPlaying} onRemove={handleRemove} /> : null}
 
       {basket.error ? (
         <p className="text-xs text-[color:var(--error)]">{basket.error}</p>
@@ -109,7 +118,10 @@ export function BasketPanel({ onNavigate }: { onNavigate?: () => void }) {
             <BasketRow
               item={item}
               playing={item.id === nowPlayingId}
-              onPlay={() => setNowPlayingId(item.id)}
+              onPlay={() => {
+                play(item.id);
+                onPlay?.();
+              }}
               onRemove={() => handleRemove(item.id)}
               onNavigate={onNavigate}
             />
@@ -151,7 +163,7 @@ export function BasketPanel({ onNavigate }: { onNavigate?: () => void }) {
           type="button"
           onClick={() => {
             basket.clear();
-            setNowPlayingId(null);
+            stop();
           }}
           className="inline-flex h-8 items-center justify-center text-[11px] text-slate underline-offset-4 hover:text-ink hover:underline"
         >

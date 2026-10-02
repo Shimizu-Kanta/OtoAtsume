@@ -74,7 +74,7 @@ export default async function PerformersPage({
             <label htmlFor="performer-sort" className="eyebrow-muted">
               order
             </label>
-            <Select id="performer-sort" name="sort" defaultValue={sort} className="h-[42px] text-[13px]">
+            <Select id="performer-sort" name="sort" defaultValue={sort} className="h-[42px] text-base md:text-[13px]">
               <option value="nameAsc">名前順</option>
               <option value="coverCountDesc">歌唱記録が多い順</option>
               <option value="debutDateAsc">デビュー日 昇順</option>

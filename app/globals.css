@@ -9,6 +9,8 @@
   --paper: #ede6db; /* ページ背景 = 店の床 */
   --panel: #fbf7f1; /* カード・什器の面 */
   --panel-2: #f3ece1; /* フッター・非アクティブタブ・棚の内側 */
+  /* 不透明度修飾子(from-panel-2/0 など)用のチャンネル値。--panel-2 と同じ色。 */
+  --panel-2-rgb: 243 236 225;
   --hover: #f6f0e5; /* 行ホバー */
   --ink: #16212b; /* 本文 */
   --slate: #5c4b38; /* 副次テキスト */
@@ -76,6 +78,9 @@
 
 body {
   min-height: 100vh;
+  /* 試聴中は画面下にミニプレイヤー(components/basket/mini-player.tsx)が固定で出る。
+     その高さぶん下に余白を足して、ページ末尾が隠れないようにする。 */
+  padding-bottom: var(--mini-player-h, 0px);
   background: hsl(var(--background));
   color: hsl(var(--foreground));
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
@@ -91,6 +96,14 @@ h4 {
 
 a {
   text-underline-offset: 3px;
+}
+
+/* md 未満はヘッダーのナビが画面上部に貼り付く(components/sticky-header.tsx)。
+   ページ内リンクやフォーカス移動でスクロールしたとき、行き先がナビの下に隠れないようにする。 */
+@media (max-width: 767.98px) {
+  html {
+    scroll-padding-top: var(--header-sticky-h, 0px);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -68,7 +68,7 @@ export default async function GroupsPage({
             <label htmlFor="group-sort" className="eyebrow-muted">
               order
             </label>
-            <Select id="group-sort" name="sort" defaultValue={sort} className="h-[42px] text-[13px]">
+            <Select id="group-sort" name="sort" defaultValue={sort} className="h-[42px] text-base md:text-[13px]">
               <option value="nameAsc">グループ名 昇順</option>
               <option value="performerCountDesc">所属活動者が多い順</option>
             </Select>

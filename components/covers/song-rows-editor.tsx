@@ -162,7 +162,7 @@ export function SongRowsEditor({
                   value={row.timestamp}
                   onChange={(event) => updateRow(row.key, { timestamp: event.target.value })}
                   placeholder="1:23:45"
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm"
                 />
               </div>
               <div className="space-y-1">

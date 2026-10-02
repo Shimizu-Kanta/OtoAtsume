@@ -103,11 +103,15 @@ function describeError(code: number): { message: string; removable: boolean } {
 
 export function PreviewPlayer({
   item,
-  onRemove
+  onRemove,
+  showDetails = true
 }: {
   // いま試聴機に掛かっている一枚。null なら何も掛かっていない。
   item: BasketItem | null;
   onRemove?: (id: string) => void;
+  // 動画の下に曲名・活動者名・YouTube への導線を出すか。
+  // ミニプレイヤーは自前で同じ情報を1行にまとめて出すので false にする。
+  showDetails?: boolean;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<YTPlayer | null>(null);
@@ -287,7 +291,7 @@ export function PreviewPlayer({
 
       {/* 配信名・活動者名・YouTube への導線は常に出す。
           このサイトが YouTube の代替ではなく入口であることを担保する。 */}
-      {item ? (
+      {item && showDetails ? (
         <div className="flex flex-col gap-1">
           <p className="truncate text-xs font-bold text-ink">{item.songTitle}</p>
           {item.performerNames ? (

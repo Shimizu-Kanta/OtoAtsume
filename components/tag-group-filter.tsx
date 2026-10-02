@@ -79,7 +79,7 @@ export function TagGroupFilter({
           }
         }}
         placeholder="タグ名で検索"
-        className="w-full rounded-full border border-border bg-background px-4 py-2 text-sm outline-none focus-visible:border-primary/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        className="w-full rounded-full border border-border bg-background px-4 py-2 text-base outline-none md:text-sm focus-visible:border-primary/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       />
 
       {selectedList.length > 0 ? (

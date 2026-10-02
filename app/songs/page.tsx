@@ -72,7 +72,7 @@ export default async function SongsPage({
             <label htmlFor="song-sort" className="eyebrow-muted">
               order
             </label>
-            <Select id="song-sort" name="sort" defaultValue={sort} className="h-[42px] text-[13px]">
+            <Select id="song-sort" name="sort" defaultValue={sort} className="h-[42px] text-base md:text-[13px]">
               <option value="titleAsc">楽曲名 昇順</option>
               <option value="titleDesc">楽曲名 降順</option>
               <option value="coverCountDesc">歌唱記録が多い順</option>
