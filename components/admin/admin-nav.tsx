@@ -78,7 +78,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="lg:grid lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-6">
-      <div className="sticky top-20 z-30 mb-4 rounded-2xl border bg-card/95 p-3 shadow-sm backdrop-blur lg:hidden">
+      <div className="sticky top-4 z-30 mb-4 rounded-2xl border bg-card/95 p-3 shadow-sm backdrop-blur lg:hidden">
         <button
           type="button"
           onClick={() => setOpen(true)}
@@ -123,7 +123,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       ) : null}
 
       <aside className="hidden lg:block">
-        <div className="sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto rounded-3xl border bg-card/90 p-4 shadow-sm">
+        <div className="sticky top-4 max-h-[calc(100vh-2rem)] overflow-y-auto rounded-3xl border bg-card/90 p-4 shadow-sm">
           <div className="mb-4 border-b pb-4">
             <p className="text-sm font-bold">管理画面</p>
             <p className="mt-1 text-xs text-muted-foreground">よく使う項目をサイドバーにまとめています。</p>
