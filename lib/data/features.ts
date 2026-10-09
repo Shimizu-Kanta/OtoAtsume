@@ -30,6 +30,18 @@ export async function listFeaturesForAdmin() {
   });
 }
 
+// 管理画面の ⌘K 検索用。タイトルの部分一致で、状態を問わず新しい順に返す。
+export async function searchFeaturesForAdmin(query: string, take = 5) {
+  return db.feature.findMany({
+    where: {
+      title: { contains: escapeLikePattern(query), mode: Prisma.QueryMode.insensitive }
+    },
+    select: { id: true, title: true, status: true },
+    orderBy: [{ updatedAt: "desc" }],
+    take
+  });
+}
+
 export async function getFeatureForAdmin(id: string): Promise<FeatureAdminDetail | null> {
   return db.feature.findUnique({
     where: { id },

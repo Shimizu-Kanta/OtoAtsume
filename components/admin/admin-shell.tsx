@@ -28,6 +28,7 @@ import {
   type LucideIcon
 } from "lucide-react";
 
+import { CommandPalette } from "@/components/admin/command-palette";
 import { cn } from "@/lib/utils";
 
 export type AdminNavCounts = {
@@ -99,6 +100,11 @@ export const adminNavSections: { title: string; items: AdminNavItem[] }[] = [
     ]
   }
 ];
+
+// ⌘K 検索の「ページ」候補。サイドバーと同じ並び。
+const commandPalettePages = adminNavSections.flatMap((section) =>
+  section.items.map(({ href, label, icon }) => ({ href, label, icon }))
+);
 
 export function AdminShell({
   email,
@@ -192,7 +198,7 @@ function AdminTopBar({
       </Link>
 
       <div className="flex min-w-0 flex-1 justify-center px-1">
-        <AdminSearchButton />
+        <CommandPalette pages={commandPalettePages} />
       </div>
 
       <div className="flex shrink-0 items-center gap-1 text-sm sm:gap-2">
@@ -221,23 +227,6 @@ function AdminTopBar({
         </Link>
       </div>
     </header>
-  );
-}
-
-function AdminSearchButton() {
-  return (
-    <button
-      type="button"
-      disabled
-      className="inline-flex h-9 w-full max-w-md items-center gap-2 rounded-md border border-white/15 bg-white/5 px-3 text-sm text-white/60 disabled:cursor-not-allowed"
-      aria-label="検索（準備中）"
-    >
-      <Search className="size-4 shrink-0" aria-hidden="true" />
-      <span className="hidden flex-1 text-left sm:inline">検索…</span>
-      <kbd className="ml-auto hidden rounded border border-white/20 px-1.5 font-mono text-[11px] text-white/50 sm:inline">
-        ⌘K
-      </kbd>
-    </button>
   );
 }
 
