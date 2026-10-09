@@ -83,24 +83,27 @@ function buildMonthlyRegistrations(dates: Date[]) {
 }
 
 export async function getAdminDashboardStats() {
-  const [pendingReportCount, pendingPerformerCount, latestCovers] = await Promise.all([
-    db.report.count({ where: { status: ReportStatus.PENDING } }),
-    db.performer.count({ where: { status: MasterDataStatus.PENDING } }),
-    db.cover.findMany({
-      include: {
-        song: true,
-        performers: {
-          include: {
-            performer: true
+  const [pendingReportCount, pendingPerformerCount, pendingCandidateCount, draftFeatureCount, latestCovers] =
+    await Promise.all([
+      db.report.count({ where: { status: ReportStatus.PENDING } }),
+      db.performer.count({ where: { status: MasterDataStatus.PENDING } }),
+      countPendingCoverCandidates(),
+      db.feature.count({ where: { status: ContentStatus.PENDING } }),
+      db.cover.findMany({
+        include: {
+          song: true,
+          performers: {
+            include: {
+              performer: true
+            }
           }
-        }
-      },
-      orderBy: { createdAt: "desc" },
-      take: 8
-    })
-  ]);
+        },
+        orderBy: { createdAt: "desc" },
+        take: 8
+      })
+    ]);
 
-  return { pendingReportCount, pendingPerformerCount, latestCovers };
+  return { pendingReportCount, pendingPerformerCount, pendingCandidateCount, draftFeatureCount, latestCovers };
 }
 
 // 管理画面のサイドバーに出す要対応の件数。全ページで呼ばれるが count 3 本だけなので、
