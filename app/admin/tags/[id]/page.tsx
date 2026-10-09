@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { AdminNav } from "@/components/admin/admin-nav";
 import { DeleteSubmitButton } from "@/components/admin/delete-submit-button";
-import { PageHeading } from "@/components/page-heading";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { requireAdminPage } from "@/lib/auth/admin";
@@ -46,8 +45,8 @@ export default async function AdminTagDetailPage({
 
   return (
     <div className="space-y-6">
-      <AdminNav />
-      <PageHeading
+      <AdminPageHeader
+        breadcrumbs={[{ href: "/admin/tags", label: "タグ" }, { label: "詳細" }]}
         title={`タグ: ${tag.name}`}
         description={`このタグが付いている活動者 ${tag.performers.length} 件`}
         actions={

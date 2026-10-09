@@ -1,7 +1,6 @@
 import Link from "next/link";
 
-import { AdminNav } from "@/components/admin/admin-nav";
-import { PageHeading } from "@/components/page-heading";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { Pagination } from "@/components/pagination";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,8 +24,7 @@ export default async function AdminGroupsPage({
 
   return (
     <div className="space-y-6">
-      <AdminNav />
-      <PageHeading title="所属グループ管理" description="活動者に紐づける所属グループを追加・編集します。" />
+      <AdminPageHeader title="所属グループ管理" description="活動者に紐づける所属グループを追加・編集します。" />
 
       <form action={createGroupAction} className="flex flex-col gap-3 rounded-md border bg-card p-5 sm:flex-row sm:items-end">
         <div className="flex-1 space-y-2">

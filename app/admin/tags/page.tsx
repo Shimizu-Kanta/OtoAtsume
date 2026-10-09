@@ -1,7 +1,6 @@
 import Link from "next/link";
 
-import { AdminNav } from "@/components/admin/admin-nav";
-import { PageHeading } from "@/components/page-heading";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { Pagination } from "@/components/pagination";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,8 +35,7 @@ export default async function AdminTagsPage({
 
   return (
     <div className="space-y-6">
-      <AdminNav />
-      <PageHeading
+      <AdminPageHeader
         title="タグ管理"
         description="活動者に付与するタグを管理します。タグ付与は活動者編集画面で行います。"
       />

@@ -1,7 +1,6 @@
 import Link from "next/link";
 
-import { AdminNav } from "@/components/admin/admin-nav";
-import { PageHeading } from "@/components/page-heading";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { Pagination } from "@/components/pagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -44,8 +43,7 @@ export default async function AdminCoversPage({
 
   return (
     <div className="space-y-6">
-      <AdminNav />
-      <PageHeading
+      <AdminPageHeader
         title="歌唱記録管理"
         description="歌唱記録を検索し、編集・非表示対応できます。"
         actions={

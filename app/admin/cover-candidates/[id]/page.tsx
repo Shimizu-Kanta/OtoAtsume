@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
-import { AdminNav } from "@/components/admin/admin-nav";
 import { PerformerPicker } from "@/components/covers/performer-picker";
-import { PageHeading } from "@/components/page-heading";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -71,8 +70,8 @@ export default async function AdminCoverCandidateConfirmPage({
 
   return (
     <div className="space-y-6">
-      <AdminNav />
-      <PageHeading
+      <AdminPageHeader
+        breadcrumbs={[{ href: "/admin/cover-candidates", label: "歌唱記録候補" }, { label: "確定" }]}
         title="歌唱記録候補の確定"
         description="推定結果を確認・修正して歌唱記録を作成します。"
         actions={

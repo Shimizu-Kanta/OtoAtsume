@@ -1,13 +1,11 @@
 import Link from "next/link";
 
-import { AdminNav } from "@/components/admin/admin-nav";
-import { PageHeading } from "@/components/page-heading";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
 import { requireAdminPage } from "@/lib/auth/admin";
 import { coverTypeLabel } from "@/lib/constants";
 import { getAdminDashboardStats } from "@/lib/data/stats";
-import { cn, formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -17,15 +15,9 @@ export default async function AdminPage() {
 
   return (
     <div className="space-y-6">
-      <AdminNav />
-      <PageHeading
+      <AdminPageHeader
         title="管理者トップ"
         description={`${session.user?.email ?? ""} でログイン中`}
-        actions={
-          <Link href="/api/auth/signout" className={cn(buttonVariants({ variant: "outline" }))}>
-            ログアウト
-          </Link>
-        }
       />
 
       <section className="grid gap-3 md:grid-cols-2">

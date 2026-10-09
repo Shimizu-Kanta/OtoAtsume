@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { AdminNav } from "@/components/admin/admin-nav";
 import { PerformerPicker } from "@/components/covers/performer-picker";
-import { PageHeading } from "@/components/page-heading";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,8 +48,8 @@ export default async function AdminCoverEditPage({
 
   return (
     <div className="space-y-6">
-      <AdminNav />
-      <PageHeading
+      <AdminPageHeader
+        breadcrumbs={[{ href: "/admin/covers", label: "歌唱記録" }, { label: "編集" }]}
         title="歌唱記録編集"
         description="楽曲、活動者、情報元、公開状態を編集できます。"
         actions={

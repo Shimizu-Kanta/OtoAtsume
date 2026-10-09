@@ -1,5 +1,4 @@
-import { AdminNav } from "@/components/admin/admin-nav";
-import { PageHeading } from "@/components/page-heading";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
@@ -48,8 +47,7 @@ export default async function AdminExportsPage() {
 
   return (
     <div className="space-y-6">
-      <AdminNav />
-      <PageHeading
+      <AdminPageHeader
         title="データエクスポート"
         description="登録データを CSV / JSON でダウンロードします。列名は一括インポートと共通なので、編集してそのまま取り込み直せます（CSV の複数値は ; 区切り）。"
       />

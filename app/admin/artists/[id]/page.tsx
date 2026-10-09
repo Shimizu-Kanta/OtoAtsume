@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { AdminNav } from "@/components/admin/admin-nav";
-import { PageHeading } from "@/components/page-heading";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,8 +33,7 @@ export default async function AdminArtistEditPage({
 
   return (
     <div className="space-y-6">
-      <AdminNav />
-      <PageHeading title="アーティスト編集" description={`紐づく楽曲 ${artist._count.songs} 件`} />
+      <AdminPageHeader breadcrumbs={[{ href: "/admin/artists", label: "アーティスト" }, { label: "編集" }]} title="アーティスト編集" description={`紐づく楽曲 ${artist._count.songs} 件`} />
 
       {error ? (
         <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm">

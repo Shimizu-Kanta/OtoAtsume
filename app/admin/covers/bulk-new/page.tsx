@@ -1,8 +1,7 @@
 import Link from "next/link";
 
-import { AdminNav } from "@/components/admin/admin-nav";
 import { CoverRegistrationForm } from "@/components/covers/cover-registration-form";
-import { PageHeading } from "@/components/page-heading";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { requireAdminPage } from "@/lib/auth/admin";
 import { getPerformerOptions } from "@/lib/data/performers";
 import { getSearchParam, getSearchParamAll } from "@/lib/utils";
@@ -25,8 +24,8 @@ export default async function AdminBulkNewCoverPage({
 
   return (
     <div className="space-y-6">
-      <AdminNav />
-      <PageHeading
+      <AdminPageHeader
+        breadcrumbs={[{ href: "/admin/covers", label: "歌唱記録" }, { label: "一括登録" }]}
         title="歌唱記録の一括登録"
         description="1つの動画URLから複数曲をまとめて登録します。歌枠・ライブ・メドレーのように1つのアーカイブに複数曲が含まれる記録向けです。"
         actions={

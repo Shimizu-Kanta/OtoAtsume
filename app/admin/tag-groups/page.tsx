@@ -1,8 +1,7 @@
 import Link from "next/link";
 
-import { AdminNav } from "@/components/admin/admin-nav";
 import { DeleteSubmitButton } from "@/components/admin/delete-submit-button";
-import { PageHeading } from "@/components/page-heading";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { Pagination } from "@/components/pagination";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,8 +35,7 @@ export default async function AdminTagGroupsPage({
 
   return (
     <div className="space-y-6">
-      <AdminNav />
-      <PageHeading
+      <AdminPageHeader
         title="タググループ管理"
         description="タグを種類別に分類するグループを管理します。1つのタグは複数のグループに所属できます。公開側の表示順は sortOrder（小さいほど先）で制御します。"
       />

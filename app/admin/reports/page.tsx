@@ -1,7 +1,6 @@
 import Link from "next/link";
 
-import { AdminNav } from "@/components/admin/admin-nav";
-import { PageHeading } from "@/components/page-heading";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { Pagination } from "@/components/pagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,8 +31,7 @@ export default async function AdminReportsPage({
 
   return (
     <div className="space-y-6">
-      <AdminNav />
-      <PageHeading title="通報一覧" description="通報内容を確認し、必要に応じて対象記録を非表示にします。" />
+      <AdminPageHeader title="通報一覧" description="通報内容を確認し、必要に応じて対象記録を非表示にします。" />
 
       <form action="/admin/reports" className="flex flex-col gap-3 rounded-md border bg-card p-4 sm:flex-row sm:items-end">
         <Select name="status" defaultValue={status ?? ""} aria-label="通報ステータス">

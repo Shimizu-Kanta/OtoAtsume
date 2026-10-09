@@ -1,8 +1,7 @@
 import { notFound } from "next/navigation";
 import { ContentStatus } from "@prisma/client";
 
-import { AdminNav } from "@/components/admin/admin-nav";
-import { PageHeading } from "@/components/page-heading";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { Button } from "@/components/ui/button";
 import { requireAdminPage } from "@/lib/auth/admin";
 import { getFeatureForAdmin } from "@/lib/data/features";
@@ -43,8 +42,8 @@ export default async function EditFeaturePage({
 
   return (
     <div className="space-y-6">
-      <AdminNav />
-      <PageHeading
+      <AdminPageHeader
+        breadcrumbs={[{ href: "/admin/features", label: "特集" }, { label: "編集" }]}
         title="特集を編集"
         description={
           published

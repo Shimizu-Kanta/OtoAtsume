@@ -1,8 +1,7 @@
 import { CrawlKeywordKind } from "@prisma/client";
 
-import { AdminNav } from "@/components/admin/admin-nav";
 import { DeleteSubmitButton } from "@/components/admin/delete-submit-button";
-import { PageHeading } from "@/components/page-heading";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,8 +36,7 @@ export default async function AdminCrawlKeywordsPage({
 
   return (
     <div className="space-y-6">
-      <AdminNav />
-      <PageHeading
+      <AdminPageHeader
         title="巡回キーワード管理"
         description="歌唱記録候補の巡回で使う判定キーワードを管理します。判定順は 除外 → 歌枠 → 歌ってみた です。"
       />

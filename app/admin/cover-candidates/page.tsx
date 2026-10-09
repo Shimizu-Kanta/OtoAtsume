@@ -2,8 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { CoverCandidateStatus, CoverCandidateType } from "@prisma/client";
-import { AdminNav } from "@/components/admin/admin-nav";
-import { PageHeading } from "@/components/page-heading";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { Pagination } from "@/components/pagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -101,8 +100,7 @@ export default async function AdminCoverCandidatesPage({
 
   return (
     <div className="space-y-6">
-      <AdminNav />
-      <PageHeading
+      <AdminPageHeader
         title="歌唱記録候補"
         description="活動者のYouTubeチャンネルを巡回して集めた、未登録の歌唱動画候補です。確認して確定すると正式な歌唱記録になります。"
       />

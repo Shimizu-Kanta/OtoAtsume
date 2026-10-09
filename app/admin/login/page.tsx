@@ -1,5 +1,5 @@
 import { LoginButtons } from "@/components/admin/login-buttons";
-import { PageHeading } from "@/components/page-heading";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { getAllowedAdminEmails } from "@/lib/auth/allowed";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +11,7 @@ export default function AdminLoginPage() {
 
   return (
     <div className="mx-auto max-w-xl space-y-6">
-      <PageHeading
+      <AdminPageHeader
         title="管理者ログイン"
         description="管理画面は許可されたメールアドレスの Google アカウントのみアクセスできます。"
       />

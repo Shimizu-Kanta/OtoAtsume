@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { AdminNav } from "@/components/admin/admin-nav";
-import { PageHeading } from "@/components/page-heading";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
@@ -38,8 +37,7 @@ export default async function AdminReportDetailPage({
 
   return (
     <div className="space-y-6">
-      <AdminNav />
-      <PageHeading title="通報詳細" description={formatDateTime(report.createdAt)} />
+      <AdminPageHeader breadcrumbs={[{ href: "/admin/reports", label: "通報" }, { label: "詳細" }]} title="通報詳細" description={formatDateTime(report.createdAt)} />
 
       <section className="rounded-md border bg-card p-5">
         <div className="flex flex-wrap items-center gap-2">
