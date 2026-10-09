@@ -1,5 +1,4 @@
-import { AdminNav } from "@/components/admin/admin-nav";
-import { PageHeading } from "@/components/page-heading";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { requireAdminPage } from "@/lib/auth/admin";
 import { getInitialImportState } from "@/lib/imports/master-data";
 import { ImportForm } from "./import-form";
@@ -11,8 +10,7 @@ export default async function AdminImportsPage() {
 
   return (
     <div className="space-y-6">
-      <AdminNav />
-      <PageHeading title="一括インポート" description="マスターデータを CSV / JSON で追加・更新します。" />
+      <AdminPageHeader title="一括インポート" description="マスターデータを CSV / JSON で追加・更新します。" />
       <ImportForm initialState={getInitialImportState()} />
     </div>
   );

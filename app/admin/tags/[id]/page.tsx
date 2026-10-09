@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { AdminNav } from "@/components/admin/admin-nav";
 import { DeleteSubmitButton } from "@/components/admin/delete-submit-button";
-import { PageHeading } from "@/components/page-heading";
+import { FormActionBar } from "@/components/admin/form-action-bar";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { requireAdminPage } from "@/lib/auth/admin";
@@ -46,8 +46,8 @@ export default async function AdminTagDetailPage({
 
   return (
     <div className="space-y-6">
-      <AdminNav />
-      <PageHeading
+      <AdminPageHeader
+        breadcrumbs={[{ href: "/admin/tags", label: "タグ" }, { label: "詳細" }]}
         title={`タグ: ${tag.name}`}
         description={`このタグが付いている活動者 ${tag.performers.length} 件`}
         actions={
@@ -92,7 +92,7 @@ export default async function AdminTagDetailPage({
             で作成してください。
           </p>
         ) : (
-          <form action={setTagGroupsAction.bind(null, tag.id)} className="mt-3 space-y-4">
+          <form id="admin-edit-form" action={setTagGroupsAction.bind(null, tag.id)} className="mt-3 space-y-4">
             <div className="flex flex-wrap gap-x-4 gap-y-2">
               {tagGroups.map((tagGroup) => (
                 <label key={tagGroup.id} className="inline-flex cursor-pointer items-center gap-2 text-sm">
@@ -107,9 +107,6 @@ export default async function AdminTagDetailPage({
                 </label>
               ))}
             </div>
-            <Button type="submit" variant="outline" size="sm">
-              グループを保存
-            </Button>
           </form>
         )}
       </section>
@@ -188,6 +185,9 @@ export default async function AdminTagDetailPage({
           </div>
         ) : null}
       </section>
+      {tagGroups.length > 0 ? (
+        <FormActionBar formId="admin-edit-form" backHref="/admin/tags" submitLabel="グループを保存" />
+      ) : null}
     </div>
   );
 }

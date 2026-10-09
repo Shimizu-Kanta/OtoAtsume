@@ -1,9 +1,7 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { AdminNav } from "@/components/admin/admin-nav";
-import { PageHeading } from "@/components/page-heading";
-import { Button } from "@/components/ui/button";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { FormActionBar } from "@/components/admin/form-action-bar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
@@ -37,8 +35,7 @@ export default async function AdminSongEditPage({
 
   return (
     <div className="space-y-6">
-      <AdminNav />
-      <PageHeading title="楽曲編集" description="楽曲名、原曲URL、原曲アーティストを編集できます。" />
+      <AdminPageHeader breadcrumbs={[{ href: "/admin/songs", label: "楽曲" }, { label: "編集" }]} title="楽曲編集" description="楽曲名、原曲URL、原曲アーティストを編集できます。" />
 
       {error ? (
         <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm">
@@ -51,7 +48,7 @@ export default async function AdminSongEditPage({
         </div>
       ) : null}
 
-      <form action={action} className="rounded-md border bg-card p-5">
+      <form id="admin-edit-form" action={action} className="rounded-md border bg-card p-5">
         <div className="form-grid">
           <div className="space-y-2">
             <Label htmlFor="title">楽曲名</Label>
@@ -76,13 +73,8 @@ export default async function AdminSongEditPage({
             <Input id="originalUrl" name="originalUrl" type="url" defaultValue={song.originalUrl ?? ""} />
           </div>
         </div>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <Button type="submit">更新する</Button>
-          <Link href="/admin/songs" className="rounded-md border px-4 py-2 text-sm">
-            一覧に戻る
-          </Link>
-        </div>
       </form>
+      <FormActionBar formId="admin-edit-form" backHref="/admin/songs" publicHref={`/songs/${song.id}`} />
     </div>
   );
 }

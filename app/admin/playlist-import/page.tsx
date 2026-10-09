@@ -1,7 +1,6 @@
 import Link from "next/link";
 
-import { AdminNav } from "@/components/admin/admin-nav";
-import { PageHeading } from "@/components/page-heading";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { requireAdminPage } from "@/lib/auth/admin";
 import { PlaylistImportForm } from "./playlist-import-form";
 
@@ -12,8 +11,7 @@ export default async function AdminPlaylistImportPage() {
 
   return (
     <div className="space-y-6">
-      <AdminNav />
-      <PageHeading
+      <AdminPageHeader
         title="プレイリスト取り込み"
         description="YouTubeのプレイリストURLから歌唱記録候補をまとめて収集します。取得した動画は確認画面で選んだものだけが候補として登録されます。"
         actions={

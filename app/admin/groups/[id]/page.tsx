@@ -1,10 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { AdminNav } from "@/components/admin/admin-nav";
-import { PageHeading } from "@/components/page-heading";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { FormActionBar } from "@/components/admin/form-action-bar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { requireAdminPage } from "@/lib/auth/admin";
@@ -35,8 +34,8 @@ export default async function AdminGroupEditPage({
 
   return (
     <div className="space-y-6">
-      <AdminNav />
-      <PageHeading
+      <AdminPageHeader
+        breadcrumbs={[{ href: "/admin/groups", label: "所属グループ" }, { label: "編集" }]}
         title="所属グループ編集"
         description={`活動者 ${group._count.performers} 件が紐づいています。`}
       />
@@ -52,16 +51,10 @@ export default async function AdminGroupEditPage({
         </div>
       ) : null}
 
-      <form action={action} className="rounded-md border bg-card p-5">
+      <form id="admin-edit-form" action={action} className="rounded-md border bg-card p-5">
         <div className="space-y-2">
           <Label htmlFor="name">グループ名</Label>
           <Input id="name" name="name" defaultValue={group.name} required />
-        </div>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <Button type="submit">更新する</Button>
-          <Link href="/admin/groups" className="rounded-md border px-4 py-2 text-sm">
-            一覧に戻る
-          </Link>
         </div>
       </form>
       <section className="rounded-md border bg-card">
@@ -139,6 +132,7 @@ export default async function AdminGroupEditPage({
           </p>
         )}
       </section>
+      <FormActionBar formId="admin-edit-form" backHref="/admin/groups" publicHref={`/groups/${group.id}`} />
     </div>
   );
 }

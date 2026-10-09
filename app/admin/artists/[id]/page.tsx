@@ -1,9 +1,7 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { AdminNav } from "@/components/admin/admin-nav";
-import { PageHeading } from "@/components/page-heading";
-import { Button } from "@/components/ui/button";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { FormActionBar } from "@/components/admin/form-action-bar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { requireAdminPage } from "@/lib/auth/admin";
@@ -34,8 +32,7 @@ export default async function AdminArtistEditPage({
 
   return (
     <div className="space-y-6">
-      <AdminNav />
-      <PageHeading title="アーティスト編集" description={`紐づく楽曲 ${artist._count.songs} 件`} />
+      <AdminPageHeader breadcrumbs={[{ href: "/admin/artists", label: "アーティスト" }, { label: "編集" }]} title="アーティスト編集" description={`紐づく楽曲 ${artist._count.songs} 件`} />
 
       {error ? (
         <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm">
@@ -48,18 +45,13 @@ export default async function AdminArtistEditPage({
         </div>
       ) : null}
 
-      <form action={action} className="rounded-md border bg-card p-5">
+      <form id="admin-edit-form" action={action} className="rounded-md border bg-card p-5">
         <div className="space-y-2">
           <Label htmlFor="name">アーティスト名</Label>
           <Input id="name" name="name" defaultValue={artist.name} required />
         </div>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <Button type="submit">更新する</Button>
-          <Link href="/admin/artists" className="rounded-md border px-4 py-2 text-sm">
-            一覧に戻る
-          </Link>
-        </div>
       </form>
+      <FormActionBar formId="admin-edit-form" backHref="/admin/artists" />
     </div>
   );
 }

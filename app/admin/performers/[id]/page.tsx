@@ -2,8 +2,8 @@ import { MasterDataStatus } from "@prisma/client";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { AdminNav } from "@/components/admin/admin-nav";
-import { PageHeading } from "@/components/page-heading";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { FormActionBar } from "@/components/admin/form-action-bar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,8 +43,8 @@ export default async function AdminPerformerEditPage({
 
   return (
     <div className="space-y-6">
-      <AdminNav />
-      <PageHeading
+      <AdminPageHeader
+        breadcrumbs={[{ href: "/admin/performers", label: "活動者" }, { label: "編集" }]}
         title="活動者編集"
         description="活動者マスタの基本情報を編集できます。"
         actions={
@@ -89,7 +89,7 @@ export default async function AdminPerformerEditPage({
         </section>
       ) : null}
       
-      <form action={action} className="rounded-md border bg-card p-5">
+      <form id="admin-edit-form" action={action} className="rounded-md border bg-card p-5">
         <div className="form-grid">
           <div className="space-y-2">
             <Label htmlFor="name">活動者名</Label>
@@ -172,12 +172,6 @@ export default async function AdminPerformerEditPage({
             />
           </div>
         </div>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <Button type="submit">更新する</Button>
-          <Link href="/admin/performers" className="rounded-md border px-4 py-2 text-sm">
-            一覧に戻る
-          </Link>
-        </div>
       </form>
       <section className="rounded-md border border-destructive/40 bg-destructive/10 p-5">
         <h2 className="text-lg font-semibold">危険操作</h2>
@@ -219,6 +213,7 @@ export default async function AdminPerformerEditPage({
           </Button>
         </form>
       </section>
+      <FormActionBar formId="admin-edit-form" backHref="/admin/performers" publicHref={`/performers/${performer.id}`} />
     </div>
   );
 }

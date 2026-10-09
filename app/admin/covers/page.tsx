@@ -1,22 +1,19 @@
 import Link from "next/link";
+import { Search } from "lucide-react";
 
-import { AdminNav } from "@/components/admin/admin-nav";
-import { PageHeading } from "@/components/page-heading";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { Pagination } from "@/components/pagination";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { DeleteSubmitButton } from "@/components/admin/delete-submit-button";
 import {
-  contentStatusLabel,
   contentStatusOptions,
   coverTypeLabel,
   coverTypeOptions
 } from "@/lib/constants";
 import { getAdminCovers } from "@/lib/data/covers";
 import { formatDate, getSearchParam, parsePageParam } from "@/lib/utils";
-import { deleteCoverAction, updateCoverStatusAction } from "./actions";
+import { CoversTable, type AdminCoverRow } from "./covers-table";
 import { requireAdminPage } from "@/lib/auth/admin";
 
 export const dynamic = "force-dynamic";
@@ -40,16 +37,31 @@ export default async function AdminCoversPage({
     status: getSearchParam(params, "status")
   };
   const page = parsePageParam(getSearchParam(params, "page"));
+  const bulkUpdatedParam = getSearchParam(params, "bulkUpdated");
+  const bulkUpdated = bulkUpdatedParam && /^\d+$/.test(bulkUpdatedParam) ? Number(bulkUpdatedParam) : null;
   const { items: covers, totalCount, totalPages } = await getAdminCovers(search, page);
+
+  // 一括変更のあと同じ絞り込み条件・ページに戻すため、今のクエリ文字列を渡しておく。
+  const returnQuery = buildQueryString(params);
+  const rows: AdminCoverRow[] = covers.map((cover) => ({
+    id: cover.id,
+    songTitle: cover.song.title,
+    artistNames: cover.song.artists.map(({ artist }) => artist.name).join(", "),
+    performerNames: cover.performers.map(({ performer }) => performer.name).join(", "),
+    performedAt: formatDate(cover.performedAt),
+    coverTypeLabel: coverTypeLabel(cover.coverType),
+    status: cover.status,
+    sourceUrl: cover.sourceUrl,
+    sourceHost: hostnameOf(cover.sourceUrl)
+  }));
 
   return (
     <div className="space-y-6">
-      <AdminNav />
-      <PageHeading
+      <AdminPageHeader
         title="歌唱記録管理"
         description="歌唱記録を検索し、編集・非表示対応できます。"
         actions={
-          <Link href="/admin/covers/bulk-new" className="rounded-md border px-4 py-2 text-sm">
+          <Link href="/admin/covers/bulk-new" className={buttonVariants({ variant: "secondary", size: "sm" })}>
             一括登録
           </Link>
         }
@@ -67,12 +79,47 @@ export default async function AdminCoversPage({
         </div>
       ) : null}
 
-      <form action="/admin/covers" className="rounded-md border bg-card p-4">
-        <div className="form-grid">
-          <Input name="performer" defaultValue={search.performer} placeholder="活動者名・別名" />
-          <Input name="song" defaultValue={search.song} placeholder="楽曲名" />
-          <Input name="artist" defaultValue={search.artist} placeholder="原曲アーティスト名" />
-          <Select name="coverType" defaultValue={search.coverType ?? ""}>
+      {bulkUpdated !== null ? (
+        <div className="rounded-md border border-primary/30 bg-primary/5 p-3 text-sm" role="status">
+          {bulkUpdated} 件の状態を変更しました。
+        </div>
+      ) : null}
+
+      <form action="/admin/covers" className="space-y-2 rounded-md border bg-card p-3">
+        <div className="flex flex-col gap-2 md:flex-row md:items-center">
+          <Input
+            name="performer"
+            defaultValue={search.performer}
+            placeholder="活動者名・別名"
+            aria-label="活動者名・別名"
+            className="h-9 md:flex-1"
+          />
+          <Input
+            name="song"
+            defaultValue={search.song}
+            placeholder="楽曲名"
+            aria-label="楽曲名"
+            className="h-9 md:flex-1"
+          />
+          <Input
+            name="artist"
+            defaultValue={search.artist}
+            placeholder="原曲アーティスト名"
+            aria-label="原曲アーティスト名"
+            className="h-9 md:flex-1"
+          />
+          <Button type="submit" size="sm" className="shrink-0">
+            <Search className="size-4" aria-hidden="true" />
+            検索
+          </Button>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Select
+            name="coverType"
+            defaultValue={search.coverType ?? ""}
+            aria-label="歌唱種別"
+            className="h-9 min-w-0 flex-1 sm:w-auto sm:min-w-[10rem] sm:flex-none"
+          >
             <option value="">歌唱種別すべて</option>
             {coverTypeOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -80,7 +127,12 @@ export default async function AdminCoversPage({
               </option>
             ))}
           </Select>
-          <Select name="status" defaultValue={search.status ?? ""}>
+          <Select
+            name="status"
+            defaultValue={search.status ?? ""}
+            aria-label="ステータス"
+            className="h-9 min-w-0 flex-1 sm:w-auto sm:min-w-[9rem] sm:flex-none"
+          >
             <option value="">ステータスすべて</option>
             {contentStatusOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -88,86 +140,57 @@ export default async function AdminCoversPage({
               </option>
             ))}
           </Select>
-          <Input name="dateFrom" type="date" defaultValue={search.dateFrom} />
-          <Input name="dateTo" type="date" defaultValue={search.dateTo} />
-        </div>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <Button type="submit">検索</Button>
-          <Link href="/admin/covers" className="rounded-md border px-4 py-2 text-sm">
+          <div className="flex w-full items-center gap-1.5 sm:w-auto">
+            <Input
+              name="dateFrom"
+              type="date"
+              defaultValue={search.dateFrom}
+              aria-label="歌唱日(から)"
+              className="h-9 min-w-0 flex-1 sm:w-auto sm:flex-none"
+            />
+            <span className="text-sm text-muted-foreground">〜</span>
+            <Input
+              name="dateTo"
+              type="date"
+              defaultValue={search.dateTo}
+              aria-label="歌唱日(まで)"
+              className="h-9 min-w-0 flex-1 sm:w-auto sm:flex-none"
+            />
+          </div>
+          <Link href="/admin/covers" className="ml-auto text-sm text-muted-foreground hover:text-foreground hover:underline">
             条件クリア
           </Link>
         </div>
       </form>
 
-      <p className="text-sm text-muted-foreground">
-        全 {totalCount.toLocaleString("ja-JP")} 件 / {page}ページ目（表示中 {covers.length} 件）
-      </p>
-
-      <div className="overflow-hidden rounded-md border bg-card">
-        <div className="divide-y">
-          {covers.map((cover) => (
-            <div key={cover.id} className="grid gap-4 p-4 lg:grid-cols-[1fr_360px]">
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Link href={`/admin/covers/${cover.id}`} className="font-medium text-primary underline">
-                    {cover.song.title}
-                  </Link>
-                  <Badge variant="outline">{contentStatusLabel(cover.status)}</Badge>
-                </div>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {cover.song.artists.map(({ artist }) => artist.name).join(", ")} /{" "}
-                  {cover.performers.map(({ performer }) => performer.name).join(", ")}
-                </p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {formatDate(cover.performedAt)} / {coverTypeLabel(cover.coverType)}
-                </p>
-                <a
-                  href={cover.sourceUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-2 block truncate text-sm text-primary underline"
-                >
-                  {cover.sourceUrl}
-                </a>
-              </div>
-              <div className="flex flex-col gap-3">
-                <form action={updateCoverStatusAction} className="flex items-end gap-2">
-                  <input type="hidden" name="id" value={cover.id} />
-                  <Select name="status" defaultValue={cover.status} aria-label="ステータス">
-                    {contentStatusOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </Select>
-                  <Button type="submit" variant="outline">
-                    状態更新
-                  </Button>
-                </form>
-                <div className="flex flex-wrap gap-2">
-                  <Link href={`/admin/covers/${cover.id}`} className="rounded-md border px-3 py-2 text-sm">
-                    編集
-                  </Link>
-                  <Link href={`/covers/${cover.id}`} className="rounded-md border px-3 py-2 text-sm">
-                    公開画面
-                  </Link>
-                  <form action={deleteCoverAction}>
-                    <input type="hidden" name="id" value={cover.id} />
-                    <DeleteSubmitButton
-                      size="sm"
-                      confirmMessage={`歌唱記録「${cover.song.title}」を削除します。関連する通報も削除されます。よろしいですか？`}
-                    >
-                      削除
-                    </DeleteSubmitButton>
-                  </form>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+      <div className="space-y-2">
+        <p className="text-right font-mono text-xs tabular-nums text-muted-foreground">
+          全 {totalCount.toLocaleString("ja-JP")} 件 / {page}ページ目
+        </p>
+        <CoversTable rows={rows} returnQuery={returnQuery} />
       </div>
 
       <Pagination page={page} totalPages={totalPages} basePath="/admin/covers" params={params} />
     </div>
   );
+}
+
+function buildQueryString(params: Record<string, string | string[] | undefined>) {
+  const query = new URLSearchParams();
+
+  for (const [key, value] of Object.entries(params)) {
+    for (const item of Array.isArray(value) ? value : value === undefined ? [] : [value]) {
+      query.append(key, item);
+    }
+  }
+
+  return query.toString();
+}
+
+function hostnameOf(url: string) {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return "リンク";
+  }
 }

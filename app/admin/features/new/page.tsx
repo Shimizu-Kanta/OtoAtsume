@@ -1,5 +1,4 @@
-import { AdminNav } from "@/components/admin/admin-nav";
-import { PageHeading } from "@/components/page-heading";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { requireAdminPage } from "@/lib/auth/admin";
 import { FeatureForm } from "../feature-form";
 
@@ -10,8 +9,7 @@ export default async function NewFeaturePage() {
 
   return (
     <div className="space-y-6">
-      <AdminNav />
-      <PageHeading title="特集を作成" description="下書きとして保存し、内容が固まったら公開します。" />
+      <AdminPageHeader breadcrumbs={[{ href: "/admin/features", label: "特集" }, { label: "新規作成" }]} title="特集を作成" description="下書きとして保存し、内容が固まったら公開します。" />
 
       <FeatureForm
         featureId={null}

@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { ContentStatus } from "@prisma/client";
 
-import { AdminNav } from "@/components/admin/admin-nav";
 import { DeleteSubmitButton } from "@/components/admin/delete-submit-button";
-import { PageHeading } from "@/components/page-heading";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { Button } from "@/components/ui/button";
 import { requireAdminPage } from "@/lib/auth/admin";
 import { listFeaturesForAdmin } from "@/lib/data/features";
@@ -25,8 +24,7 @@ export default async function AdminFeaturesPage({
 
   return (
     <div className="space-y-6">
-      <AdminNav />
-      <PageHeading
+      <AdminPageHeader
         title="特集"
         description="スタッフのおすすめPOP（特集記事）を作成・編集します。"
         actions={

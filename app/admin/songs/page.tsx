@@ -1,7 +1,6 @@
-import { AdminNav } from "@/components/admin/admin-nav";
 import Image from "next/image";
 import Link from "next/link";
-import { PageHeading } from "@/components/page-heading";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { Pagination } from "@/components/pagination";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,8 +40,7 @@ export default async function AdminSongsPage({
 
   return (
     <div className="space-y-6">
-      <AdminNav />
-      <PageHeading title="楽曲管理" description="楽曲マスタを追加・確認します。" />
+      <AdminPageHeader title="楽曲管理" description="楽曲マスタを追加・確認します。" />
 
       <form action="/admin/songs" className="space-y-3 rounded-md border bg-card p-4">
         <div className="flex flex-wrap items-end gap-3">

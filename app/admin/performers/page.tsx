@@ -1,8 +1,7 @@
 import Link from "next/link";
 
 import { MasterDataStatus } from "@prisma/client";
-import { AdminNav } from "@/components/admin/admin-nav";
-import { PageHeading } from "@/components/page-heading";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { Pagination } from "@/components/pagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -43,8 +42,7 @@ export default async function AdminPerformersPage({
 
   return (
     <div className="space-y-6">
-      <AdminNav />
-      <PageHeading title="活動者管理" description="活動者マスタを追加・確認します。" />
+      <AdminPageHeader title="活動者管理" description="活動者マスタを追加・確認します。" />
       <form action="/admin/performers" className="rounded-md border bg-card p-4">
         <div className="grid gap-3 md:grid-cols-[1fr_220px_auto] md:items-end">
           <div className="space-y-2">

@@ -1,6 +1,5 @@
-import { AdminNav } from "@/components/admin/admin-nav";
 import Link from "next/link";
-import { PageHeading } from "@/components/page-heading";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { Pagination } from "@/components/pagination";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,8 +33,7 @@ export default async function AdminArtistsPage({
 
   return (
     <div className="space-y-6">
-      <AdminNav />
-      <PageHeading title="アーティスト管理" description="原曲アーティストのマスタを追加・確認します。" />
+      <AdminPageHeader title="アーティスト管理" description="原曲アーティストのマスタを追加・確認します。" />
 
       {error ? (
         <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm">

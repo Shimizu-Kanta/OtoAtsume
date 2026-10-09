@@ -1,5 +1,4 @@
-import { AdminNav } from "@/components/admin/admin-nav";
-import { PageHeading } from "@/components/page-heading";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { requireAdminPage } from "@/lib/auth/admin";
 import { listDailySiteReports } from "@/lib/data/daily-report";
 
@@ -12,8 +11,7 @@ export default async function AdminDailyReportsPage() {
 
   return (
     <div>
-      <AdminNav />
-      <PageHeading
+      <AdminPageHeader
         title="日次レポート"
         description="Discordへ送信された日次集計の履歴を確認できます。"
       />

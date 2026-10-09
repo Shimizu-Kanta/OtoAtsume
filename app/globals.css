@@ -76,6 +76,61 @@
   border-color: hsl(var(--border));
 }
 
+/* --- 管理画面(app/admin)専用の配色 ---
+   公開側の紙・黒板・スタンプの赤とは別の、落ち着いた中立グレー。
+   開いた瞬間に「管理画面にいる」と分かるよう、アクセントは青にしている。
+   hex トークンと shadcn 互換トークンの両方を上書きするので、Button・Input・Badge・Select
+   などの既存部品はこのクラスの内側に置くだけで管理画面の配色になる。 */
+.admin-theme {
+  --paper: #f5f6f8;
+  --panel: #ffffff;
+  --panel-2: #f0f2f5;
+  --panel-2-rgb: 240 242 245;
+  --hover: #f3f5f8;
+  --ink: #111827;
+  --slate: #4b5563;
+  --slate-light: #6b7280;
+  --rule: #dfe3e8;
+
+  --background: 220 17% 97%;
+  --foreground: 221 39% 11%;
+  --card: 0 0% 100%;
+  --card-foreground: 221 39% 11%;
+  --primary: 224 63% 48%; /* 白文字とのコントラスト約 6:1(AA) */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 220 14% 93%;
+  --secondary-foreground: 221 39% 11%;
+  --muted: 220 14% 95%;
+  --muted-foreground: 220 9% 38%; /* 白背景で約 6:1(AA) */
+  --border: 214 15% 89%;
+  --input: 214 15% 82%;
+  --ring: 224 63% 48%;
+  --radius: 6px;
+
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+/* 共有の UI 部品(components/ui)がスタンプの赤を直接参照している箇所を、管理画面の
+   内側だけ primary(青)に寄せる。--stamp 自体は上書きしない(公開側の意味を持つ色のため)。 */
+.admin-theme .bg-stamp {
+  background-color: hsl(var(--primary));
+}
+
+.admin-theme .shadow-press {
+  box-shadow: 0 1px 0 hsl(224 63% 34%);
+}
+
+.admin-theme .focus-visible\:border-stamp:focus-visible,
+.admin-theme .focus-visible\:border-aqua:focus-visible {
+  border-color: hsl(var(--ring));
+}
+
+.admin-theme .focus-visible\:ring-stamp:focus-visible,
+.admin-theme .focus-visible\:ring-aqua:focus-visible {
+  --tw-ring-color: hsl(var(--ring));
+}
+
 body {
   min-height: 100vh;
   /* 試聴中は画面下にミニプレイヤー(components/basket/mini-player.tsx)が固定で出る。

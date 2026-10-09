@@ -2,16 +2,6 @@ import type { Metadata } from "next";
 import { JetBrains_Mono, Noto_Sans_JP, Zen_Kaku_Gothic_New } from "next/font/google";
 
 import "./globals.css";
-import { BasketBar } from "@/components/basket/basket-bar";
-import { MiniPlayer } from "@/components/basket/mini-player";
-import { BasketRail } from "@/components/basket/basket-rail";
-import { HelpButton } from "@/components/onboarding/help-button";
-import { SiteFooter } from "@/components/site-footer";
-import { SiteHeader } from "@/components/site-header";
-import { AccessLogger } from "@/components/telemetry/access-logger";
-import { WatchlistWidget } from "@/components/watchlist/watchlist-widget";
-import { BasketProvider } from "@/lib/basket/context";
-import { PreviewProvider } from "@/lib/basket/preview-context";
 import { siteUrl } from "@/lib/site-url";
 
 // 本文: Noto Sans JP / 見出し: Zen Kaku Gothic New / 数値・日付・件数: JetBrains Mono。
@@ -38,8 +28,6 @@ const jetBrainsMono = JetBrains_Mono({
   display: "swap",
   variable: "--font-mono"
 });
-
-const adsenseClientId = process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID;
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -84,36 +72,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       lang="ja"
       className={`${notoSansJp.variable} ${zenKaku.variable} ${jetBrainsMono.variable}`}
     >
-      <body>
-        {/* async 付き script は React 19 が <head> にホイストするため、
-            SSR の生 HTML に AdSense のコードスニペットがそのまま出力される */}
-        {adsenseClientId ? (
-          <script
-            async
-            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseClientId}`}
-            crossOrigin="anonymous"
-          />
-        ) : null}
-        <AccessLogger />
-        <BasketProvider>
-          {/* 試聴中の曲。ページ遷移しても再生を続けるためレイアウトに置く。 */}
-          <PreviewProvider>
-            <SiteHeader />
-            {/* CDかごの右レールはレイアウトの1カラムとして流れに置く（sticky を効かせ、
-                position: fixed で広告ユニットに重ならないようにするため）。
-                lg 未満ではレールを畳み、下部の sticky バーに切り替える。 */}
-            <div className="container-page py-8 lg:grid lg:grid-cols-[minmax(0,1fr)_220px] lg:items-start lg:gap-6">
-              <main className="min-w-0">{children}</main>
-              <BasketRail />
-            </div>
-            <SiteFooter />
-            <BasketBar />
-            <MiniPlayer />
-            <WatchlistWidget />
-            <HelpButton />
-          </PreviewProvider>
-        </BasketProvider>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }
