@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { DeleteSubmitButton } from "@/components/admin/delete-submit-button";
+import { FormActionBar } from "@/components/admin/form-action-bar";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -91,7 +92,7 @@ export default async function AdminTagDetailPage({
             で作成してください。
           </p>
         ) : (
-          <form action={setTagGroupsAction.bind(null, tag.id)} className="mt-3 space-y-4">
+          <form id="admin-edit-form" action={setTagGroupsAction.bind(null, tag.id)} className="mt-3 space-y-4">
             <div className="flex flex-wrap gap-x-4 gap-y-2">
               {tagGroups.map((tagGroup) => (
                 <label key={tagGroup.id} className="inline-flex cursor-pointer items-center gap-2 text-sm">
@@ -106,9 +107,6 @@ export default async function AdminTagDetailPage({
                 </label>
               ))}
             </div>
-            <Button type="submit" variant="outline" size="sm">
-              グループを保存
-            </Button>
           </form>
         )}
       </section>
@@ -187,6 +185,9 @@ export default async function AdminTagDetailPage({
           </div>
         ) : null}
       </section>
+      {tagGroups.length > 0 ? (
+        <FormActionBar formId="admin-edit-form" backHref="/admin/tags" submitLabel="グループを保存" />
+      ) : null}
     </div>
   );
 }

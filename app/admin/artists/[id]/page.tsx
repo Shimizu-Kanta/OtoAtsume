@@ -1,8 +1,7 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
-import { Button } from "@/components/ui/button";
+import { FormActionBar } from "@/components/admin/form-action-bar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { requireAdminPage } from "@/lib/auth/admin";
@@ -46,18 +45,13 @@ export default async function AdminArtistEditPage({
         </div>
       ) : null}
 
-      <form action={action} className="rounded-md border bg-card p-5">
+      <form id="admin-edit-form" action={action} className="rounded-md border bg-card p-5">
         <div className="space-y-2">
           <Label htmlFor="name">アーティスト名</Label>
           <Input id="name" name="name" defaultValue={artist.name} required />
         </div>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <Button type="submit">更新する</Button>
-          <Link href="/admin/artists" className="rounded-md border px-4 py-2 text-sm">
-            一覧に戻る
-          </Link>
-        </div>
       </form>
+      <FormActionBar formId="admin-edit-form" backHref="/admin/artists" />
     </div>
   );
 }

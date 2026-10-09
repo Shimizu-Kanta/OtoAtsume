@@ -100,6 +100,7 @@ export default async function EditFeaturePage({
           items,
           links: parseFeatureLinks(feature.links)
         }}
+        publicHref={published ? `/features/${feature.slug}` : undefined}
       />
     </div>
   );

@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ChevronDown, ChevronUp, GripVertical, Plus, Search, Trash2, X } from "lucide-react";
 
+import { FormActionBar } from "@/components/admin/form-action-bar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -42,10 +43,13 @@ const EMPTY_LINK: FeatureLink = { url: "", label: "", note: undefined };
 
 export function FeatureForm({
   featureId,
-  defaults
+  defaults,
+  publicHref
 }: {
   featureId: string | null;
   defaults: FeatureFormDefaults;
+  // 公開中の特集のときだけ渡す(保存バーの「公開ページで確認」)。
+  publicHref?: string;
 }) {
   const [state, formAction, pending] = useActionState<FeatureFormState, FormData>(
     saveFeatureAction.bind(null, featureId),
@@ -107,74 +111,75 @@ export function FeatureForm({
   const selectedCoverIds = new Set(items.map((item) => item.coverId));
 
   return (
-    <form action={formAction} className="space-y-6">
-      <input type="hidden" name="itemsJson" value={itemsJson} readOnly />
-      <input type="hidden" name="linksJson" value={linksJson} readOnly />
+    <>
+      <form id="admin-edit-form" action={formAction} className="space-y-6">
+        <input type="hidden" name="itemsJson" value={itemsJson} readOnly />
+        <input type="hidden" name="linksJson" value={linksJson} readOnly />
 
-      {state.error ? (
-        <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm">
-          {state.error}
+        {state.error ? (
+          <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm">
+            {state.error}
+          </div>
+        ) : null}
+
+        <div className="space-y-4 rounded-md border bg-card p-5">
+          <div className="space-y-2">
+            <Label htmlFor="title">タイトル</Label>
+            <Input
+              id="title"
+              name="title"
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="slug">slug（URL・英数字とハイフン）</Label>
+            <Input
+              id="slug"
+              name="slug"
+              value={slug}
+              onChange={(event) => setSlug(event.target.value)}
+              onBlur={() => setSlug((current) => normalizeSlug(current))}
+              placeholder="women-sing-hoshino-gen"
+              required
+            />
+            <p className="text-xs text-muted-foreground">
+              公開URL: <span className="font-mono">/features/{normalizeSlug(slug) || "…"}</span>
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="lead">序文</Label>
+            <Textarea id="lead" name="lead" defaultValue={defaults.lead} className="min-h-36" required />
+          </div>
         </div>
-      ) : null}
 
-      <div className="space-y-4 rounded-md border bg-card p-5">
-        <div className="space-y-2">
-          <Label htmlFor="title">タイトル</Label>
-          <Input
-            id="title"
-            name="title"
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-            required
-          />
+        <CoverPickerSection items={items} onAdd={addCover} onMove={moveItem} onRemove={(coverId) =>
+          setItems((current) => current.filter((item) => item.coverId !== coverId))
+        } onComment={(coverId, comment) =>
+          setItems((current) =>
+            current.map((item) => (item.coverId === coverId ? { ...item, comment } : item))
+          )
+        } selectedCoverIds={selectedCoverIds} />
+
+        <div className="space-y-2 rounded-md border bg-card p-5">
+          <Label htmlFor="outro">結び（任意）</Label>
+          <Textarea id="outro" name="outro" defaultValue={defaults.outro} className="min-h-28" />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="slug">slug（URL・英数字とハイフン）</Label>
-          <Input
-            id="slug"
-            name="slug"
-            value={slug}
-            onChange={(event) => setSlug(event.target.value)}
-            onBlur={() => setSlug((current) => normalizeSlug(current))}
-            placeholder="women-sing-hoshino-gen"
-            required
-          />
-          <p className="text-xs text-muted-foreground">
-            公開URL: <span className="font-mono">/features/{normalizeSlug(slug) || "…"}</span>
-          </p>
-        </div>
+        <LinksSection links={links} setLinks={setLinks} />
 
-        <div className="space-y-2">
-          <Label htmlFor="lead">序文</Label>
-          <Textarea id="lead" name="lead" defaultValue={defaults.lead} className="min-h-36" required />
-        </div>
-      </div>
-
-      <CoverPickerSection items={items} onAdd={addCover} onMove={moveItem} onRemove={(coverId) =>
-        setItems((current) => current.filter((item) => item.coverId !== coverId))
-      } onComment={(coverId, comment) =>
-        setItems((current) =>
-          current.map((item) => (item.coverId === coverId ? { ...item, comment } : item))
-        )
-      } selectedCoverIds={selectedCoverIds} />
-
-      <div className="space-y-2 rounded-md border bg-card p-5">
-        <Label htmlFor="outro">結び（任意）</Label>
-        <Textarea id="outro" name="outro" defaultValue={defaults.outro} className="min-h-28" />
-      </div>
-
-      <LinksSection links={links} setLinks={setLinks} />
-
-      <div className="flex flex-wrap gap-2">
-        <Button type="submit" disabled={pending}>
-          {pending ? "保存中…" : featureId ? "下書きを保存" : "下書きとして作成"}
-        </Button>
-        <Link href="/admin/features" className="rounded-md border px-4 py-2 text-sm">
-          一覧に戻る
-        </Link>
-      </div>
-    </form>
+      </form>
+      <FormActionBar
+        formId="admin-edit-form"
+        backHref="/admin/features"
+        publicHref={publicHref}
+        submitLabel={featureId ? "下書きを保存" : "下書きとして作成"}
+        pending={pending}
+      />
+    </>
   );
 }
 
