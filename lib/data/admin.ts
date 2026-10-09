@@ -648,6 +648,11 @@ export async function updateAdminCoverStatus(id: string, status: ContentStatus) 
   });
 }
 
+// 歌唱記録一覧の一括操作。件数の上限は呼び出し側(サーバーアクション)で確認する。
+export async function updateAdminCoverStatuses(ids: string[], status: ContentStatus) {
+  return db.cover.updateMany({ where: { id: { in: ids } }, data: { status } });
+}
+
 export async function deleteAdminCover(id: string) {
   const cover = await db.cover.findUnique({
     where: { id },

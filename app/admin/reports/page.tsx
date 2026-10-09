@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { AdminEmptyRow, AdminTable, AdminTd, AdminTh, AdminTr } from "@/components/admin/admin-table";
 import { Pagination } from "@/components/pagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -49,25 +50,40 @@ export default async function AdminReportsPage({
         全 {totalCount.toLocaleString("ja-JP")} 件 / {page}ページ目（表示中 {reports.length} 件）
       </p>
 
-      <div className="overflow-hidden rounded-md border bg-card">
-        <div className="divide-y">
+      <AdminTable>
+        <thead>
+          <tr>
+            <AdminTh>対象の歌唱記録</AdminTh>
+            <AdminTh>理由</AdminTh>
+            <AdminTh>状態</AdminTh>
+            <AdminTh className="hidden md:table-cell">通報日時</AdminTh>
+          </tr>
+        </thead>
+        <tbody>
           {reports.map((report) => (
-            <div key={report.id} className="grid gap-2 p-4 md:grid-cols-[1fr_auto]">
-              <div>
-                <Link href={`/admin/reports/${report.id}`} className="font-medium text-primary underline">
+            <AdminTr key={report.id}>
+              <AdminTd className="min-w-[10rem]">
+                <Link href={`/admin/reports/${report.id}`} className="font-medium text-primary hover:underline">
                   {report.cover.song.title}
                 </Link>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {formatDateTime(report.createdAt)} / {reportReasonLabel(report.reason)}
+                <p className="font-mono text-xs tabular-nums text-muted-foreground md:hidden">
+                  {formatDateTime(report.createdAt)}
                 </p>
-              </div>
-              <Badge variant={report.status === "PENDING" ? "accent" : "muted"}>
-                {reportStatusLabel(report.status)}
-              </Badge>
-            </div>
+              </AdminTd>
+              <AdminTd className="whitespace-nowrap">{reportReasonLabel(report.reason)}</AdminTd>
+              <AdminTd>
+                <Badge variant={report.status === "PENDING" ? "accent" : "muted"}>
+                  {reportStatusLabel(report.status)}
+                </Badge>
+              </AdminTd>
+              <AdminTd className="hidden whitespace-nowrap font-mono text-xs tabular-nums text-muted-foreground md:table-cell">
+                {formatDateTime(report.createdAt)}
+              </AdminTd>
+            </AdminTr>
           ))}
-        </div>
-      </div>
+          {reports.length === 0 ? <AdminEmptyRow colSpan={4}>該当する通報はありません</AdminEmptyRow> : null}
+        </tbody>
+      </AdminTable>
 
       <Pagination page={page} totalPages={totalPages} basePath="/admin/reports" params={params} />
     </div>
