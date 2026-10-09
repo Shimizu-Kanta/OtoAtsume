@@ -1,6 +1,7 @@
 import { ContentStatus, MasterDataStatus, ReportStatus } from "@prisma/client";
 
 import { summarizeYearlyCounts } from "@/lib/content-summary";
+import { countPendingCoverCandidates } from "@/lib/data/cover-candidates";
 import { db } from "@/lib/db";
 
 export async function getPublicStats() {
@@ -100,4 +101,16 @@ export async function getAdminDashboardStats() {
   ]);
 
   return { pendingReportCount, pendingPerformerCount, latestCovers };
+}
+
+// 管理画面のサイドバーに出す要対応の件数。全ページで呼ばれるが count 3 本だけなので、
+// 最新値を出すためにキャッシュはしない。
+export async function getAdminNavCounts() {
+  const [pendingReports, pendingPerformers, pendingCandidates] = await Promise.all([
+    db.report.count({ where: { status: ReportStatus.PENDING } }),
+    db.performer.count({ where: { status: MasterDataStatus.PENDING } }),
+    countPendingCoverCandidates()
+  ]);
+
+  return { pendingReports, pendingPerformers, pendingCandidates };
 }
