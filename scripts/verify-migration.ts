@@ -88,7 +88,8 @@ async function main() {
     const tableNames = [...new Set([...sourceTables.keys(), ...targetTables.keys()])].sort();
 
     console.log("## 行数");
-    for (const name of tableNames) {
+    // _prisma_migrations は移行後に足した migration の分だけ移行先が多くなるため、末尾の専用チェックで比較する。
+    for (const name of tableNames.filter((table) => table !== "_prisma_migrations")) {
       const inSource = sourceTables.has(name);
       const inTarget = targetTables.has(name);
       if (!inSource || !inTarget) {

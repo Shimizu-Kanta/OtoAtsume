@@ -12,7 +12,7 @@
   - プライベートバケット（公開アクセス禁止、均一なバケットレベルのアクセス）
   - ライフサイクルルールで 30 日経ったものを自動削除する
   - リポジトリが公開のため、Actions の artifact には置かない
-- 権限：deploy 用 service account（`github-deploy`）に、バケット単位で `roles/storage.objectCreator`（書き込みのみ）を付与している
+- 権限：deploy 用 service account（`github-deploy`）に、バケット単位で `roles/storage.objectCreator` と `roles/storage.objectViewer` を付与している。`gcloud storage cp` はアップロード前に同名オブジェクトの有無を確認するため、書き込みだけでは 403 になる
 - 失敗時：日次レポートと同じ Discord Webhook（Secret Manager の `DISCORD_DAILY_REPORT_WEBHOOK_URL`）に通知する
 
 このジョブは毎日 DB に接続するため、無料プランの「7 日間非アクティブで自動停止」への備えにもなる見込みです。ただし公式にアクティビティとして数えられる保証はないので、停止通知のメールが来ないかは引き続き確認してください。
