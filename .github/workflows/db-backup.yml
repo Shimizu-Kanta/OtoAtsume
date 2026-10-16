@@ -1,0 +1,73 @@
+name: Daily DB backup
+
+on:
+  schedule:
+    - cron: "0 19 * * *" # JST 04:00
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: db-backup
+  cancel-in-progress: false
+
+env:
+  GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+  # プライベートバケット。ライフサイクルルールで 30 日経ったものを自動削除する。
+  # リポジトリが公開のため、Actions の artifact には置かない。
+  BACKUP_BUCKET: oto-atsume-db-backups
+  # pg_dump は Supabase 側の Postgres メジャーバージョンに合わせる（SELECT version(); で確認）
+  POSTGRES_IMAGE: postgres:17
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Set backup file name
+        run: echo "BACKUP_FILE=otoatsume_$(TZ=Asia/Tokyo date +%Y%m%d%H%M).dump" >> "$GITHUB_ENV"
+
+      # MIGRATION_DATABASE_URL は Supabase の Session pooler（:5432）。
+      # 接続文字列はコマンドライン引数に載せず、環境変数でコンテナに渡す。
+      - name: Dump database
+        env:
+          PGURL: ${{ secrets.MIGRATION_DATABASE_URL }}
+        run: |
+          docker run --rm \
+            --user "$(id -u):$(id -g)" \
+            -e PGURL \
+            -v "$PWD:/out" \
+            "$POSTGRES_IMAGE" \
+            sh -c 'pg_dump "$PGURL" --schema=public --no-owner --no-privileges --format=custom --file="/out/$0"' "$BACKUP_FILE"
+
+      - name: Check dump contents
+        run: |
+          tables=$(docker run --rm -v "$PWD:/out:ro" "$POSTGRES_IMAGE" pg_restore --list "/out/$BACKUP_FILE" | grep -c "TABLE DATA" || true)
+          echo "Dumped tables: ${tables}, size: $(du -h "$BACKUP_FILE" | cut -f1)"
+          if [ "$tables" -eq 0 ]; then
+            echo "Dump contains no table data"
+            exit 1
+          fi
+
+      - name: Upload to GCS
+        run: gcloud storage cp "$BACKUP_FILE" "gs://${BACKUP_BUCKET}/daily/${BACKUP_FILE}"
+
+      # 日次レポートと同じ Discord Webhook に通知する。Secret はバージョン番号で固定。
+      - name: Notify failure to Discord
+        if: failure()
+        run: |
+          webhook=$(gcloud secrets versions access 1 --secret DISCORD_DAILY_REPORT_WEBHOOK_URL --project "$GCP_PROJECT_ID")
+          run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          payload=$(jq -n --arg content "⚠️ DB の日次バックアップに失敗しました: ${run_url}" '{content: $content}')
+          curl -fsS -H "Content-Type: application/json" -d "$payload" "$webhook"
