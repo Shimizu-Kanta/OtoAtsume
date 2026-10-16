@@ -83,7 +83,27 @@ gcloud run services update-traffic oto-atsume \
 
 Cloud SQL は移行後 2 週間は削除しないので、その間はこの手順を使えます。
 
-## 後片付け（Phase 7）での注意
+## 後片付け（Phase 7）
 
+- 問題がなければ早めに Cloud SQL インスタンスを停止する（停止中はストレージ分のみ課金）
+- 2 週間後に最終ダンプを GCS に保存してから Cloud SQL インスタンスを削除する
 - `DATABASE_URL` のバージョン 1（Cloud SQL 向け）は、**ロールバック猶予の 2 週間が終わり、Cloud SQL を削除するときまで破棄しない。** 先に破棄すると、ロールバック先リビジョンが起動できなくなる
 - そのほかの Secret の古いバージョンは、workflow の `secrets` 配列が参照している番号以外なら、いつ破棄してもよい
+- Cloud SQL 削除後に片付けるもの
+  - `github-deploy` と既定の Compute SA に付いている `roles/cloudsql.client`
+  - GitHub の Repository Variable `CLOUD_SQL_CONNECTION_NAME`
+- 翌月の請求レポートで Cloud SQL が 0 円になっていることを確認する
+
+## 実施記録（2026-10-16）
+
+| 時刻（JST） | 内容 |
+| --- | --- |
+| 13:37 | 0：本番を `DATABASE_URL:1` に固定。ロールバック先リビジョンは `oto-atsume-00129-8bp` |
+| 13:40 | 1：`DATABASE_URL` のバージョン 2（Transaction pooler）を追加 |
+| 13:41:30 | 2：本番ダンプ取得、`--clean` 付きでリストア、検証一致 |
+| 13:44 | 3：`MIGRATION_DATABASE_URL` を Session pooler に差し替え |
+| 13:45 | 4：PR #50 をマージ。リビジョン `oto-atsume-00130-vbp`（`DATABASE_URL:2`、Cloud SQL 接続なし）にデプロイ |
+| 13:50 | 5：ダンプ以降の旧 DB への登録は 0 件。本番ページ、書き込み、ログを確認 |
+| 13:55 | `Daily DB backup` を手動実行。初回は GCS への保存が 403 で失敗し、`objectViewer` を追加して成功。取得したダンプからのリストアも確認 |
+
+Cloud SQL の削除予定：2026-10-30 以降
