@@ -15,7 +15,6 @@ env:
   ARTIFACT_REGISTRY_REPOSITORY: ${{ vars.ARTIFACT_REGISTRY_REPOSITORY }}
   CLOUD_RUN_SERVICE: ${{ vars.CLOUD_RUN_SERVICE }}
   CLOUD_RUN_SERVICE_ACCOUNT: ${{ vars.CLOUD_RUN_SERVICE_ACCOUNT }}
-  CLOUD_SQL_CONNECTION_NAME: ${{ vars.CLOUD_SQL_CONNECTION_NAME }}
   NEXT_PUBLIC_ADSENSE_CLIENT_ID: ${{ vars.NEXT_PUBLIC_ADSENSE_CLIENT_ID }}
   IMAGE_NAME: oto-atsume
 
@@ -79,24 +78,34 @@ jobs:
             --push \
             .
 
-      - name: Download Cloud SQL Auth Proxy
-        run: |
-          curl -fsSL -o cloud-sql-proxy https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.14.3/cloud-sql-proxy.linux.amd64
-          chmod +x cloud-sql-proxy
-
-      - name: Start Cloud SQL Auth Proxy
-        run: |
-          ./cloud-sql-proxy "${CLOUD_SQL_CONNECTION_NAME}" --port 5432 --quiet &
-          echo $! > cloud-sql-proxy.pid
-          sleep 5
-
+      # MIGRATION_DATABASE_URL は Supabase の Session pooler（:5432）。
+      # migrate は directUrl（DIRECT_URL）を使うが、schema の url も解決できる必要があるため両方に渡す。
       - name: Apply Prisma migrations
         env:
           DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
         run: pnpm prisma:deploy
 
+      # Secret は :latest を使わずバージョン番号で固定する。
+      # :latest はインスタンス起動時に解決されるため、旧リビジョンへ戻しても新しい値を読んでしまう。
+      # Secret に新しいバージョンを追加したら、ここの番号も上げること。
       - name: Deploy to Cloud Run
         run: |
+          secrets=(
+            "DATABASE_URL=DATABASE_URL:2"
+            "NEXT_PUBLIC_SITE_URL=NEXT_PUBLIC_SITE_URL:4"
+            "NEXTAUTH_URL=NEXTAUTH_URL:2"
+            "ADMIN_ALLOWED_EMAILS=ADMIN_ALLOWED_EMAILS:4"
+            "AUTH_SECRET=AUTH_SECRET:1"
+            "GOOGLE_CLIENT_ID=GOOGLE_CLIENT_ID:6"
+            "GOOGLE_CLIENT_SECRET=GOOGLE_CLIENT_SECRET:6"
+            "CAPTCHA_SECRET_KEY=CAPTCHA_SECRET_KEY:2"
+            "NEXT_PUBLIC_CAPTCHA_SITE_KEY=NEXT_PUBLIC_CAPTCHA_SITE_KEY:2"
+            "YOUTUBE_DATA_API_KEY=YOUTUBE_DATA_API_KEY:2"
+            "DAILY_REPORT_API_TOKEN=DAILY_REPORT_API_TOKEN:1"
+            "DISCORD_DAILY_REPORT_WEBHOOK_URL=DISCORD_DAILY_REPORT_WEBHOOK_URL:1"
+          )
+
           gcloud run deploy "${CLOUD_RUN_SERVICE}" \
             --project "${GCP_PROJECT_ID}" \
             --region "${GCP_REGION}" \
@@ -105,14 +114,7 @@ jobs:
             --port 8080 \
             --allow-unauthenticated \
             --service-account "${CLOUD_RUN_SERVICE_ACCOUNT}" \
-            --add-cloudsql-instances "${CLOUD_SQL_CONNECTION_NAME}" \
-            --set-secrets "DATABASE_URL=DATABASE_URL:latest,NEXT_PUBLIC_SITE_URL=NEXT_PUBLIC_SITE_URL:latest,NEXTAUTH_URL=NEXTAUTH_URL:latest,ADMIN_ALLOWED_EMAILS=ADMIN_ALLOWED_EMAILS:latest,AUTH_SECRET=AUTH_SECRET:latest,GOOGLE_CLIENT_ID=GOOGLE_CLIENT_ID:latest,GOOGLE_CLIENT_SECRET=GOOGLE_CLIENT_SECRET:latest,CAPTCHA_SECRET_KEY=CAPTCHA_SECRET_KEY:latest,NEXT_PUBLIC_CAPTCHA_SITE_KEY=NEXT_PUBLIC_CAPTCHA_SITE_KEY:latest,YOUTUBE_DATA_API_KEY=YOUTUBE_DATA_API_KEY:latest,DAILY_REPORT_API_TOKEN=DAILY_REPORT_API_TOKEN:latest,DISCORD_DAILY_REPORT_WEBHOOK_URL=DISCORD_DAILY_REPORT_WEBHOOK_URL:latest" \
+            --clear-cloudsql-instances \
+            --set-secrets "$(IFS=,; echo "${secrets[*]}")" \
             --set-env-vars "NEXT_PUBLIC_ADSENSE_CLIENT_ID=${NEXT_PUBLIC_ADSENSE_CLIENT_ID}" \
             --quiet
-
-      - name: Stop Cloud SQL Auth Proxy
-        if: always()
-        run: |
-          if [ -f cloud-sql-proxy.pid ]; then
-            kill "$(cat cloud-sql-proxy.pid)" || true
-          fi

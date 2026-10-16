@@ -51,6 +51,8 @@ pnpm prisma:seed
 pnpm dev
 ```
 
+`DIRECT_URL` は `prisma migrate` が使う接続先です。ローカルの Docker Compose 環境では `DATABASE_URL` と同じ値を入れてください。
+
 `.env` の `ADMIN_ALLOWED_EMAILS` には管理者として許可する Google アカウントのメールアドレスをカンマ区切りで設定してください。`NEXTAUTH_URL` は NextAuth.js が OAuth callback URL を生成するために使うため、ローカルでは `http://localhost:3000` を設定します。
 
 管理画面は一般公開 UI からリンクせず、管理者が `/admin` を直接開くかブックマークからアクセスする前提です。
@@ -98,14 +100,12 @@ import { AdUnit } from "@/components/ads/ad-unit";
 
 - Artifact Registry の Docker repository
 - Cloud Run service
-- Cloud SQL for PostgreSQL instance
-- Cloud SQL database / user
 - Secret Manager secrets
 - GitHub Actions 用の deploy service account
 - Cloud Run runtime service account
 - GitHub Actions と GCP を接続する Workload Identity Federation
 
-Cloud SQL connection name は `PROJECT_ID:REGION:INSTANCE_NAME` 形式です。
+DB は Supabase（Northeast Asia / Tokyo）の PostgreSQL を使います。Prisma で直接接続するため、Supabase の Data API は無効化し、全テーブルで RLS を有効にしています。テーブルを追加する migration でも `ENABLE ROW LEVEL SECURITY` を付けてください。`pg_trgm` は `public` スキーマに有効化してください。
 
 ### Cloud Run 環境変数
 
@@ -113,7 +113,7 @@ Cloud Run には Secret Manager 経由で以下を設定します。DB パスワ
 
 | 環境変数 | 用途 |
 | --- | --- |
-| `DATABASE_URL` | Cloud SQL for PostgreSQL の接続文字列 |
+| `DATABASE_URL` | Supabase Transaction pooler の接続文字列 |
 | `NEXT_PUBLIC_SITE_URL` | 公開 URL |
 | `NEXTAUTH_URL` | NextAuth.js が callback URL を生成するための公開 URL |
 | `ADMIN_ALLOWED_EMAILS` | 管理者として許可するメールアドレス。カンマ区切り |
@@ -126,13 +126,15 @@ Cloud Run には Secret Manager 経由で以下を設定します。DB パスワ
 
 CAPTCHA は Cloudflare Turnstile を使います。ローカル開発では `CAPTCHA_SECRET_KEY` / `NEXT_PUBLIC_CAPTCHA_SITE_KEY` が未設定でも投稿フォームの CAPTCHA は skip できます。本番では必ず両方を Secret Manager に設定してください。未設定の場合、本番の投稿・通報・活動者申請は保存されません。
 
-公開投稿系フォームのレート制限は Cloud SQL の `rate_limit_buckets` table に保存します。IP アドレスはそのまま保存せず、scope と user agent を含めて hash 化した key を保存します。
+公開投稿系フォームのレート制限は DB の `rate_limit_buckets` table に保存します。IP アドレスはそのまま保存せず、scope と user agent を含めて hash 化した key を保存します。
 
-Cloud Run runtime の `DATABASE_URL` は Cloud SQL connector を使う前提で、例として以下のような形式にします。
+Cloud Run runtime の `DATABASE_URL` は Supabase の Transaction pooler（ポート 6543）を使い、末尾に `pgbouncer=true` と `connection_limit` を付けます。`pgbouncer=true` は Transaction モードで Prisma の prepared statement エラーを防ぐために必須です。Cloud Run の最大インスタンス数 × `connection_limit` がプーラーへの同時接続数の上限になります。
 
 ```text
-postgresql://USER:PASSWORD@localhost/DB_NAME?host=/cloudsql/PROJECT_ID:REGION:INSTANCE_NAME&schema=public
+postgresql://postgres.PROJECT_REF:PASSWORD@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=5
 ```
+
+Cloud Run は Secret を `:latest` ではなくバージョン番号で参照します（`.github/workflows/cloud-run.yml` の `secrets` 配列）。`:latest` はインスタンス起動時に解決されるため、旧リビジョンにトラフィックを戻しても新しい値を読んでしまい、ロールバックにならないためです。Secret にバージョンを追加したら、workflow の番号も上げてください。
 
 Secret Manager には workflow と同じ名前で secret を作成しておきます。
 
@@ -195,7 +197,6 @@ Repository Variables:
 | `ARTIFACT_REGISTRY_REPOSITORY` | `oto-atsume` |
 | `CLOUD_RUN_SERVICE` | `oto-atsume` |
 | `CLOUD_RUN_SERVICE_ACCOUNT` | `oto-atsume-runtime@my-project.iam.gserviceaccount.com` |
-| `CLOUD_SQL_CONNECTION_NAME` | `my-project:asia-northeast1:oto-atsume-db` |
 | `NEXT_PUBLIC_ADSENSE_CLIENT_ID` | `ca-pub-6526734700672974` |
 
 Repository Secrets:
@@ -204,15 +205,15 @@ Repository Secrets:
 | --- | --- |
 | `GCP_WORKLOAD_IDENTITY_PROVIDER` | Workload Identity Provider resource name |
 | `GCP_SERVICE_ACCOUNT` | deploy 用 service account email |
-| `MIGRATION_DATABASE_URL` | GitHub Actions から `prisma migrate deploy` を実行するための接続文字列 |
+| `MIGRATION_DATABASE_URL` | GitHub Actions から `prisma migrate deploy` と DB バックアップを実行するための接続文字列 |
 
-`MIGRATION_DATABASE_URL` は workflow 内の Cloud SQL Auth Proxy に接続するため、例として以下のような形式にします。
+`MIGRATION_DATABASE_URL` は Supabase の Session pooler（ポート 5432、ホストは `*.pooler.supabase.com`）を使います。Direct connection（`db.<ref>.supabase.co`）は IPv6 専用で GitHub Actions からつながらないことがあるため使いません。
 
 ```text
-postgresql://USER:PASSWORD@127.0.0.1:5432/DB_NAME?schema=public
+postgresql://postgres.PROJECT_REF:PASSWORD@aws-0-ap-northeast-1.pooler.supabase.com:5432/postgres
 ```
 
-deploy 用 service account には少なくとも Artifact Registry への push、Cloud Run deploy、Cloud SQL Auth Proxy 接続に必要な権限を付与します。Cloud Run runtime service account には `roles/cloudsql.client` と Secret Manager の secret accessor 権限を付与してください。
+deploy 用 service account には少なくとも Artifact Registry への push と Cloud Run deploy に必要な権限を付与します。Cloud Run runtime service account には Secret Manager の secret accessor 権限を付与してください。
 
 ### Prisma migration
 
@@ -222,9 +223,9 @@ deploy 用 service account には少なくとも Artifact Registry への push�
 pnpm prisma:deploy
 ```
 
-GitHub Actions では Cloud SQL Auth Proxy を起動し、`MIGRATION_DATABASE_URL` を `DATABASE_URL` として渡して `prisma migrate deploy` を実行します。migration が失敗した場合、Cloud Run deploy は実行されません。
+GitHub Actions では `MIGRATION_DATABASE_URL` を `DATABASE_URL` と `DIRECT_URL` の両方に渡して `prisma migrate deploy` を実行します。migration が失敗した場合、Cloud Run deploy は実行されません。
 
-本番データのバックアップ方針は [docs/production-backup.md](docs/production-backup.md) を参照してください。migration 前に Cloud SQL backup を作成する運用を推奨します。
+本番データのバックアップ方針は [docs/production-backup.md](docs/production-backup.md) を参照してください。
 
 ## 主な画面
 
