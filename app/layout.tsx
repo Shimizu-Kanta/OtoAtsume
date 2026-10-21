@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { JetBrains_Mono, Noto_Sans_JP, Zen_Kaku_Gothic_New } from "next/font/google";
 
 import "./globals.css";
+import { Analytics } from "@/components/analytics/analytics";
 import { siteUrl } from "@/lib/site-url";
 
 // 本文: Noto Sans JP / 見出し: Zen Kaku Gothic New / 数値・日付・件数: JetBrains Mono。
@@ -72,7 +73,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       lang="ja"
       className={`${notoSansJp.variable} ${zenKaku.variable} ${jetBrainsMono.variable}`}
     >
-      <body>{children}</body>
+      <body>
+        {children}
+        <Analytics />
+      </body>
     </html>
   );
 }

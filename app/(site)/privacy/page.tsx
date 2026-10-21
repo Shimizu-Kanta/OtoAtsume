@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   description: "おとあつめのプライバシーポリシー"
 };
 
-const updatedAt = "2026年7月20日";
+const updatedAt = "2026年10月21日";
 
 export default function PrivacyPage() {
   return (
@@ -76,6 +76,7 @@ export default function PrivacyPage() {
           <li>YouTube Data API: YouTube URL から動画タイトル、投稿日、チャンネル名などを取得する補助機能に使用します。</li>
           <li>Google Cloud / Cloud Run / Cloud SQL: サービスのホスティングとデータ保存に使用します。</li>
           <li>Google AdSense: 広告配信に使用します。</li>
+          <li>Google アナリティクス: アクセス解析に使用します。</li>
         </ul>
       </section>
 
@@ -122,14 +123,54 @@ export default function PrivacyPage() {
       </section>
 
       <section className="space-y-3 rounded-md border bg-card p-5">
-        <h2 className="text-lg font-semibold">6. 第三者提供</h2>
+        <h2 className="text-lg font-semibold">6. アクセス解析ツールについて</h2>
+        <div className="space-y-3 text-sm leading-7 text-muted-foreground">
+          <p>
+            本サービスは、アクセス解析のため Google LLC が提供する「Google アナリティクス」を利用しています。Google アナリティクスの利用にあたり、ユーザーのブラウザから Google に対して以下の情報が送信されます。
+          </p>
+          <ul className="list-disc space-y-2 pl-5">
+            <li>閲覧したページの URL</li>
+            <li>参照元（どのページから訪れたか）</li>
+            <li>ブラウザ・端末の情報</li>
+            <li>Cookie 等の識別子</li>
+            <li>サイト内での操作（検索語を含む）など</li>
+          </ul>
+          <p>
+            これらの情報は、本サービスの利用状況の把握と改善のために利用します。Google アナリティクスによって個人を特定する情報は収集しません。
+          </p>
+          <p>
+            ブラウザの設定で Cookie を無効にするか、
+            <a
+              href="https://tools.google.com/dlpage/gaoptout"
+              target="_blank"
+              rel="noreferrer"
+              className="mx-1 text-primary underline"
+            >
+              Google アナリティクス オプトアウト アドオン
+            </a>
+            を利用することで、Google アナリティクスによる情報の送信を無効にできます。Google によるデータの取り扱いについては
+            <a
+              href="https://policies.google.com/technologies/partner-sites?hl=ja"
+              target="_blank"
+              rel="noreferrer"
+              className="mx-1 text-primary underline"
+            >
+              Google のパートナーサイトでのデータ使用について
+            </a>
+            を参照してください。
+          </p>
+        </div>
+      </section>
+
+      <section className="space-y-3 rounded-md border bg-card p-5">
+        <h2 className="text-lg font-semibold">7. 第三者提供</h2>
         <p className="text-sm leading-7 text-muted-foreground">
           法令に基づく場合、本人の同意がある場合、サービス運営に必要な委託先に取り扱いを委託する場合を除き、取得した情報を第三者に提供しません。
         </p>
       </section>
 
       <section className="space-y-3 rounded-md border bg-card p-5">
-        <h2 className="text-lg font-semibold">7. 情報の修正・削除</h2>
+        <h2 className="text-lg font-semibold">8. 情報の修正・削除</h2>
         <p className="text-sm leading-7 text-muted-foreground">
           掲載情報の修正・削除、または本ポリシーに関する問い合わせは、
           <Link href="/contact" className="mx-1 text-primary underline">
@@ -140,7 +181,7 @@ export default function PrivacyPage() {
       </section>
 
       <section className="space-y-3 rounded-md border bg-card p-5">
-        <h2 className="text-lg font-semibold">8. ポリシーの変更</h2>
+        <h2 className="text-lg font-semibold">9. ポリシーの変更</h2>
         <p className="text-sm leading-7 text-muted-foreground">
           管理者は、必要に応じて本ポリシーを変更できます。変更後の内容は、本ページに掲載した時点で効力を生じます。
         </p>
