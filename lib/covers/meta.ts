@@ -11,7 +11,7 @@ export type CoverMetaInput = {
   artistNames: string[];
   // この記録の活動者
   performerNames: string[];
-  // 先頭の活動者の所属グループ
+  // 全活動者に共通の所属グループ。グループが混在する・未所属がいる場合は null
   groupName: string | null;
   coverType: string;
   performedAt: Date;
@@ -94,7 +94,11 @@ export function buildCoverTitle(input: CoverMetaInput) {
 }
 
 export function buildCoverDescription(input: CoverMetaInput) {
-  const performers = joinNames(input.performerNames);
+  // 合同曲で数十人並ぶと1文目だけで上限を超えるため、title と同じく先頭2人に絞る。
+  const performers =
+    input.performerNames.length >= 3
+      ? `${input.performerNames[0]}、${input.performerNames[1]}ほか${input.performerNames.length - 2}人`
+      : joinNames(input.performerNames);
   const subject = input.groupName ? `${performers}（${input.groupName}）` : performers;
   const song = `「${input.songTitle}」${input.artistNames.length > 0 ? `（原曲：${joinNames(input.artistNames)}）` : ""}`;
   const date = longDateFormatter.format(input.performedAt);
@@ -123,8 +127,8 @@ export function buildCoverDescription(input: CoverMetaInput) {
         `同じ曲は他に${otherCount}人がカバー（${joinNames(input.otherSongPerformerNames.slice(0, DESCRIPTION_NAME_LIMIT))}など）。`
       );
     }
-    // 活動者が複数いても、件数は先頭の活動者のもので出す。
-    if (input.performerNames.length > 0 && input.performerCoverCount > 0) {
+    // 活動者が複数いても、件数は先頭の活動者のもので出す。この1件だけなら言う意味が無いので出さない。
+    if (input.performerNames.length > 0 && input.performerCoverCount >= 2) {
       sentences.push(`${input.performerNames[0]}の歌唱記録は全${input.performerCoverCount}件。`);
     }
   }

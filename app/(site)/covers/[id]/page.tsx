@@ -80,12 +80,16 @@ export async function generateMetadata({
     leadPerformer ? getPerformerCoverCount(leadPerformer.id) : Promise.resolve(0)
   ]);
   const { isIndexable } = evaluateCoverQuality(relationCounts);
+  // グループ名は全員が同じグループに所属しているときだけ出す（混在時に先頭の所属で括ると誤解を招く）。
+  const sharedGroup = leadPerformer?.group;
+  const groupName =
+    sharedGroup && performers.every((performer) => performer.groupId === sharedGroup.id) ? sharedGroup.name : null;
 
   const { title, description } = buildCoverMeta({
     songTitle: cover.song.title,
     artistNames: cover.song.artists.map(({ artist }) => artist.name),
     performerNames: performers.map((performer) => performer.name),
-    groupName: leadPerformer?.group?.name ?? null,
+    groupName,
     coverType: cover.coverType,
     performedAt: cover.performedAt,
     otherSongPerformerNames,
