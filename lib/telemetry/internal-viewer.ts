@@ -2,7 +2,8 @@
 // 日本の家庭・モバイル回線はIPが動的でCGNATも多いため、IPベースの除外ではなく
 // ブラウザ単位(localStorage)のフラグ方式を採用している。
 // `/?internal=1` でON、`/?internal=0` でOFFにできる（本人のみが使う想定）。
-const INTERNAL_FLAG_KEY = "oa_internal_viewer";
+// GA 側の判定は SSR の初期化スクリプト (lib/analytics.ts の GA_INIT_SCRIPT) に同じ条件で埋め込んでいる。
+export const INTERNAL_FLAG_KEY = "oa_internal_viewer";
 
 export function syncInternalFlag() {
   if (typeof window === "undefined") {
