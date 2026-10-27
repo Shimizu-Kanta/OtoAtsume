@@ -30,3 +30,54 @@ window.dataLayer=window.dataLayer||[];
 function gtag(){dataLayer.push(arguments);}
 gtag("js",new Date());
 gtag("config",${JSON.stringify(GA_MEASUREMENT_ID)});`;
+
+type Gtag = (...args: unknown[]) => void;
+
+// GA4 にイベントを送る。gtag が無い（開発環境・タグ未読み込み）ときは何もしない。
+// 内部閲覧者・本番ドメイン以外は ga-disable で gtag 側が送信を止める。
+// 個人を特定できる情報はパラメータに入れないこと。
+export function track(event: string, params: Record<string, string | number | undefined> = {}) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const gtag = (window as unknown as { gtag?: Gtag }).gtag;
+  if (typeof gtag !== "function") {
+    return;
+  }
+
+  gtag("event", event, params);
+}
+
+// 詳細ページ（/covers/[id] など）の既定の ui_location。
+const DETAIL_UI_LOCATIONS: Record<string, string> = {
+  covers: "cover_detail",
+  performers: "performer_page",
+  songs: "song_page",
+  features: "feature_page",
+  groups: "group_page"
+};
+
+// イベントの発生場所を、押された要素の祖先の data 属性から組み立てる。
+// - data-ui-location: 棚やかごなど、同じページ内で場所を見分けたい区画に付ける。無ければパスから決める
+// - data-item-id / data-content-type: リンク自体が対象 ID を持たない区画（詳細ページ・かごの行など）に付ける
+export function trackingContext(element: Element | null) {
+  const location = element?.closest<HTMLElement>("[data-ui-location]")?.dataset.uiLocation;
+  const item = element?.closest<HTMLElement>("[data-item-id]");
+
+  return {
+    ui_location: location ?? defaultUiLocation(window.location.pathname),
+    item_id: item?.dataset.itemId,
+    content_type: item?.dataset.contentType
+  };
+}
+
+function defaultUiLocation(pathname: string) {
+  const [first, second] = pathname.split("/").filter(Boolean);
+
+  if (!first) {
+    return "home";
+  }
+
+  return (second && second !== "new" && DETAIL_UI_LOCATIONS[first]) || first;
+}

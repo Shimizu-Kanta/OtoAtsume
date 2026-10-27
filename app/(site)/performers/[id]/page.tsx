@@ -116,7 +116,7 @@ export default async function PerformerDetailPage({ params }: { params: Promise<
   const summary = buildPerformerSummary(performer.name, stats);
 
   return (
-    <div className="space-y-6">
+    <div data-item-id={performer.id} data-content-type="performer" className="space-y-6">
       <Breadcrumb
         items={[
           { name: "ホーム", href: "/" },

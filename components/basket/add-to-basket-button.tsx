@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Check, ShoppingCart } from "lucide-react";
 
+import { track, trackingContext } from "@/lib/analytics";
 import { useBasket } from "@/lib/basket/context";
 import { cn } from "@/lib/utils";
 
@@ -42,8 +43,10 @@ export function AddToBasketButton({
       ? coverIds.every((id) => basket.ids.has(id))
       : coverIds.some((id) => basket.ids.has(id)));
 
-  async function handleClick() {
+  async function handleClick(event: React.MouseEvent<HTMLButtonElement>) {
     setError(null);
+    // await の後では currentTarget が外れるので、場所はここで取っておく。
+    const { ui_location } = trackingContext(event.currentTarget);
 
     if (inBasket) {
       for (const id of coverIds) {
@@ -77,6 +80,11 @@ export function AddToBasketButton({
 
     if (!result.ok) {
       setError(result.error ?? "かごに入れられませんでした。");
+      return;
+    }
+
+    if (result.added > 0) {
+      track("cart_add", { content_type: "cover", item_id: coverIds[0], ui_location, item_count: result.added });
     }
   }
 

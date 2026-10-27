@@ -213,6 +213,8 @@ export default async function CoverDetailPage({ params, searchParams }: CoverDet
 
       {/* ライナーノーツ本体。上辺の太い線が綴じ側で、活動者カラーがあればそれを使う。 */}
       <article
+        data-item-id={cover.id}
+        data-content-type="cover"
         className="rounded-[2px] border border-rule bg-panel p-5 shadow-lift sm:px-9 sm:pb-7 sm:pt-8"
         style={{ borderTopWidth: 4, borderTopColor: accentColor ?? "var(--stamp)" }}
       >
@@ -506,7 +508,7 @@ function RelatedCoversSection({
   action?: React.ReactNode;
 }) {
   return (
-    <section className="flex flex-col gap-4">
+    <section data-ui-location="cover_detail_related" className="flex flex-col gap-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
           <p className="eyebrow-muted">{eyebrow}</p>

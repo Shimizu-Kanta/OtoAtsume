@@ -92,7 +92,7 @@ export default async function SongDetailPage({ params }: { params: Promise<{ id:
   const summary = buildSongSummary(song.title, artists, stats);
 
   return (
-    <div className="space-y-6">
+    <div data-item-id={song.id} data-content-type="song" className="space-y-6">
       <Breadcrumb
         items={[
           { name: "ホーム", href: "/" },

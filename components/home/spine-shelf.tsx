@@ -29,13 +29,16 @@ export function SpineShelf({
   title,
   description,
   albums,
-  emptyMessage = "表示できる歌唱記録がありません。"
+  emptyMessage = "表示できる歌唱記録がありません。",
+  uiLocation
 }: {
   en?: string;
   title: string;
   description: string;
   albums: CoverAlbum[];
   emptyMessage?: string;
+  // GA イベントの ui_location。
+  uiLocation: string;
 }) {
   // 空パネルを見せないよう、初期状態は先頭を選択済みにする。
   const [selectedKey, setSelectedKey] = useState(() => albums[0]?.key ?? null);
@@ -43,7 +46,7 @@ export function SpineShelf({
   const selected = albums.find((album) => album.key === selectedKey) ?? albums[0] ?? null;
 
   return (
-    <section className="flex flex-col gap-3.5">
+    <section data-ui-location={uiLocation} className="flex flex-col gap-3.5">
       <SectionHeading en={en} title={title} description={description} />
 
       {selected ? (

@@ -6,6 +6,7 @@ import { Bookmark, BookmarkCheck } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { ErrorText } from "@/components/ui/notice";
 import { WATCHLIST_CHANGED_EVENT } from "@/components/watchlist/events";
+import { track } from "@/lib/analytics";
 import { recordSongRequest } from "@/lib/watchlist/request-log";
 import { addWatchlistItem } from "@/lib/watchlist/storage";
 import { cn } from "@/lib/utils";
@@ -43,6 +44,7 @@ export function AddToWatchlistButton({
     // 既に入っていた曲（added: false）では記録しない。
     if (result.added) {
       recordSongRequest({ songName, artistName, songId });
+      track("watchlist_add", { content_type: "song", item_id: songId ?? undefined });
     }
   }
 

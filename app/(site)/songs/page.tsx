@@ -54,7 +54,7 @@ export default async function SongsPage({
         description="楽曲名と原曲アーティスト名で検索できます。在庫数はその曲の歌唱記録の件数です。"
       />
 
-      <form action="/songs">
+      <form action="/songs" data-search-type="song">
         <IndexSearchBar countLabel={`${totalCount.toLocaleString("ja-JP")} songs`}>
           <div className="flex min-w-0 flex-[1_1_240px] flex-col gap-2">
             <label htmlFor="song-q" className="eyebrow-muted">

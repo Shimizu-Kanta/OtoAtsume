@@ -57,6 +57,9 @@ export function MiniPlayer() {
       ref={ref}
       role="region"
       aria-label="試聴中の曲"
+      data-ui-location="mini_player"
+      data-item-id={nowPlaying.id}
+      data-content-type="cover"
       className="fixed inset-x-0 bottom-[var(--bottom-anchor-h,0px)] z-[45] border-t border-rule bg-panel pb-[env(safe-area-inset-bottom)] shadow-modal lg:hidden"
     >
       <div className="mx-auto w-full max-w-md">

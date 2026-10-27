@@ -56,7 +56,7 @@ export default async function PerformersPage({
         description="活動者名、別名、所属グループで検索できます。背表紙の色は活動者カラーです。タグ絞り込みとデビュー日順の並び替えに対応しています。"
       />
 
-      <form action="/performers" className="flex flex-col gap-4">
+      <form action="/performers" data-search-type="performer" className="flex flex-col gap-4">
         <IndexSearchBar countLabel={`${totalCount.toLocaleString("ja-JP")} performers`}>
           <div className="flex min-w-0 flex-[1_1_240px] flex-col gap-2">
             <label htmlFor="performer-q" className="eyebrow-muted">

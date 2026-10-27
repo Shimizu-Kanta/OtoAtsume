@@ -18,7 +18,8 @@ export function ShelfSection({
   actionHref,
   actionLabel,
   emptyMessage = "表示できる歌唱記録がありません。",
-  representativeOnly = false
+  representativeOnly = false,
+  uiLocation
 }: {
   en?: string;
   title: string;
@@ -29,6 +30,8 @@ export function ShelfSection({
   emptyMessage?: string;
   // tracks が代表1曲のみの棚（attachTrackCounts 経由）で true にする。
   representativeOnly?: boolean;
+  // GA イベントの ui_location。棚ごとに固定の識別子を付ける（例: shelf_latest）。
+  uiLocation: string;
 }) {
   const viewportRef = useRef<HTMLDivElement>(null);
 
@@ -47,7 +50,7 @@ export function ShelfSection({
   }
 
   return (
-    <section className="flex flex-col gap-3.5">
+    <section data-ui-location={uiLocation} className="flex flex-col gap-3.5">
       <SectionHeading
         en={en}
         title={title}
