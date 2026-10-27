@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { JetBrains_Mono, Noto_Sans_JP, Zen_Kaku_Gothic_New } from "next/font/google";
 
 import "./globals.css";
-import { Analytics } from "@/components/analytics/analytics";
+import { GA_INIT_SCRIPT, GA_MEASUREMENT_ID } from "@/lib/analytics";
 import { siteUrl } from "@/lib/site-url";
 
 // 本文: Noto Sans JP / 見出し: Zen Kaku Gothic New / 数値・日付・件数: JetBrains Mono。
@@ -73,10 +73,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       lang="ja"
       className={`${notoSansJp.variable} ${zenKaku.variable} ${jetBrainsMono.variable}`}
     >
-      <body>
-        {children}
-        <Analytics />
-      </body>
+      {process.env.NODE_ENV === "production" ? (
+        <head>
+          {/* 初期化（オプトアウト判定 → config）を gtag.js 本体より前に置き、HTML のパース時点で実行させる。
+              gtag.js は async なのでページ表示を妨げない（AdSense と同じく SSR の生 HTML に出す）。
+              next/script はハイドレーション後の実行になり、早期離脱の訪問を取りこぼすため使わない。 */}
+          <script id="ga-init" dangerouslySetInnerHTML={{ __html: GA_INIT_SCRIPT }} />
+          <script async src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`} />
+        </head>
+      ) : null}
+      <body>{children}</body>
     </html>
   );
 }
