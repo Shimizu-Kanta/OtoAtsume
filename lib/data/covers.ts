@@ -536,6 +536,39 @@ export async function getOtherCoversBySong(songId: string, excludeCoverId: strin
   });
 }
 
+// 同じ曲を歌った他の活動者の名前（重複なし・新しい記録順）。カバー詳細ページのメタ情報用。
+// getOtherCoversBySong は表示用に件数を絞るため、人数を数えるにはこちらを使う。
+export async function getOtherSongPerformerNames(
+  songId: string,
+  excludeCoverId: string,
+  excludePerformerIds: string[]
+) {
+  const links = await db.coverPerformer.findMany({
+    where: {
+      performerId: { notIn: excludePerformerIds },
+      cover: { status: ContentStatus.APPROVED, id: { not: excludeCoverId }, songId }
+    },
+    select: { performerId: true, performer: { select: { name: true } } },
+    orderBy: [{ cover: { performedAt: "desc" } }, { cover: { createdAt: "desc" } }]
+  });
+
+  const names = new Map<string, string>();
+  for (const link of links) {
+    if (!names.has(link.performerId)) {
+      names.set(link.performerId, link.performer.name);
+    }
+  }
+
+  return [...names.values()];
+}
+
+// 活動者の公開済み歌唱記録の件数（getPerformerStats の総数と同じ数え方）。
+export async function getPerformerCoverCount(performerId: string) {
+  return db.coverPerformer.count({
+    where: { performerId, cover: { status: ContentStatus.APPROVED } }
+  });
+}
+
 // 単一歌唱記録の関連件数（同楽曲 / 同活動者 / 同 sourceUrl の他記録数）。
 // generateMetadata の noindex 判定に使う。すべて自身を除いた APPROVED 件数。
 export async function getCoverRelationCounts(cover: {

@@ -1,3 +1,4 @@
+import { cache } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ExternalLink, Music2 } from "lucide-react";
@@ -12,6 +13,7 @@ import { RelatedFeatures } from "@/components/features/related-features";
 import { PerformerColorChip } from "@/components/performers/performer-color-chip";
 import { ShareButton } from "@/components/share-button";
 import { buttonVariants } from "@/components/ui/button";
+import { buildCoverMeta } from "@/lib/covers/meta";
 import { buildObiText } from "@/lib/covers/obi";
 import { clampPerformerColor } from "@/lib/performer-color";
 import { coverTypeLabel } from "@/lib/constants";
@@ -21,6 +23,8 @@ import {
   getOtherCoversByPerformers,
   getOtherCoversBySong,
   getOtherCoversBySourceVideoId,
+  getOtherSongPerformerNames,
+  getPerformerCoverCount,
   type CoverListItem
 } from "@/lib/data/covers";
 import { getFeaturesForCover } from "@/lib/data/features";
@@ -31,6 +35,16 @@ import { extractYouTubeVideoId, getYouTubeThumbnailUrl } from "@/lib/youtube";
 import type { Metadata } from "next";
 
 export const revalidate = 3600;
+
+// generateMetadata とページ本体で同じクエリを二重に走らせないよう、1リクエスト内でキャッシュする。
+const getCover = cache(getCoverById);
+const getSameSourceCovers = cache(getOtherCoversBySourceVideoId);
+
+// 同一動画のグルーピングは sourceVideoId で行う（URL 表記揺れに強い）。
+// 保存済みの値を優先し、未設定の古いレコードは sourceUrl から導出する。
+function resolveSourceVideoId(cover: { sourceVideoId: string | null; sourceUrl: string }) {
+  return cover.sourceVideoId ?? extractYouTubeVideoId(cover.sourceUrl);
+}
 
 type CoverDetailPageProps = {
   params: Promise<{ id: string }>;
@@ -43,7 +57,7 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
-  const cover = await getCoverById(id);
+  const cover = await getCover(id);
 
   if (!cover) {
     return {
@@ -51,15 +65,33 @@ export async function generateMetadata({
     };
   }
 
-  const artists = cover.song.artists.map(({ artist }) => artist.name).join(", ");
-  const performers = cover.performers.map(({ performer }) => performer.name).join(", ");
-  const title = `${cover.song.title} / ${performers}`;
-  const description = artists
-    ? `${cover.song.title} - ${artists} の歌唱記録です。`
-    : `${cover.song.title} の歌唱記録です。`;
+  const performers = cover.performers.map(({ performer }) => performer);
+  const leadPerformer = performers[0] ?? null;
+  const sourceVideoId = resolveSourceVideoId(cover);
 
-  const relationCounts = await getCoverRelationCounts(cover);
+  const [relationCounts, otherSongPerformerNames, sameSourceCovers, performerCoverCount] = await Promise.all([
+    getCoverRelationCounts(cover),
+    getOtherSongPerformerNames(
+      cover.songId,
+      cover.id,
+      performers.map((performer) => performer.id)
+    ),
+    sourceVideoId ? getSameSourceCovers(sourceVideoId, cover.id) : Promise.resolve([]),
+    leadPerformer ? getPerformerCoverCount(leadPerformer.id) : Promise.resolve(0)
+  ]);
   const { isIndexable } = evaluateCoverQuality(relationCounts);
+
+  const { title, description } = buildCoverMeta({
+    songTitle: cover.song.title,
+    artistNames: cover.song.artists.map(({ artist }) => artist.name),
+    performerNames: performers.map((performer) => performer.name),
+    groupName: leadPerformer?.group?.name ?? null,
+    coverType: cover.coverType,
+    performedAt: cover.performedAt,
+    otherSongPerformerNames,
+    sameSourceSongTitles: sameSourceCovers.map((sourceCover) => sourceCover.song.title),
+    performerCoverCount
+  });
 
   return {
     title,
@@ -85,7 +117,7 @@ export async function generateMetadata({
 
 export default async function CoverDetailPage({ params, searchParams }: CoverDetailPageProps) {
   const [{ id }, query] = await Promise.all([params, searchParams]);
-  const cover = await getCoverById(id);
+  const cover = await getCover(id);
 
   if (!cover) {
     notFound();
@@ -100,9 +132,7 @@ export default async function CoverDetailPage({ params, searchParams }: CoverDet
   const sourceTitle = cover.sourceTitle?.trim();
   const hasTimestamp = cover.timestampSeconds != null;
   const sourceUrlWithTimestamp = withTimestamp(cover.sourceUrl, cover.timestampSeconds);
-  // 同一動画のグルーピングは sourceVideoId で行う（URL 表記揺れに強い）。
-  // 保存済みの値を優先し、未設定の古いレコードは sourceUrl から導出する。
-  const sourceVideoId = cover.sourceVideoId ?? extractYouTubeVideoId(cover.sourceUrl);
+  const sourceVideoId = resolveSourceVideoId(cover);
 
   const [otherPerformerCovers, otherSongCovers, sameSourceCovers, relatedFeatures] =
     await Promise.all([
@@ -111,7 +141,7 @@ export default async function CoverDetailPage({ params, searchParams }: CoverDet
         cover.id
       ),
       getOtherCoversBySong(cover.songId, cover.id),
-      sourceVideoId ? getOtherCoversBySourceVideoId(sourceVideoId, cover.id) : Promise.resolve([]),
+      sourceVideoId ? getSameSourceCovers(sourceVideoId, cover.id) : Promise.resolve([]),
       getFeaturesForCover(cover.id)
     ]);
 
