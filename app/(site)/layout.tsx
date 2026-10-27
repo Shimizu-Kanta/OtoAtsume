@@ -1,3 +1,4 @@
+import { AnalyticsListener } from "@/components/analytics/analytics-listener";
 import { BasketBar } from "@/components/basket/basket-bar";
 import { MiniPlayer } from "@/components/basket/mini-player";
 import { BasketRail } from "@/components/basket/basket-rail";
@@ -26,6 +27,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
         />
       ) : null}
       <AccessLogger />
+      <AnalyticsListener />
       <BasketProvider>
         {/* 試聴中の曲。ページ遷移しても再生を続けるためレイアウトに置く。 */}
         <PreviewProvider>

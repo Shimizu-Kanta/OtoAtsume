@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Trash2, X } from "lucide-react";
 
 import { WATCHLIST_CHANGED_EVENT } from "@/components/watchlist/events";
+import { track } from "@/lib/analytics";
 import {
   applyWatchlistCheckResults,
   countUnread,
@@ -104,7 +105,9 @@ export function WatchlistWidget() {
   }
 
   function handleRemove(id: string) {
+    const removed = items.find((item) => item.id === id);
     setItems(removeWatchlistItem(id));
+    track("watchlist_remove", { content_type: "song", item_id: removed?.songId ?? undefined });
   }
 
   return (

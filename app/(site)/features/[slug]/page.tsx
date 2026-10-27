@@ -99,7 +99,7 @@ export default async function FeatureDetailPage({
   };
 
   return (
-    <div className="flex flex-col gap-8">
+    <div data-item-id={feature.id} data-content-type="feature" className="flex flex-col gap-8">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}

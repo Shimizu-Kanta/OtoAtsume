@@ -27,7 +27,7 @@ export function PlaylistResult({ tracks }: { tracks: PlaylistTrack[] }) {
   }, [tracks]);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div data-ui-location="playlist_result" className="flex flex-col gap-4">
       <div className="flex flex-wrap items-start gap-2">
         {takeaway.url ? (
           <a
@@ -63,7 +63,7 @@ export function PlaylistResult({ tracks }: { tracks: PlaylistTrack[] }) {
 
       <ol className="flex flex-col border-t border-rule">
         {tracks.map((track, index) => (
-          <li key={track.id} className="flex items-center gap-3 border-b border-dashed border-rule py-2.5">
+          <li key={track.id} data-item-id={track.id} data-content-type="cover" className="flex items-center gap-3 border-b border-dashed border-rule py-2.5">
             <span className="w-6 shrink-0 text-right font-mono text-xs tabular-nums text-slate">
               {index + 1}
             </span>

@@ -22,7 +22,12 @@ export function ListeningStation({ album }: { album: CoverAlbum }) {
   const listenUrl = withTimestamp(album.sourceUrl, head.timestampSeconds);
 
   return (
-    <section className="flex flex-col gap-3.5">
+    <section
+      data-ui-location="listening_station"
+      data-item-id={head.id}
+      data-content-type="cover"
+      className="flex flex-col gap-3.5"
+    >
       <div className="flex flex-wrap items-baseline gap-3.5">
         <h2 className="text-xl font-bold tracking-tight text-ink sm:text-[22px]">試聴機コーナー</h2>
         <span className="eyebrow-muted">listening station</span>

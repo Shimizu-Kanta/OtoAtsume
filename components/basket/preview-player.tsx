@@ -248,7 +248,7 @@ export function PreviewPlayer({
   const watchUrl = item ? withTimestamp(item.sourceUrl, item.startSeconds) : null;
 
   return (
-    <div className="flex flex-col gap-2">
+    <div data-item-id={item?.id} data-content-type="cover" className="flex flex-col gap-2">
       {/* プレイヤーはパネル幅いっぱいの 16:9 で出す。極端に縮めたり隠したりしない。 */}
       <div className="relative aspect-video w-full overflow-hidden rounded-[2px] bg-board">
         {/* iframe は起動後だけ描画する。起動前は下の案内文だけを 16:9 枠に出す。 */}

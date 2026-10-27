@@ -4,6 +4,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { Copy, ExternalLink, GripVertical, Play, Trash2 } from "lucide-react";
 
 import { PreviewPlayer } from "@/components/basket/preview-player";
+import { track } from "@/lib/analytics";
 import { useBasket } from "@/lib/basket/context";
 import { useIsRailLayout, usePreview } from "@/lib/basket/preview-context";
 import { buildTakeawayPlaylist, buildTrackListText } from "@/lib/basket/takeaway";
@@ -63,8 +64,10 @@ export function BasketPanel({
     );
   }
 
+  const uiLocation = isRail ? "basket_rail" : "basket_sheet";
+
   return (
-    <div className="flex flex-col gap-3">
+    <div data-ui-location={uiLocation} className="flex flex-col gap-3">
       <BasketHeading count={basket.count} />
 
       {isRail ? <PreviewPlayer item={nowPlaying} onRemove={handleRemove} /> : null}
@@ -77,6 +80,8 @@ export function BasketPanel({
         {basket.items.map((item, index) => (
           <li
             key={item.id}
+            data-item-id={item.id}
+            data-content-type="cover"
             draggable
             onDragStart={() => {
               dragIndex.current = index;
@@ -119,6 +124,10 @@ export function BasketPanel({
               item={item}
               playing={item.id === nowPlayingId}
               onPlay={() => {
+                // 再生中の曲をもう一度押しても数えない。
+                if (item.id !== nowPlayingId) {
+                  track("preview_play", { item_id: item.id, ui_location: uiLocation });
+                }
                 play(item.id);
                 onPlay?.();
               }}

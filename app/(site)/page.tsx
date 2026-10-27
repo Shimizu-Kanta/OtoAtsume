@@ -197,6 +197,7 @@ export default async function HomePage({
         </div>
         <form
           action="/covers"
+          data-search-type="cover"
           className="flex flex-wrap items-end gap-2.5 rounded-[3px] border border-rule bg-panel p-5 shadow-lift"
         >
           <CounterField label="song title" htmlFor="home-song" grow="1 1 260px">
@@ -260,6 +261,7 @@ export default async function HomePage({
         title="最新入荷"
         description="最近登録された歌唱記録です。"
         albums={arrivalShelfAlbums}
+        uiLocation="shelf_latest"
         actionHref="/covers?sort=addedAtDesc"
         actionLabel="すべて見る"
       />
@@ -269,6 +271,7 @@ export default async function HomePage({
         title="新譜"
         description="歌唱日が新しい歌唱記録です。"
         albums={newReleaseAlbums.items}
+        uiLocation="shelf_new_release"
         actionHref="/covers"
         actionLabel="すべて見る"
       />
@@ -280,6 +283,7 @@ export default async function HomePage({
         title="おすすめの一枚"
         description="登録されている歌唱記録からランダムに表示しています。"
         albums={listeningAlbums}
+        uiLocation="shelf_random_pick"
         representativeOnly
       />
 
@@ -288,6 +292,7 @@ export default async function HomePage({
         title="バックナンバー棚"
         description="古くから登録されている歌唱記録です。背表紙をクリックすると一枚を取り出せます。"
         albums={backNumberAlbums.items}
+        uiLocation="shelf_back_numbers"
       />
     </div>
   );
@@ -330,7 +335,7 @@ type AnniversaryAlbumGroup = AnniversaryCoverGroup & { albums: CoverAlbum[] };
 
 function AnniversaryCoverSection({ groups }: { groups: AnniversaryAlbumGroup[] }) {
   return (
-    <section className="flex flex-col gap-3.5">
+    <section data-ui-location="shelf_today" className="flex flex-col gap-3.5">
       <SectionHeading
         en="today's pick"
         title="本日の一枚"

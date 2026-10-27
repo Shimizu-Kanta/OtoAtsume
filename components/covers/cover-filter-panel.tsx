@@ -54,6 +54,7 @@ export function CoverFilterPanel({
   return (
     <form
       action="/covers"
+      data-search-type="cover"
       className="overflow-hidden rounded-[3px] border border-rule bg-panel shadow-lift"
     >
       {view ? <input type="hidden" name="view" value={view} /> : null}
