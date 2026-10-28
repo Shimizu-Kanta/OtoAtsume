@@ -3,6 +3,7 @@ import { JetBrains_Mono, Noto_Sans_JP, Zen_Kaku_Gothic_New } from "next/font/goo
 
 import "./globals.css";
 import { GA_INIT_SCRIPT, GA_MEASUREMENT_ID } from "@/lib/analytics";
+import { DEFAULT_OG_IMAGE } from "@/lib/default-og-image";
 import { siteUrl } from "@/lib/site-url";
 
 // 本文: Noto Sans JP / 見出し: Zen Kaku Gothic New / 数値・日付・件数: JetBrains Mono。
@@ -50,20 +51,13 @@ export const metadata: Metadata = {
     siteName: "おとあつめ",
     title: "おとあつめ",
     description: "VTuber、配信者、歌い手などの歌唱記録を集めるデータベースです。",
-    images: [
-      {
-        url: "/ogp.png",
-        width: 1200,
-        height: 630,
-        alt: "おとあつめ"
-      }
-    ]
+    images: [DEFAULT_OG_IMAGE]
   },
   twitter: {
     card: "summary_large_image",
     title: "おとあつめ",
     description: "VTuber、配信者、歌い手などの歌唱記録を集めるデータベースです。",
-    images: ["/ogp.png"]
+    images: [DEFAULT_OG_IMAGE]
   }
 };
 

@@ -10,6 +10,7 @@ import {
   getPublishedFeatureBySlug,
   type FeaturePublicDetail
 } from "@/lib/data/features";
+import { DEFAULT_OG_IMAGE } from "@/lib/default-og-image";
 import { parseFeatureLinks } from "@/lib/validations/feature";
 import { absoluteUrl, siteUrl } from "@/lib/site-url";
 import { formatDate } from "@/lib/utils";
@@ -53,7 +54,8 @@ export async function generateMetadata({
       title: feature.title,
       description,
       ...(feature.publishedAt ? { publishedTime: feature.publishedAt.toISOString() } : {}),
-      ...(ogImage ? { images: [ogImage] } : {})
+      // 収録曲のサムネイルが取れない特集は既定画像にする(images が無いとカードが画像なしになる)
+      images: [ogImage ?? DEFAULT_OG_IMAGE]
     },
     twitter: {
       card: "summary_large_image",

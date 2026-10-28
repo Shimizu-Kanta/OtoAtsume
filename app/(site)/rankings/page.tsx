@@ -5,6 +5,7 @@ import { BarChart3 } from "lucide-react";
 import { PageHeading } from "@/components/page-heading";
 import { RankingTabs } from "@/components/ranking-tabs";
 import { getRankings } from "@/lib/data/rankings";
+import { DEFAULT_OG_IMAGE } from "@/lib/default-og-image";
 import { cn } from "@/lib/utils";
 import type { Metadata } from "next";
 
@@ -24,7 +25,8 @@ export const metadata: Metadata = {
     url: "/rankings",
     siteName: "おとあつめ",
     title: "ランキング",
-    description: "おとあつめの歌唱記録をもとにした各種ランキングです。"
+    description: "おとあつめの歌唱記録をもとにした各種ランキングです。",
+    images: [DEFAULT_OG_IMAGE]
   }
 };
 

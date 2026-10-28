@@ -22,6 +22,7 @@ import {
 } from "@/lib/data/covers";
 import { getLatestPublishedFeatures } from "@/lib/data/features";
 import { getPublicStats } from "@/lib/data/stats";
+import { DEFAULT_OG_IMAGE } from "@/lib/default-og-image";
 import { absoluteUrl, siteUrl } from "@/lib/site-url";
 import { cn, formatDateInput } from "@/lib/utils";
 import type { Metadata } from "next";
@@ -37,10 +38,13 @@ export const metadata: Metadata = {
   description:
     "VTuber・配信者・歌い手の歌ってみた動画・歌枠・ライブでの歌唱記録を集めるデータベース。ユーザー登録なしで、楽曲・活動者・原曲アーティストから歌唱記録を探せます。",
   openGraph: {
-    title: "おとあつめ | VTuber・歌い手の歌ってみた・歌枠 歌唱記録データベース"
+    title: "おとあつめ | VTuber・歌い手の歌ってみた・歌枠 歌唱記録データベース",
+    images: [DEFAULT_OG_IMAGE]
   },
   twitter: {
-    title: "おとあつめ | VTuber・歌い手の歌ってみた・歌枠 歌唱記録データベース"
+    card: "summary_large_image",
+    title: "おとあつめ | VTuber・歌い手の歌ってみた・歌枠 歌唱記録データベース",
+    images: [DEFAULT_OG_IMAGE]
   }
 };
 

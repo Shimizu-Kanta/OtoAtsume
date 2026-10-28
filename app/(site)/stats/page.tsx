@@ -5,6 +5,7 @@ import { Database, Music, Music2, Users } from "lucide-react";
 import { PageHeading } from "@/components/page-heading";
 import { coverTypeLabel } from "@/lib/constants";
 import { getSiteStats } from "@/lib/data/stats";
+import { DEFAULT_OG_IMAGE } from "@/lib/default-og-image";
 import type { Metadata } from "next";
 
 // Docker build（builder ステージ）は DATABASE_URL に到達できないため、
@@ -23,7 +24,8 @@ export const metadata: Metadata = {
     url: "/stats",
     siteName: "おとあつめ",
     title: "データベース統計",
-    description: "おとあつめのデータベース統計です。"
+    description: "おとあつめのデータベース統計です。",
+    images: [DEFAULT_OG_IMAGE]
   }
 };
 
