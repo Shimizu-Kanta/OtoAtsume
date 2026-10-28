@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { PageHeading } from "@/components/page-heading";
+import { DEFAULT_OG_IMAGE } from "@/lib/default-og-image";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -13,7 +14,8 @@ export const metadata: Metadata = {
     url: "/about",
     siteName: "おとあつめ",
     title: "おとあつめについて",
-    description: "おとあつめの目的・設計思想・収録基準・運営者情報について。"
+    description: "おとあつめの目的・設計思想・収録基準・運営者情報について。",
+    images: [DEFAULT_OG_IMAGE]
   }
 };
 

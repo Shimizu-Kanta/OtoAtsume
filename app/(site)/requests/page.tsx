@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { AddToWatchlistButton } from "@/components/watchlist/add-to-watchlist-button";
 import { getSongRequestRanking, type SongRequestFilter } from "@/lib/data/song-request-log";
+import { DEFAULT_OG_IMAGE } from "@/lib/default-og-image";
 import { cn, getSearchParam } from "@/lib/utils";
 import type { Metadata } from "next";
 
@@ -25,7 +26,8 @@ export const metadata: Metadata = {
     url: "/requests",
     siteName: "おとあつめ",
     title: "気になる曲ランキング",
-    description: "直近7日間に「気になる曲」として追加された楽曲のランキングです。"
+    description: "直近7日間に「気になる曲」として追加された楽曲のランキングです。",
+    images: [DEFAULT_OG_IMAGE]
   }
 };
 

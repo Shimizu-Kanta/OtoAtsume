@@ -4,6 +4,7 @@ import { Pagination } from "@/components/pagination";
 import { buttonVariants } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { getGroups, type GroupSort } from "@/lib/data/groups";
+import { DEFAULT_OG_IMAGE } from "@/lib/default-og-image";
 import { cn, getSearchParam, isFilteredListing, parsePageParam } from "@/lib/utils";
 import type { Metadata } from "next";
 
@@ -30,12 +31,14 @@ export async function generateMetadata({
       url: "/groups",
       siteName: "おとあつめ",
       title: "グループ",
-      description: "VTuber・歌い手グループごとに所属活動者と歌唱記録をまとめています。"
+      description: "VTuber・歌い手グループごとに所属活動者と歌唱記録をまとめています。",
+      images: [DEFAULT_OG_IMAGE]
     },
     twitter: {
-      card: "summary",
+      card: "summary_large_image",
       title: "グループ",
-      description: "VTuber・歌い手グループごとに所属活動者と歌唱記録をまとめています。"
+      description: "VTuber・歌い手グループごとに所属活動者と歌唱記録をまとめています。",
+      images: [DEFAULT_OG_IMAGE]
     }
   };
 }

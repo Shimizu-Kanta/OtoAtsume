@@ -5,6 +5,7 @@ import { Breadcrumb } from "@/components/breadcrumb";
 import { CoverJacket } from "@/components/covers/cover-jacket";
 import { PageHeading } from "@/components/page-heading";
 import { listPublishedFeatures, type FeatureCard } from "@/lib/data/features";
+import { DEFAULT_OG_IMAGE } from "@/lib/default-og-image";
 import { formatDate } from "@/lib/utils";
 import { getYouTubeThumbnailUrl } from "@/lib/youtube";
 
@@ -19,7 +20,8 @@ export const metadata: Metadata = {
     type: "website",
     url: "/features",
     siteName: "おとあつめ",
-    title: "特集 | おとあつめ"
+    title: "特集 | おとあつめ",
+    images: [DEFAULT_OG_IMAGE]
   }
 };
 
