@@ -35,7 +35,7 @@ export async function generateMetadata({
       images: [DEFAULT_OG_IMAGE]
     },
     twitter: {
-      card: "summary",
+      card: "summary_large_image",
       title: "グループ",
       description: "VTuber・歌い手グループごとに所属活動者と歌唱記録をまとめています。",
       images: [DEFAULT_OG_IMAGE]
